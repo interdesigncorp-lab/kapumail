@@ -1,0 +1,2 @@
+#!/usr/bin/env node
+require('./fake').run('claude', process.argv.slice(2));

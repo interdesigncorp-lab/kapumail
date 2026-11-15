@@ -1,0 +1,12 @@
+.DS_Store
+*.log
+node_modules/
+
+# Az élő próbák kimenete (csak szerkezet); nem kerül a repóba
+research/kiserletek/kimenet/
+
+# Hivatalos aláírt kiadás jelzőfájlja (csak a build-release.js állítja elő csomagoláskor)
+app/bootstrap/official-build.json
+
+# Előfizetési szolgáltatás helyi adatbázisa és titkai
+billing/data/

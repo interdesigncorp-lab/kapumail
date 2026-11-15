@@ -1,0 +1,117 @@
+{
+  "name": "kapumail",
+  "productName": "KapuMail",
+  "version": "0.2.0",
+  "description": "KapuMail asztali keret (Windows, macOS)",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "postinstall": "node scripts/patch-dev-app.js",
+    "start": "node scripts/patch-dev-app.js && electron .",
+    "smoke": "electron . --smoke",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win",
+    "release": "node scripts/build-release.js",
+    "build:oss": "node scripts/build-release.js --unsigned",
+    "icon": "electron scripts/make-icon.js",
+    "test": "node --test test/*.test.js",
+    "megfigyelo:nav": "node scripts/patch-dev-app.js && electron . --megfigyelo-nav",
+    "megfigyelo:asp": "node scripts/patch-dev-app.js && electron . --megfigyelo-asp"
+  },
+  "build": {
+    "appId": "hu.kapumail.desktop",
+    "productName": "KapuMail",
+    "icon": "assets/icon.png",
+    "afterPack": "scripts/win-icon.js",
+    "files": [
+      "main.js",
+      "preload.js",
+      "setup.html",
+      "welcome.html",
+      "mode.js",
+      "local-server.js",
+      "splash.html",
+      "assets/**",
+      "!assets/dmg/**",
+      "connector.js",
+      "tarhely-live.js",
+      "tarhely-http.js",
+      "tarhely-auto.js",
+      "nav-http.js",
+      "nav-exports.js",
+      "asp-http.js",
+      "asp-live.js",
+      "asp-panel-preload.js",
+      "asp-panel.html",
+      "asp-panel.js",
+      "nav-calendar.js",
+      "mailbox-filter.js",
+      "mailbox-ident.js",
+      "download-gate.js",
+      "listing-ledger.js",
+      "auto-control.js",
+      "schedule.js",
+      "totp.js",
+      "confirm-view.js",
+      "confirm-preload.js",
+      "confirm.html",
+      "confirm-screen.js",
+      "lock.js",
+      "lock-preload.js",
+      "lock.html",
+      "lock-screen.js",
+      "relay.js",
+      "updater.js",
+      "kapu/**"
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "hardenedRuntime": true,
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "A KapuMail a mikrofont csak akkor használja, ha élő beszélgetést indítasz Kapuval."
+      },
+      "identity": null,
+      "artifactName": "KapuMail-${version}-${arch}.${ext}",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ]
+    },
+    "dmg": {
+      "artifactName": "KapuMail-${version}-${arch}.${ext}",
+      "format": "ULFO"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "artifactName": "KapuMail-Setup-${version}.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "directories": {
+      "output": "dist"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8",
+    "pe-library": "^0.4.1",
+    "resedit": "^1.7.2"
+  },
+  "author": "KapuMail"
+}

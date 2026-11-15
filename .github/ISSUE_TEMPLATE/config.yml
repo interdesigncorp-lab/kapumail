@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "🔒 Biztonsági sebezhetőség privát bejelentése (SECURITY.md)"
+    url: "mailto:info@kapumail.hu?subject=KapuMail%20biztonsagi%20bejelentes"
+    about: "Biztonsági hibát kizárólag privátban, az info@kapumail.hu e-mail-címen jelents be – ne nyiss róla nyilvános Issue-t!"
+  - name: "🌐 KapuMail hivatalos weboldal és dokumentáció"
+    url: "https://kapumail.hu"
+    about: "Hivatalos aláírt macOS és Windows telepítők, felhasználói útmutató és GYIK."

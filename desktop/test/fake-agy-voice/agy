@@ -1,0 +1,111 @@
+#!/usr/bin/env node
+// Hamis interaktív `agy` a kapu-voice-agy teszthez: pszeudoterminálban fut (a voice-agy python-segédje
+// indítja), a `/voice live` parancsra az ANTIGRAVITY_MIC címre kapcsolódik (hangszóró köszönéssel, mikrofon
+// köszönés nélkül), ahogy az agy 1.5.8. Viselkedés: FAKE_AGY JSON {log, notAvailable, gate, audio, clear,
+// talker, hangup}. A log fájlba soronként: {start:{…}}, {typed}, {ok}, {mic}.
+const fs = require('node:fs');
+const net = require('node:net');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const s = JSON.parse(process.env.FAKE_AGY || '{}');
+const log = (o) => { if (s.log) fs.appendFileSync(s.log, JSON.stringify(o) + '\n'); };
+const home = process.env.HOME || '';
+const cfg = path.join(home, '.gemini', 'antigravity-cli');
+const read = (f) => { try { return fs.readFileSync(f, 'utf8'); } catch { return null; } };
+log({ start: {
+  pid: process.pid, ppid: process.ppid, home, cwd: process.cwd(), env: Object.keys(process.env), mic: process.env.ANTIGRAVITY_MIC,
+  tty: !!process.stdin.isTTY, settings: read(path.join(cfg, 'settings.json')), onboarding: read(path.join(cfg, 'cache', 'onboarding.json')),
+  token: read(path.join(cfg, 'antigravity-oauth-token')), mcp: fs.existsSync(path.join(home, '.gemini', 'config', 'mcp_config.json')),
+  agents: read(path.join(process.cwd(), 'AGENTS.md')),
+} });
+const out = (t) => process.stdout.write(t);
+let notAvailable = s.notAvailable || 0;
+let live = false;
+let speaker = null;
+let mic = null;
+let micBytes = 0;
+let micHead = '';
+const conv = crypto.randomUUID();
+const logs = path.join(cfg, 'brain', conv, '.system_generated', 'logs');
+let step = 0;
+const writeStep = (o) => { fs.mkdirSync(logs, { recursive: true }); fs.appendFileSync(path.join(logs, 'transcript.jsonl'), JSON.stringify({ step_index: step++, ...o }) + '\n'); };
+const frame = (tag, payload) => { const h = Buffer.alloc(5); h[0] = tag.charCodeAt(0); h.writeUInt32LE(payload.length, 1); return Buffer.concat([h, payload]); };
+
+// early: a /voice live előtt próbál a hangcsatornára kapcsolódni (a szervernek bontania kell).
+if (s.early) {
+  const [h0, p0] = String(process.env.ANTIGRAVITY_MIC || '').split(':');
+  const e = net.connect(Number(p0), h0, () => e.write('JETSKI-AUDIO/1 speaker rate=24000\n'));
+  let ok = false;
+  e.on('data', (d) => { if (d.toString().includes('OK')) ok = true; });
+  e.on('close', () => log({ early: ok ? 'ok' : 'closed' }));
+  e.on('error', () => {});
+}
+if (s.gate) out('\x1b[1mTerms of Service & Data Use\x1b[0m\r\n');
+else setTimeout(() => out('\x1b[2m? for shortcuts\x1b[0m auto · Gemini\r\n'), 50);
+
+function startLive() {
+  const [host, port] = String(process.env.ANTIGRAVITY_MIC || '').split(':');
+  speaker = net.connect(Number(port), host, () => speaker.write('JETSKI-AUDIO/1 speaker rate=24000\n'));
+  let got = '';
+  speaker.on('data', (d) => {
+    got += d.toString('latin1');
+    if (got.includes('\nJETSKI-AUDIO/1 OK\n') && !speaker.ok) {
+      speaker.ok = true;
+      log({ ok: true });
+      mic = net.connect(Number(port), host);
+      mic.on('data', (c) => {
+        if (micHead.length < 64) micHead += c.toString('latin1').replace(/\0/g, '');
+        micBytes += c.length;
+      });
+      mic.on('error', () => {});
+      setTimeout(() => {
+        out('\x1b[35m●\x1b[0m Live 00:00 · listening · f6 mute · f7 hang up\r\n' +
+          '  ⎿  🎤 Started voice chat · 1:33PM\r\n' + (s.instantHangup ? '  ⎿  🎤 Stopped voice chat · 00:00\r\n' : ''));
+        if (s.dropMic) setTimeout(() => { log({ dropped: true }); mic.destroy(); }, s.dropMic);
+        live = true;
+        if (s.audio) setTimeout(() => speaker.write(frame('A', Buffer.from(s.audio, 'base64'))), 300);
+        if (s.clear) setTimeout(() => speaker.write(frame('C', Buffer.alloc(0))), 500);
+        if (s.talker) setTimeout(() => {
+          const ctx = s.talker.map((l) => `[2026-11-13T04:36:0${l.n || 7}-08:00] ${l.who}: ${JSON.stringify(l.text)}`).join('\n');
+          writeStep({ source: 'USER_EXPLICIT', type: 'USER_INPUT', content: `<USER_REQUEST>\n<talker_agent_context>\n${ctx}\n</talker_agent_context>\n</USER_REQUEST>` });
+          writeStep({ source: 'MODEL', type: 'PLANNER_RESPONSE', content: 'Megnézem.' });
+          // ugyanaz a sor újra (a következő kör kontextusa): nem új kérdés
+          writeStep({ source: 'USER_EXPLICIT', type: 'USER_INPUT', content: `<talker_agent_context>\n${ctx}\n</talker_agent_context>` });
+        }, 400);
+        if (s.hangup) setTimeout(() => out('  ⎿  🎤 Stopped voice chat · 00:03\r\n'), s.hangup);
+      }, 150);
+    }
+  });
+  speaker.on('error', () => {});
+}
+
+setInterval(() => log({ mic: micBytes, head: micHead }), 100).unref();
+process.stdin.setEncoding('utf8');
+let buf = '';
+process.stdin.on('data', (d) => {
+  buf += d;
+  let i;
+  while ((i = buf.search(/[\r\n]/)) >= 0) {
+    const line = buf.slice(0, i).replace(/^\x15/, '');
+    buf = buf.slice(i + 1);
+    if (!line) continue;
+    log({ typed: line });
+    if (line === '/voice live') {
+      if (notAvailable > 0) { notAvailable--; out('  ⎿  Live mode isn\'t available in this session.\r\n'); continue; }
+      if (!live) startLive();
+    } else if (line === '/voice stop') {
+      out('  ⎿  🎤 Stopped voice chat · 00:05\r\n');
+    } else if (line === '/quit') {
+      process.emit('SIGTERM');
+    } else if (live) {
+      writeStep({ source: 'USER_EXPLICIT', type: 'USER_INPUT', content: `<USER_REQUEST>\n${line}\n</USER_REQUEST>` });
+      writeStep({ source: 'MODEL', type: 'PLANNER_RESPONSE', content: 'Két határidőd jár le a héten.' });
+    }
+  }
+});
+process.stdin.on('end', () => process.exit(0));
+// Mint a valódi agy: leállításkor még kiírja a hangbeszélgetés naplóját (voice_chats), és csak utána lép ki.
+process.on('SIGTERM', () => {
+  log({ sigterm: true });
+  setTimeout(() => { try { fs.mkdirSync(path.join(cfg, 'voice_chats'), { recursive: true }); fs.writeFileSync(path.join(cfg, 'voice_chats', `${conv}.json`), '{"lines":[]}'); } catch { /* nincs */ } process.exit(0); }, 300);
+});

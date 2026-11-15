@@ -1,0 +1,44 @@
+name: "🐛 Hibabejelentés (Bug Report)"
+description: "Jelents be reprodukálható szoftverhibát vagy váratlan működést."
+title: "[Hiba]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Köszönjük a hibajelentést!
+        > **Fontos:** Biztonsági sebezhetőséget **soha** ne jelents nyilvános Issue-ban — küldd el privátban az **`info@kapumail.hu`** címre (`SECURITY.md`). Nyilvános hibajelentésbe ne csatolj valós ügyféladatot, adószámot vagy hivatalos iratot!
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Mi a hiba rövid leírása?"
+      placeholder: "Mit tapasztaltál, és ezzel szemben mi lett volna a várt működés?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "A hiba előidézésének lépései"
+      placeholder: |
+        1. Nyisd meg a '...' nézetet
+        2. Kattints a '...' gombra
+        3. Megjelenik a hiba: ...
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: "Környezet és verzió"
+      description: "Operációs rendszer, KapuMail verzió, és hogy hivatalos telepítő vagy saját forrásból fordított példány."
+      placeholder: "Pl.: macOS 15.2 (Apple Silicon), KapuMail 0.2.0 (saját fordítás)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: "Képernyőkép vagy hibanapló (kizárólag mintaadatokkal / kitakarva)"
+      description: "Ha a felületen látható a hiba, csatolj képernyőképet (személyes és céges adatok nélkül)."

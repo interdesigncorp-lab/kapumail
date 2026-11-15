@@ -1,0 +1,142 @@
+<!doctype html><html lang="hu"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self' file:; script-src 'unsafe-inline'">
+<title>KapuMail – üdvözlünk</title>
+<!-- Nyitóképernyő első indításkor: üzemmód választása. A kapu-animáció (splash.html) után jelenik meg.
+     A felhő alapú mód kártyája szándékosan nem választható: a közös szerver még nem készült el. -->
+<style>
+:root{--ink:#1a1733;--soft:#4a4666;--mute:#6b6786;--accent:#4a36e0;--rose:#d4508c;--green:#1f9d6b}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink)}
+body{min-height:100vh;display:grid;place-items:center;padding:44px 24px 28px;background:linear-gradient(135deg,#f6dbe9 0%,#e6dbf7 38%,#dcd8fa 62%,#f7e4dc 100%);-webkit-app-region:drag;cursor:default;user-select:none}
+main{width:min(880px,100%);-webkit-app-region:no-drag}
+header{text-align:center;animation:up .5s cubic-bezier(.2,.8,.3,1) both}
+header img{width:84px;height:auto;filter:drop-shadow(0 12px 16px rgba(70,40,130,.2));-webkit-user-drag:none}
+h1{margin:10px 0 8px;font-size:clamp(28px,3.6vw,38px);font-weight:800;letter-spacing:-.035em;line-height:1.08}
+.lead{margin:0 auto;max-width:46ch;font-size:16px;line-height:1.5;color:var(--soft)}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:30px}
+.card{position:relative;display:flex;flex-direction:column;text-align:left;font:inherit;color:inherit;padding:26px 26px 22px;border-radius:28px;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.82);box-shadow:0 20px 50px -30px rgba(60,35,120,.4);animation:up .55s cubic-bezier(.2,.8,.3,1) both}
+.card:nth-child(1){animation-delay:.08s}.card:nth-child(2){animation-delay:.16s}
+button.card{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+button.card:hover,button.card:focus-visible{transform:translateY(-3px);border-color:rgba(74,54,224,.35);box-shadow:0 28px 60px -30px rgba(60,35,120,.5)}
+button.card:focus-visible{outline:none}
+button.card:active{transform:translateY(-1px)}
+button.card[aria-busy="true"]{pointer-events:none;opacity:.8}
+.card.off{background:rgba(255,255,255,.46);box-shadow:none;border-style:dashed;border-color:rgba(40,30,90,.2)}
+.card.off .ic,.card.off h2,.card.off p,.card.off li{opacity:.62}
+.ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:#efecff}
+.off .ic{background:rgba(26,23,51,.06)}
+.ic svg{width:26px;height:26px;fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tag{position:absolute;top:24px;right:24px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.01em;background:#e7f6ef;color:#16744f}
+.off .ic svg{stroke:var(--mute)}
+.off .tag{background:rgba(26,23,51,.08);color:var(--soft)}
+h2{margin:18px 0 6px;font-size:21px;font-weight:700;letter-spacing:-.02em}
+.card p{margin:0;font-size:14.5px;line-height:1.5;color:var(--soft)}
+ul{list-style:none;margin:18px 0 24px;padding:0;display:grid;gap:9px}
+li{display:flex;gap:9px;align-items:flex-start;font-size:14px;line-height:1.4}
+li svg{flex:none;width:18px;height:18px;margin-top:1px;fill:none;stroke:var(--green);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.off li svg{stroke:var(--mute)}
+.cta{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 16px;border-radius:999px;font-size:15px;font-weight:600;background:#15131c;color:#fff;transition:background .15s}
+button.card:hover .cta,button.card:focus-visible .cta{background:var(--accent)}
+.cta svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .18s}
+button.card:hover .cta svg{transform:translateX(3px)}
+.off .cta{background:rgba(26,23,51,.07);color:var(--mute)}
+.terms{margin:28px auto 0;max-width:720px;display:grid;gap:12px}
+.terms .box{padding:18px 20px;border-radius:22px;background:rgba(255,255,255,.86);border:1px solid rgba(255,255,255,.95);box-shadow:0 20px 50px -30px rgba(60,35,120,.4);animation:up .55s cubic-bezier(.2,.8,.3,1) both;transition:opacity .35s ease,background .35s ease,box-shadow .35s ease}
+.terms .box:nth-child(2){animation-delay:.08s}
+.terms label{display:flex;gap:14px;align-items:flex-start;font-size:14.5px;line-height:1.5;color:var(--ink);cursor:pointer;user-select:text}
+.tabs{display:flex;gap:6px;margin:14px 0 8px 38px}.tabs button{font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid rgba(74,54,224,.25);background:#fff;color:var(--accent);cursor:pointer}.tabs button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.reader{margin-left:38px;height:230px;overflow:auto;padding:12px 16px;border-radius:14px;border:1px solid rgba(40,30,90,.12);background:#fff;font-size:13px;line-height:1.55;color:var(--soft);user-select:text}
+.reader h1{font-size:17px;margin:0 0 6px;color:var(--ink)}.reader h2{font-size:15px;margin:16px 0 6px;color:var(--ink)}.reader h3{font-size:14px;margin:12px 0 4px;color:var(--ink)}.reader p{margin:6px 0}.reader ul,.reader ol{display:block;margin:6px 0;padding-left:20px}.reader li{display:list-item;font-size:13px}
+.reader table{border-collapse:collapse;width:100%;font-size:12.5px;margin:8px 0}.reader th,.reader td{border:1px solid #e3e0ef;padding:4px 6px;text-align:left;vertical-align:top}.reader th{background:#f6f4fc}.reader blockquote{margin:8px 0;padding:6px 10px;background:#fff8e6;border-left:3px solid #e0a800}.reader a{color:var(--accent)}
+.terms input{appearance:none;-webkit-appearance:none;flex:none;position:relative;width:24px;height:24px;margin:0;border-radius:8px;border:2px solid rgba(74,54,224,.45);background:#fff;cursor:pointer;transition:background .2s,border-color .2s}
+.terms input:focus-visible{outline:3px solid rgba(74,54,224,.3);outline-offset:2px}
+.terms input:checked{background:var(--green);border-color:var(--green)}
+.terms input:checked::after{content:"";position:absolute;left:7px;top:3px;width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+.terms .box:has(input:checked){background:rgba(231,246,239,.9)}
+.terms.done{display:none}
+.terms .box[hidden]{display:none}.terms .box.leaving{opacity:0;transform:translateY(-10px) scale(.98);transition:opacity .25s ease,transform .25s ease}
+.terms .box.rise{animation:up .35s cubic-bezier(.2,.8,.3,1) both}
+.okline{display:flex;gap:8px;align-items:center;justify-content:center;margin:18px 0 0;font-size:13.5px;font-weight:600;color:#16744f;animation:up .4s cubic-bezier(.2,.8,.3,1) both}.okline[hidden]{display:none}
+.okline svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.okline button{font:inherit;font-weight:500;color:var(--mute);background:none;border:0;padding:0;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.terms a{color:var(--accent);font-weight:600;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.terms small{display:block;margin-top:3px;font-size:12.5px;color:var(--mute)}
+.cards[hidden],footer[hidden]{display:none}
+#err{min-height:22px;margin:16px 0 0;text-align:center;font-size:14px;font-weight:600;color:#a3193a}
+footer{display:flex;gap:9px;align-items:center;justify-content:center;margin-top:6px;font-size:13px;line-height:1.45;color:var(--mute);text-align:center;animation:up .6s .24s cubic-bezier(.2,.8,.3,1) both}
+footer svg{flex:none;width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@keyframes up{from{opacity:0;transform:translateY(14px)}}
+@media (max-width:700px){.cards{grid-template-columns:1fr}body{place-items:start center}}
+@media (prefers-reduced-motion:reduce){header,.card,footer{animation:none}button.card,.cta svg{transition:none}}
+</style></head>
+<body><main>
+  <header>
+    <img src="assets/plush.png" alt="" width="84" height="78" draggable="false">
+    <h1>Üdvözlünk a KapuMailben</h1>
+    <p class="lead" id="lead">Mielőtt elkezded, kérjük, fogadd el a feltételeinket.</p>
+  </header>
+  <div class="terms" id="terms">
+    <div class="box"><label><input type="checkbox" id="t1"><span>Elfogadom az <a data-doc="aszf">Általános Szerződési Feltételeket</a>, köztük <b>külön és kifejezetten</b> a 0. pontban felsorolt kiemelt rendelkezéseket (K1–K12), és megismertem az <a data-doc="adatkezeles">adatkezelési tájékoztatót</a>.<small>Többek között: a felelősség legfeljebb a megfizetett díjig terjed, a tárhelyi letöltés határidőt indíthat, a kijelzett adatok gépi becslések, az AI-asszisztens használata saját felelősségre történik.</small></span></label>
+      <div class="tabs" role="tablist"><button type="button" data-doc="aszf" aria-pressed="true">ÁSZF</button><button type="button" data-doc="adatkezeles" aria-pressed="false">Adatkezelési tájékoztató</button></div>
+      <div class="reader" id="reader" tabindex="0" aria-live="polite">Betöltés…</div></div>
+    <div class="box"><label><input type="checkbox" id="t2"><span>A KapuMailt üzleti, szakmai tevékenységem körében használom (nem fogyasztóként), és az ügyfeleim tárhelyéhez, adóügyeihez érvényes meghatalmazással vagy más jogalappal rendelkezem.</span></label></div>
+  </div>
+  <p class="okline" id="okline" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7"/></svg>Feltételek elfogadva · <button type="button" id="reopen">újra megnézem</button></p>
+  <div class="cards" id="cards" hidden>
+    <button class="card" id="local" type="button">
+      <span class="tag">Ajánlott</span>
+      <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="11.5" rx="2.4"/><path d="M8.5 20h7M12 16v4"/></svg></span>
+      <h2>Helyi asztali alkalmazás</h2>
+      <p>Minden ezen a gépen marad.</p>
+      <ul>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7"/></svg>A leveleid és az adataid nem hagyják el a gépedet</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7"/></svg>Nincs szerver, nincs mit üzemeltetni</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7"/></svg>Egyedül dolgozó könyvelőknek és kis irodáknak</li>
+      </ul>
+      <span class="cta">Ezzel kezdem<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </button>
+    <div class="card off" aria-disabled="true">
+      <span class="tag">Hamarosan</span>
+      <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 18.5a4.5 4.5 0 0 1-.6-8.96 5.8 5.8 0 0 1 11.2 1.1A3.95 3.95 0 0 1 17 18.5z"/></svg></span>
+      <h2>Felhő alapú szerver</h2>
+      <p>Az egész iroda közösen dolgozik.</p>
+      <ul>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7"/></svg>Közös munka több kollégával</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7"/></svg>Iratok kiosztása ügyintézőknek</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7"/></svg>Elérhető több gépről is</li>
+      </ul>
+      <span class="cta">Hamarosan elérhető</span>
+    </div>
+  </div>
+  <div id="err" role="alert"></div>
+  <footer id="foot" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="9.5" rx="2.6"/><path d="M8.2 10.5V8a3.8 3.8 0 0 1 7.6 0v2.5"/></svg>Az Ügyfélkapu-jelszavad és a hitelesítő kulcsod mindkét módban csak ezen a gépen, a rendszer kulcstartójában tárolódik.</footer>
+</main>
+<script>
+const b=document.getElementById('local'),err=document.getElementById('err'),cta=b.querySelector('.cta'),label=cta.firstChild,t1=document.getElementById('t1'),t2=document.getElementById('t2');
+// Az ÁSZF és az adatkezelés elfogadása nélkül a kártya nem választható; az elfogadást a helyi belépés rögzíti a szerveren (verzió, lenyomat, audit).
+// Két lépés: előbb a két nyilatkozat; ha mindkettő pipát kapott, elhalványulnak, és megjelenik a két kártya.
+const cards=document.getElementById('cards'),foot=document.getElementById('foot'),lead=document.getElementById('lead'),terms=document.getElementById('terms');
+const okline=document.getElementById('okline');
+// Elfogadás után a dobozok eltűnnek; helyükön egy sor marad, ahonnan újra megnyithatók (a pipák megmaradnak).
+// Minden doboz a saját pipájától tűnik el, a következő a helyére ugrik; az „újra megnézem” mindkettőt visszahozza (a pipák megmaradnak).
+const boxes=[t1,t2].map(x=>x.closest('.box'));
+document.getElementById('reopen').onclick=()=>{boxes.forEach(x=>{x.hidden=false;x.classList.remove('leaving')});terms.classList.remove('done');okline.hidden=true};
+const leave=(cb)=>{const bx=cb.closest('.box');if(!cb.checked){bx.hidden=false;bx.classList.remove('leaving');return}
+  bx.classList.add('leaving');setTimeout(()=>{if(!cb.checked)return;bx.hidden=true;bx.classList.remove('leaving');boxes.filter(x=>!x.hidden).forEach(x=>{x.classList.remove('rise');void x.offsetWidth;x.classList.add('rise')});sync()},250)};
+const sync=()=>{const ok=t1.checked&&t2.checked;terms.classList.toggle('done',ok);okline.hidden=!ok;cards.hidden=foot.hidden=!ok;lead.textContent=ok?'Válaszd ki, hogyan szeretnéd használni.':'Mielőtt elkezded, kérjük, fogadd el a feltételeinket.';if(ok){err.textContent='';setTimeout(()=>cards.scrollIntoView({behavior:'smooth',block:'nearest'}),60)}};
+t1.onchange=()=>{leave(t1);if(!t1.checked)sync()};t2.onchange=()=>{leave(t2);if(!t2.checked)sync()};
+// A szövegek beágyazva: a helyi szerver /legal oldaláról jönnek; beillesztés előtt minden szkript és eseménykezelő kikerül.
+const reader=document.getElementById('reader');
+const clean=html=>{const d=new DOMParser().parseFromString('<div>'+html+'</div>','text/html');d.querySelectorAll('script,style,iframe,object,embed,link,meta,form').forEach(n=>n.remove());
+  d.querySelectorAll('*').forEach(n=>[...n.attributes].forEach(a=>{if(/^on/i.test(a.name)||(/^(href|src)$/i.test(a.name)&&/^\s*javascript:/i.test(a.value)))n.removeAttribute(a.name)}));return d.body.firstChild.innerHTML};
+async function show(doc){document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.doc===doc)));reader.textContent='Betöltés…';
+  const r=await iratkapuDesktop.setup.legal(doc).catch(x=>({ok:false,error:String(x&&x.message||x)}));
+  if(!r.ok){reader.textContent=r.error||'A szöveg nem tölthető be.';return}reader.innerHTML=clean(r.html);reader.scrollTop=0}
+document.getElementById('terms').addEventListener('click',e=>{const d=e.target.closest('[data-doc]');if(d){e.preventDefault();show(d.dataset.doc);return}
+  const a=e.target.closest('.reader a');if(a){e.preventDefault();const m=(a.getAttribute('href')||'').match(/^\/legal\/(aszf|adatkezeles|adatfeldolgozas)$/);if(m)show(m[1])}});
+show('aszf');
+b.onclick=async()=>{if(!(t1.checked&&t2.checked)){err.textContent='A folytatáshoz fogadd el a feltételeket.';return}
+  err.textContent='';b.setAttribute('aria-busy','true');label.textContent='Indítás… ';
+  const r=await iratkapuDesktop.setup.mode('local',true).catch(e=>({ok:false,error:String(e&&e.message||e)}));
+  if(!r.ok){b.removeAttribute('aria-busy');label.textContent='Ezzel kezdem';err.textContent=r.error||'Nem sikerült elindítani.'}};
+</script></body></html>

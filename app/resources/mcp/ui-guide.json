@@ -1,0 +1,1271 @@
+{
+  "intro": "A KapuMail (belső nevén Iratkapu) könyvelőirodáknak készült asztali és webes program: összegyűjti az ügyfelek hivatalos tárhelyeire (Ügyfélkapu, Cégkapu, Hivatali kapu) érkező iratokat, a NAV ügyfélportál adónaptárát és bevallásait, és belső munkafolyamatot (felelős, teendő, határidő, kész) ad hozzájuk. A program elválasztja a hivatalos állapotot (átvétel, kézbesítési vélelem), amely csak a tárhely igazolása alapján változik, a belső irodai feldolgozástól. A súgó témákra bomlik: a bal oldali sáv menüi (home, inbox, tasks, cal, upo, clients, sync), az irat részletei (message), a Kapu AI-segéd (kapu), a Beállítások fülei (settings.*), valamint a fogalmak (concepts.*) és a billentyűparancsok (shortcuts). Minden témánál szerepel, hol érhető el, mire való, és mit csinálnak a gombjai.",
+  "topics": [
+    {
+      "key": "home",
+      "title": "Áttekintés",
+      "summary": "Napi kezdőlap: mi vár átvételre, mi sürgős, mi esedékes ma, mivel kezdd a napot, és melyek a közelgő adónaptár-események.",
+      "where": "Bal oldali sáv, legfelső ikon (ház, „Áttekintés”).",
+      "details": "Felül csempék mutatják a darabszámokat: átvételre vár, sürgős és nyitott, ma esedékes, nálad van, valamint hány tárhely nem naprakész. Az „Ezzel kezdd” kártya sorba szedi a teendőket: sürgős, még át nem vett iratok; ma lejáró határidők; ismeretlen típusú, besorolásra váró iratok; becsült, még meg nem erősített határidők. Jobbra az „Iratok feldolgozottsága” sáv a belső állapotok (Új, Osztályozandó, Kiosztott, Folyamatban, Ellenőrzésre vár, Kész) arányát mutatja. A „Jóváhagyások” kártyán a függő átvételi kérések látszanak; vezető vagy admin itt dönthet róluk. Ha egy ügyfél szinkronja hibás, külön kártya jelzi az okot és az utolsó sikeres szinkron idejét. Alul a „Közelgő adónaptár-események” blokk soronkénti kártyákban mutatja a még nyitott NAV bevallási és fizetési határidőket (dátumkockával, nyomtatványkóddal, ügyfélnévvel, hátralévő napokkal, állapottal és lenyitható utalási adatokkal). A sáv ikonján pötty jelzi, ha van olyan jóváhagyás, amelyről te dönthetsz.",
+      "buttons": [
+        {
+          "label": "átvételre vár / sürgős, nyitott / ma esedékes / nálad van (csempék)",
+          "does": "A Bejövő iratok megfelelő mappáját nyitja meg."
+        },
+        {
+          "label": "tárhely nem naprakész (csempe)",
+          "does": "A Naplók (Szinkronnapló) nézetre visz."
+        },
+        {
+          "label": "Átvétel kérése / Megnyitás / Besorolás / Megerősítés",
+          "does": "Az „Ezzel kezdd” sorainál: megnyitja az adott iratot a részleteinél, ahol a művelet elvégezhető."
+        },
+        {
+          "label": "Jóváhagyom / Elutasítom",
+          "does": "Átvételi kérés jóváhagyása vagy elutasítása. Csak vezető vagy admin láthatja, és a saját kérését senki nem hagyhatja jóvá."
+        },
+        {
+          "label": "Kapcsolat megnyitása",
+          "does": "Hibás szinkronú ügyfél adatlapját nyitja meg."
+        },
+        {
+          "label": "Határidőnaptár / Teljes adónaptár",
+          "does": "Az áttekintés alján lévő adónaptár-blokk fejlécéből a Határidők naptárra vagy az Adónaptár és bevallások nézetre ugrik; a sorok naptárlapjára kattintva az adott nap heténél nyílik meg a naptár."
+        }
+      ],
+      "related": [
+        "inbox",
+        "cal",
+        "upo",
+        "concepts.atvetel",
+        "concepts.hatarido",
+        "sync"
+      ]
+    },
+    {
+      "key": "inbox",
+      "title": "Bejövő iratok",
+      "summary": "A tárhelyekről érkezett összes irat listája szűrőkkel, kereséssel és tömeges belső műveletekkel.",
+      "where": "Bal oldali sáv, második ikon (postaláda). Mellette nyílik a mappák és az ügyfelek oszlopa, jobbra az irat részletei.",
+      "details": "Minden sor egy irat: feladó rövid kódja (például NAV, ÖNK, CÉGB), ügyfél, tárhely típusa (ÜK, CK, HK), felelős monogramja, érkezés ideje, tárgy és állapotcímkék (hivatalos állapot, Sürgős, határidő, „Törlődik N nap múlva”, Tartós tár, nyomtatványkód, Ismeretlen típus, ES3). A lista napok szerint csoportosít (Ma, Tegnap, Korábban); a felső napcím jobbján lévő jelölőnégyzet egyetlen kattintással kijelöli (vagy törli) a szűrt listában látható összes iratot. A fejléc felett a keresőmező a tárgyban, ügyfélnévben, adószámban, feladóban, irattípusban és az archivált iratok szövegében keres. A lista fölötti „Mind / Olvasatlan / Teendő van” kapcsoló és a szűrőchipek (nyugták, tartós tár, tárhelytípus, feladó) szűkítik a listát. Ha egy ügyfelet választasz a bal oszlopban, a fejlécben megjelenik az adószáma, a tárhelyei, a meghatalmazás érvényessége és az „Adatlap” gomb; hibás szinkronnál piros sáv és „Újrahitelesítés” gomb. Több irat bejelölésekor tömeges sáv jelenik meg, amely csak belső műveleteket végez, a hivatalos állapot nem változik. A fejlécben a „Szinkron” felirat a legutóbbi szinkron idejét és a nem naprakész tárhelyek számát mutatja.",
+      "buttons": [
+        {
+          "label": "Összes kijelölése (jelölőnégyzet a napcím jobbján)",
+          "does": "Kijelöli az aktuális szűrésben látható összes iratot, vagy ha már mind ki van jelölve, törli a kijelölésüket."
+        },
+        {
+          "label": "Elküldött (ügyfélnézetben)",
+          "does": "Az adott ügyfél tárhelyének ELKÜLDÖTT mappájából származó kimenő beadványokra szűkíti a listát."
+        },
+        {
+          "label": "Nyugták elrejtve / Nyugták látszanak",
+          "does": "Az elfogadó nyugták és érkeztetések elrejtése vagy megjelenítése (alapból rejtve)."
+        },
+        {
+          "label": "Tartós tár elrejtve / Tartós tár látszik",
+          "does": "A hivatalos tárhelyen tartós tárba tett, már átvett iratok elrejtése vagy megjelenítése."
+        },
+        {
+          "label": "Minden tárhely / Minden feladó",
+          "does": "Szűrés tárhelytípusra (Ügyfélkapu, Cégkapu, Hivatali kapu) és feladóra."
+        },
+        {
+          "label": "Export",
+          "does": "A számodra látható iratok letöltése CSV-ben."
+        },
+        {
+          "label": "Nekem / Olvasott / Kész (tömeges sáv)",
+          "does": "A kijelölt iratok kiosztása neked, olvasottnak jelölése vagy késszé tétele. Csak belső művelet."
+        },
+        {
+          "label": "Adatlap",
+          "does": "Ügyfélnézetben az ügyfél adatlapját nyitja meg."
+        },
+        {
+          "label": "Újrahitelesítés",
+          "does": "Lejárt tárhely-hitelesítésnél újra belépteti a tárhelyet (asztali alkalmazásban, a hivatalos oldalon)."
+        },
+        {
+          "label": "Felelős monogramja / ? (a sorban)",
+          "does": "Ha nincs felelős, a „?” jelre kattintva az irat hozzád kerül."
+        }
+      ],
+      "related": [
+        "inbox.folders",
+        "message",
+        "inbox.contextmenu",
+        "shortcuts"
+      ]
+    },
+    {
+      "key": "inbox.folders",
+      "title": "Mappák, mentett nézetek és ügyféllista",
+      "summary": "A Bejövő iratok bal oszlopa: beépített mappák, mentett nézetek és az ügyfelek gyors listája.",
+      "where": "Bejövő iratok nézet, a lista bal oldalán („Iratok” oszlop). Keskeny ablakban a sáv alján lévő nyíllal nyitható.",
+      "details": "Mappák: Összes bejövő (az archivált, rendszerüzenet és elküldött tételek nélkül); Átvételre vár (még át nem vett iratok); Sürgős (sürgősnek jelölt, nem kész); Ma esedékes; Hamarosan törlődik (a tárhely 30 nap után törli a le nem töltött, nem tartós tárban lévő iratot, 7 napon belül jelez); Nekem kiosztott (egyfelhasználós módban nem látszik); Feldolgozás alatt (Folyamatban vagy Ellenőrzésre vár); Kész; Elküldött (a tárhely ELKÜLDÖTT mappájából beolvasott kimenő e-Papír és egyéb beadványok érkeztetési állapottal: Várakozik, Befogadva, Elutasítva); Archivált (itt a „Nem kell típusúak” szűrővel visszanézhetők a „Nem kell” jelölésű irattípusok iratai, amelyek egyébként egyik nézetben sem látszanak); Rendszerüzenetek. A „Mentett nézetek” a beállított mappát, keresést és szűrőket őrzik meg; megoszthatók az irodával, de mindenki csak a saját ügyfeleit látja bennük. Az „Ügyfelek” rész kereshető listája az aktív ügyfeleket mutatja; a pötty pirosra vált, ha a szinkron hibás, a szám a nyitott bejövő iratokat jelzi.",
+      "buttons": [
+        {
+          "label": "+ mentés",
+          "does": "A jelenlegi mappa, keresés és szűrők elmentése névvel; bejelölhető a „Megosztás az irodával”."
+        },
+        {
+          "label": "Nézet törlése (×)",
+          "does": "Saját mentett nézet törlése megerősítés után; az iratokat nem érinti, nem vonható vissza."
+        },
+        {
+          "label": "+ (Ügyfelek mellett)",
+          "does": "Új ügyfél és tárhely felvétele varázslóval. Csak vezető vagy admin."
+        },
+        {
+          "label": "Név vagy adószám (kereső)",
+          "does": "Az ügyféllista szűrése."
+        }
+      ],
+      "related": [
+        "inbox",
+        "client.wizard"
+      ]
+    },
+    {
+      "key": "inbox.contextmenu",
+      "title": "Jobb klikkes menü az iratlistában",
+      "summary": "Gyors belső műveletek egy iraton jobb kattintással.",
+      "where": "Bejövő iratok listája, jobb kattintás egy soron.",
+      "details": "A menü csak belső műveleteket kínál. Átvétel, letöltés és küldés innen nem indítható: ezek csak az irat részleteiből, megerősítéssel indulnak. A színcímke a sor pöttyét és a tárgy színét állítja, hogy átfutáskor is látsszon.",
+      "buttons": [
+        {
+          "label": "Megnyitás",
+          "does": "Az irat részleteinek megnyitása."
+        },
+        {
+          "label": "Kiosztás nekem",
+          "does": "Az irat felelőse te leszel."
+        },
+        {
+          "label": "Olvasottnak jelölés / Olvasatlannak jelölés",
+          "does": "Belső jelölés, a hivatalos állapot nem változik."
+        },
+        {
+          "label": "Sürgősnek jelölés / Sürgős jelölés levétele",
+          "does": "Sürgős jelzés ki-be kapcsolása; kész iratnál a Sürgős mappában nem jelenik meg."
+        },
+        {
+          "label": "Kész / Újranyitás",
+          "does": "Belső állapot késszé tétele vagy újranyitása."
+        },
+        {
+          "label": "Archiválás",
+          "does": "Az irat az Archivált mappába kerül; az eredeti a tárhelyen érintetlen."
+        },
+        {
+          "label": "Címke (színes pöttyök)",
+          "does": "Színcímke beállítása vagy törlése."
+        },
+        {
+          "label": "Eredeti tárhely megnyitása",
+          "does": "A tarhely.gov.hu megnyitása böngészőben."
+        }
+      ],
+      "related": [
+        "inbox",
+        "message"
+      ]
+    },
+    {
+      "key": "message",
+      "title": "Irat részletei",
+      "summary": "Egy irat teljes nézete: hivatalos állapot, irodai feldolgozás, előnézet, határidő, teendők, fájlok és hitelesség, megjegyzések és napló.",
+      "where": "Bejövő iratok, egy sorra kattintva (vagy Enter) a jobb oldali panelen.",
+      "details": "A fejlécben a feladó, a tárgy, az ügyfél, a tárhely és az irattípus látszik; a „gépi becslés” jelzés azt mutatja, hogy a típust a program a tárgyból ismerte fel, ember még nem erősítette meg. Megjelenhet a letöltési szabály jelvénye és az átvételi kockázat becslése (nem jogi minősítés). Két állapotsor van: a „Hivatalos állapot” (Listázva → Átvételre vár → Átvett vagy Kézbesítési vélelem) csak a tárhely igazolása alapján változik; az „Irodai feldolgozás” (Új, Osztályozandó, Kiosztott, Folyamatban, Ellenőrzésre vár, Kész) belső, kattintással állítható, mellette a felelős választható. Átvételre váró irat nem zárható le készként. Az átvételre váró iratnál a tartalom zárolt: csak a tárhely listájából ismert adatok látszanak, és átvételt csak jóváhagyással lehet kérni. Élő tárhely-listából jött, még le nem töltött iratnál letöltés indítható; ez a tárhelyen átvételnek számíthat. Letöltött iratnál PDF-előnézet (több PDF között választóval), XLSX esetén táblázat (első munkalap), szöveges vagy XML mellékletnél szöveges előnézet látszik. Ismeretlen típusú iratnál a típust kézzel kell kiválasztani; addig az „Osztályozandó” sorban marad. A saját tárhelyre érkezett iratnál sáv mutatja, hogy besorolható ügyfélhez. Jobbra négy fül van: Határidő, Teendők, Fájlok és hitelesség, Megjegyzések és napló. A Határidő fülön a Joghatály dátuma is látszik a forrásával („Irattípus: N nap az átvételtől”), ha az irattípushoz van ilyen beállítás; átvétel előtt dátum nincs, csak „az átvételtől N nap – a letöltés a NAV-nál megnyitásnak számít”.",
+      "buttons": [
+        {
+          "label": "Lista",
+          "does": "Vissza az iratlistához (keskeny ablakban)."
+        },
+        {
+          "label": "Kiosztás nekem / Nálam van",
+          "does": "Az irat felelőse te leszel."
+        },
+        {
+          "label": "Olvasottnak jelölés / Olvasatlannak jelölés",
+          "does": "Belső jelölés."
+        },
+        {
+          "label": "Kész / Újranyitás",
+          "does": "Belső állapot lezárása vagy újranyitása."
+        },
+        {
+          "label": "Archiválás / Visszaállítás",
+          "does": "Archiválás vagy visszaállítás; a tárhelyen lévő eredetit nem érinti."
+        },
+        {
+          "label": "Eredeti tárhely",
+          "does": "A hivatalos tárhely (tarhely.gov.hu) megnyitása böngészőben."
+        },
+        {
+          "label": "Ügyfél értesítése",
+          "does": "E-mail értesítés az ügyfél kapcsolattartójának, előnézet után küldhető. A szám az elküldött értesítéseket mutatja."
+        },
+        {
+          "label": "Átvétel kérése jóváhagyással",
+          "does": "Átvételi kérelmet indít; megerősítő ablakban be kell jelölni, hogy értjük a következményt. Vezető vagy admin hagyja jóvá, aki nem lehet azonos a kérelmezővel. Lejárt tárhely-hitelesítésnél nem nyomható."
+        },
+        {
+          "label": "Jóváhagyom az átvételt / Elutasítom",
+          "does": "Függő kérésnél a jogosult jóváhagyónak jelenik meg."
+        },
+        {
+          "label": "Letöltés és megnyitás a tárhelyről",
+          "does": "Élő listából jött iratnál letölti az eredeti .es3 / PDF fájlt, kibontja, ellenőrzi a sértetlenségét és kinyeri a határidőket. A letöltés a hivatalos tárhelyen átvételnek számíthat, ezért megerősítést kér. „Csak lista” típusú iratnál nincs ilyen gomb; ha a szerveren nincs bekapcsolva az élő letöltés, a gomb tiltott."
+        },
+        {
+          "label": "Megnyitás a tarhely.gov.hu-n",
+          "does": "A hivatalos tárhely megnyitása, ahol az irat kézzel átvehető."
+        },
+        {
+          "label": "Megnyitás külön lapon / Eredeti fájl letöltése",
+          "does": "Az archivált fájl megnyitása vagy letöltése."
+        },
+        {
+          "label": "Besorolás (irattípus)",
+          "does": "Ismeretlen típusú irat típusának kiválasztása."
+        },
+        {
+          "label": "Megerősítem a dátumot",
+          "does": "Becsült határidő megerősítése (Határidő fül)."
+        },
+        {
+          "label": "Rögzítés (határidő)",
+          "does": "Határidő kézi rögzítése, ha nincs rögzített; átvételre váró iratnál nem lehet."
+        },
+        {
+          "label": "Hozzáadás (teendő)",
+          "does": "Új teendő felvétele az irathoz (Teendők fül); a jelölőnégyzet késszé teszi."
+        },
+        {
+          "label": "Mentés (megjegyzés)",
+          "does": "Belső megjegyzés rögzítése (Megjegyzések és napló fül)."
+        },
+        {
+          "label": "megnézem / Újraellenőrzés",
+          "does": "A Fájlok és hitelesség fülön: kibontott PDF előnézetbe tétele, illetve az aláírások és a hash újraellenőrzése."
+        },
+        {
+          "label": "Besorolás / Átsorolás / Vissza a saját tárhelyre",
+          "does": "Saját tárhelyre érkezett irat ügyfélhez sorolása, vagy visszatétele a saját tárhelyre (onnantól csak a belépő gazdája látja)."
+        },
+        {
+          "label": "Ugrás az igazoláshoz / Ugrás a beküldött beadványhoz",
+          "does": "Kétirányú ugrás az Elküldött mappában lévő kimenő beadvány és a hozzá automatikusan párosított érkeztetési / elfogadó vagy elutasító nyugta között."
+        }
+      ],
+      "related": [
+        "concepts.atvetel",
+        "concepts.hatarido",
+        "message.notice",
+        "es3",
+        "concepts.letoltesi_szabaly",
+        "concepts.sajat_tarhely"
+      ]
+    },
+    {
+      "key": "message.notice",
+      "title": "Ügyfél értesítése e-mailben",
+      "summary": "Az iratról szóló e-mail összeállítása és elküldése az ügyfél kapcsolattartójának.",
+      "where": "Irat részletei, fejléc jobb oldala: „Ügyfél értesítése”.",
+      "details": "Az ablakban kiválasztható a címzett (az ügyfél adatlapján rögzített értesítési címek közül), szerkeszthető a tárgy és a formázható szöveg. Az irat archivált fájljai csatolhatók, ha együtt a méretkorlát alatt vannak; csatolás nélkül az irat tartalma nem kerül a levélbe. Ha a címzett már kapott értesítést erről az iratról, ezt külön jelölőnégyzettel kell tudomásul venni. A korábbi értesítések listája mutatja az állapotot (Elküldve, Sikertelen, Piszkozat); az „elküldve” csak azt jelenti, hogy a levelező átvette, nem azt, hogy az ügyfél elolvasta. Ha az értesítés nem küldhető (például nincs értesítési cím), az ablak megmondja az okot, és az ügyféladatlapra irányít. Valódi levél csak beállított SMTP mellett megy ki.",
+      "buttons": [
+        {
+          "label": "Értesítés küldése",
+          "does": "Elküldi a levelet; bekerül a korábbi értesítések közé."
+        },
+        {
+          "label": "Ügyféladatlap megnyitása",
+          "does": "Ha az értesítés blokkolt, az ügyfél adatlapjára visz (ott vehető fel értesítési cím)."
+        }
+      ],
+      "related": [
+        "message",
+        "settings.mail",
+        "client.page"
+      ]
+    },
+    {
+      "key": "es3",
+      "title": "ES3-akta megnyitása",
+      "summary": "A gépen lévő .es3 e-akta kibontása, tartalmának és aláírásainak megtekintése archiválás nélkül.",
+      "where": "Bal oldali sáv alsó része, a PDF ikon („ES3-akta megnyitása”).",
+      "details": "Húzd a mezőbe az .es3 fájlt, vagy kattints a tallózáshoz; csak .es3 fájl nyitható meg. A program kibontja az aktát, fában mutatja a fájlokat (a beágyazott akták mappaként jelennek meg), és az első PDF-et megnyitja az előnézetben. Képek, HTML (elszigetelve, parancsfájlok nem futnak), XML (színezett, becsukható fa) és szöveg is megtekinthető. A Hitelesség kártya az akta állapotát (Érvényes, Érvénytelen, Nem ellenőrizhető), az aláírásokat (Sértetlen, Hibás, Nem vizsgálható) és az SHA-256 hasht mutatja. Fontos: a kibontás sikere nem jelent érvényességet, és a „sértetlen” aláírásnál sincs ellenőrizve a tanúsítványlánc és a visszavonás. Ez csak megtekintés: a fájl nem kerül az archívumba, és nem kötődik irathoz.",
+      "buttons": [
+        {
+          "label": "Húzd ide az .es3 fájlt / Másik akta megnyitása",
+          "does": "Fájl kiválasztása vagy cseréje."
+        },
+        {
+          "label": "Letöltés",
+          "does": "Egy fájl mentése a gépre az aktából."
+        },
+        {
+          "label": "Mind ZIP-ben",
+          "does": "Az akta összes fájlja egy ZIP-ben, a beágyazott akták mappáival."
+        },
+        {
+          "label": "Megnyitás külön lapon",
+          "does": "PDF megnyitása új lapon."
+        },
+        {
+          "label": "Mind kinyit / Mind becsuk",
+          "does": "XML fa nézetben a csomópontok kinyitása vagy becsukása."
+        }
+      ],
+      "related": [
+        "message",
+        "concepts.atvetel"
+      ]
+    },
+    {
+      "key": "tasks",
+      "title": "Feladatok",
+      "summary": "Az iratokhoz rögzített teendők egy listában, felelőssel és határidővel.",
+      "where": "Bal oldali sáv, harmadik ikon („Feladatok”).",
+      "details": "Minden teendő egy irathoz tartozik, így mindig látszik, miért kell megcsinálni. A táblázat oszlopai: kész-jelölő, teendő, irat (kattintva megnyílik), ügyfél, felelős, határidő. Új teendőt az irat részleteinél, a Teendők fülön lehet felvenni.",
+      "buttons": [
+        {
+          "label": "Az enyéim / Minden nyitott / Mind",
+          "does": "Nézetváltás: a rád osztott nyitott teendők, minden nyitott teendő, vagy az összes (a késszel együtt)."
+        },
+        {
+          "label": "Szűrő",
+          "does": "Szűrőpanel ügyfélre és határidőre (Bármikor, Lejárt, 7 napon belül, 30 napon belül, Nincs határidő)."
+        },
+        {
+          "label": "Szűrők törlése",
+          "does": "A szűrők visszaállítása."
+        },
+        {
+          "label": "Jelölőnégyzet a sor elején",
+          "does": "A teendő késszé tétele."
+        }
+      ],
+      "related": [
+        "message",
+        "cal"
+      ]
+    },
+    {
+      "key": "cal",
+      "title": "Határidők (naptár)",
+      "summary": "Az iratok határidői és a NAV adónaptár tételei heti, havi vagy lista nézetben.",
+      "where": "Bal oldali sáv, negyedik ikon („Határidők”).",
+      "details": "A naptár az iratok rögzített határidőit és a NAV adónaptár esedékességeit együtt mutatja, színekkel feladó szerint (NAV, Adónaptár (NAV), Önkormányzat, Bíróság/cégbíróság/végrehajtó, Egyéb hatóság). A tömör kártya megerősített határidő, a szaggatott, ≈ jelű becsült (az átvétel napjából számolt, még senki nem ellenőrizte). Az adónaptár-kártyák alján az állapotfelirat (Beadható, Beadva, Feltételes, Hiányzó!, Hibás!) nem beküldő gomb, hanem a nyomtatvány állapotát jelzi (buboréksúgóval); a kártyára kattintva a párosított nyugta vagy az Adónaptár nézet nyílik meg. A bal oldali kis naptárban a pöttyök jelzik a határidős napokat. Szűrhető feladó szerint, bizonyosság (Mind, Megerősített, ≈ Becsült), felelős és ügyfél szerint. A Lista nézet külön mutatja a lejárt, még nyitott tételeket; az adónaptár-tételeknél az „Utalási adatok” lenyíló a számlaszámot és a közleményt adja másolható formában (az összeget a bevallásból kell beírni, a program nem utal). Az átvételre váró iratoknak még nincs határideje.",
+      "buttons": [
+        {
+          "label": "Hét / Hónap / Lista",
+          "does": "Nézetváltás."
+        },
+        {
+          "label": "Ma",
+          "does": "Ugrás a mai napra."
+        },
+        {
+          "label": "Előző / Következő (nyilak)",
+          "does": "Lapozás hetente vagy havonta."
+        },
+        {
+          "label": "Szinkronizálás",
+          "does": "Teljes szinkron: belépés, Tárhely és NAV ügyfélportál, friss iratokkal és adónaptárral. Több belépőnél előbb választani kell."
+        },
+        {
+          "label": "Naptárfájl",
+          "does": "A szűrőknek megfelelő nyitott határidők letöltése .ics fájlban (Google, Outlook, Apple naptár beolvassa). Pillanatkép, magától nem frissül."
+        },
+        {
+          "label": "Esemény (kártya)",
+          "does": "Az irat megnyitása; adónaptár-tételnél a párosított nyugta vagy az Adónaptár nézet."
+        }
+      ],
+      "related": [
+        "concepts.hatarido",
+        "upo",
+        "settings.mail"
+      ]
+    },
+    {
+      "key": "upo",
+      "title": "Adónaptár és bevallások (NAV)",
+      "summary": "A NAV ügyfélportál adónaptára, hiányzó és beadott bevallásai, összepárosítva a tárhelyre érkező nyugtákkal.",
+      "where": "Bal oldali sáv, ötödik ikon („Adónaptár és bevallások”). Pötty jelzi, ha van hiányzó vagy hibás bevallás.",
+      "details": "Az adatok a NAV ügyfélportálról (ugyfelportal.nav.gov.hu) jönnek: adónaptár-bejegyzések, hiányzó bevallások, bevallási kötelezettségek és beküldött bevallások, automatikusan párosítva a tárhelyre érkező elfogadó és elutasító nyugtákkal. A csempék számolják: beadható (esedékes), beadva nyugtával, hiányzó (lejárt), hibás/elutasított, feltételes. Az „Adónaptár mátrix” ügyfelenként és nyomtatványonként mutatja az állapotot; a „Minden bevallás” táblázat időszakkal, esedékességgel, vonalkóddal; a „Hiányzó és hibás” csak a gondokat. A kereső ügyfélre, adószámra, nyomtatványra (például 2608) szűr. A NAV-portál olvasása az asztali alkalmazásban fut, a saját, kódos (TOTP) belépővel, amelyen a NAV ügyfélportál rendszer be van kapcsolva.",
+      "buttons": [
+        {
+          "label": "NAV adónaptár frissítése",
+          "does": "A NAV ügyfélportál olvasása (adónaptár, hiányzó bevallások) a megfelelő belépőkkel. Böngészőben csak az adatokat tölti újra."
+        },
+        {
+          "label": "Ügyfélkapu összekapcsolása",
+          "does": "Új Ügyfélkapu+/DÁP belépő felvétele. Csak vezető vagy admin."
+        },
+        {
+          "label": "Adónaptár mátrix / Minden bevallás / Hiányzó és hibás",
+          "does": "Nézetváltás (a csempék is ezekre visznek)."
+        },
+        {
+          "label": "Állapotjelvény / Nyugta megnyitása",
+          "does": "Ugrás a párosított tárhely-nyugtára."
+        },
+        {
+          "label": "Ügyfél neve",
+          "does": "Az ügyfél adatlapjának megnyitása."
+        }
+      ],
+      "related": [
+        "client.page",
+        "cal",
+        "settings.portals"
+      ]
+    },
+    {
+      "key": "clients",
+      "title": "Ügyfelek és tárhelyek",
+      "summary": "Az Ügyfélkapu+/DÁP belépők, a képviselt ügyfelek, tárhelyeik, szinkronállapotuk és meghatalmazásuk.",
+      "where": "Bal oldali sáv, hatodik ikon („Ügyfelek és tárhelyek”).",
+      "details": "A fejléc összesíti a belépők, ügyfelek és tárhelyek számát. Telítődő tárhelyeknél (80% fölött) figyelmeztetés jelenik meg, mert a betelt tárhely nem fogad új iratot. A belépők összefoglaló kártyája jelzi, ha egy belépő beavatkozást kér. A „Besorolásra vár” rész azokat az élő postafiókokat mutatja, amelyeket a szinkron nem tudott egyértelműen ügyfélhez kötni; az „ajánlott ügyfelek” kártya a saját tárhely leveleiből és a NAV képviseleti listájából ajánl ügyfelet. A „Képviselt ügyfelek és Cégkapuk” táblázat oszlopai: ügyfél (jelvényekkel: felderítve, saját tárhely, inaktív, tárhely-telítettség), adószám, tárhelyek, belépés, szinkron, meghatalmazás (30 napon belül lejárónál figyelmeztetés), nyitott iratok. A belépés nevére kattintva a lista az adott belépő ügyfeleire szűrődik.",
+      "buttons": [
+        {
+          "label": "+ Új ügyfél",
+          "does": "Ügyfél és tárhely felvétele varázslóval. Csak vezető vagy admin."
+        },
+        {
+          "label": "+ Új Ügyfélkapu / DÁP összekapcsolása",
+          "does": "Új belépő felvétele. Csak vezető vagy admin."
+        },
+        {
+          "label": "Belépők kezelése",
+          "does": "A Beállítások → Belépők és rendszerek fülre visz."
+        },
+        {
+          "label": "Ügyfél neve",
+          "does": "Az ügyfél adatlapjának megnyitása."
+        },
+        {
+          "label": "Aktivál / Inaktívvá tesz",
+          "does": "Az inaktív ügyfél nem törlődik, de kimarad a napi sávból és a szinkronból. Csak vezető vagy admin."
+        },
+        {
+          "label": "Minden ügyfél",
+          "does": "A belépő szerinti szűrés megszüntetése."
+        }
+      ],
+      "related": [
+        "client.page",
+        "clients.discovered",
+        "client.wizard",
+        "settings.portals"
+      ]
+    },
+    {
+      "key": "clients.discovered",
+      "title": "Besorolásra váró postafiókok és ajánlott ügyfelek",
+      "summary": "A szinkron által talált, még ügyfélhez nem kötött postafiókok és a saját tárhely leveleiből ajánlott ügyfelek kezelése.",
+      "where": "Ügyfelek és tárhelyek nézet: „Besorolásra vár” táblázat és „N ajánlott ügyfél” kártya.",
+      "details": "A KapuMail nem talál ki ügyfelet: amíg egy postafiókot nem sorolsz be, a levelei nem kerülnek be; besorolás után a következő szinkron hozza be őket. A táblázat mutatja a postafiók nevét, a kiolvasott adószám-törzset és a tárhely típuskódját, a belépőt és a levelek számát. Az ajánlott ügyfelek a saját tárhelyed leveleinek tárgyából vagy a NAV képviseleti listájából származnak; csak te látod őket. A fajta (vállalkozás, egyéni vállalkozó, magánszemély) becslés. Ügyfélként felvenni csak akkor lehet, ha bejelölöd, hogy van meghatalmazásod; a KapuMail ezt nem ellenőrzi.",
+      "buttons": [
+        {
+          "label": "Hozzárendelés",
+          "does": "A postafiók hozzárendelése a kiválasztott meglévő ügyfélhez."
+        },
+        {
+          "label": "Ez a saját tárhelyem",
+          "does": "A postafiók a belépő saját értesítési tárhelye lesz; a levelei külön gyűjtőbe kerülnek, amelyet csak a gazdája lát."
+        },
+        {
+          "label": "Új ügyfél…",
+          "does": "Új ügyfél felvétele a postafiókból (név, adószám, tárhelytípus, meghatalmazás megerősítése)."
+        },
+        {
+          "label": "Kihagyás",
+          "does": "A postafiók vagy ajánlás eltűnik a listáról, a levelei nem kerülnek be."
+        },
+        {
+          "label": "Megnézem",
+          "does": "Az ajánlott ügyfelek ablakának megnyitása."
+        },
+        {
+          "label": "Felvétel ügyfélként",
+          "does": "Az ajánlott név felvétele ügyfélként (előbb jelöld be: „Van meghatalmazásom”); a levelei átkerülnek hozzá."
+        },
+        {
+          "label": "Ez én vagyok",
+          "does": "A saját neved és azonosítód megjelölése: többé nem ajánlja fel, és nem sorol rá."
+        }
+      ],
+      "related": [
+        "clients",
+        "concepts.sajat_tarhely",
+        "concepts.meghatalmazas"
+      ]
+    },
+    {
+      "key": "client.wizard",
+      "title": "Új ügyfél felvétele (varázsló)",
+      "summary": "Kétlépéses varázsló egy ügyfél és tárhely kézi felvételére.",
+      "where": "Ügyfelek és tárhelyek → „+ Új ügyfél”, vagy a Bejövő iratok ügyféllistájánál a „+” gomb. Csak vezető vagy admin.",
+      "details": "Első lépés: az ügyfél neve, adószáma (Ügyfélkapunál adóazonosító jel is megadható, ellenőrző számjeggyel) és a tárhely típusa (Cégkapu, Ügyfélkapu, Hivatali kapu). Második lépés: a meghatalmazás megerősítése és opcionálisan a lejárata (üresen hagyva határozatlan idejű). A belépési adat ismerete önmagában nem jogosít fel. Felvétel után próbaszinkron fut, amely csak listáz, iratot nem nyit meg. Az Ügyfélkapu+/DÁP belépést külön, a belépő űrlapján kell összekötni.",
+      "buttons": [
+        {
+          "label": "Tovább / Vissza / Mégsem",
+          "does": "Lépkedés a varázslóban."
+        },
+        {
+          "label": "Felvétel és próbaszinkron",
+          "does": "Az ügyfél rögzítése és egy listázó próbaszinkron."
+        }
+      ],
+      "related": [
+        "clients",
+        "concepts.meghatalmazas"
+      ]
+    },
+    {
+      "key": "client.page",
+      "title": "Ügyfél adatlapja",
+      "summary": "Egy ügyfél minden adata egy helyen: tárhelyek, meghatalmazás, értesítési címek, kezelők, NAV-adatok és nyitott iratok.",
+      "where": "Ügyfelek és tárhelyek → ügyfél neve, vagy a Bejövő iratok ügyfélnézetében az „Adatlap” gomb.",
+      "details": "Felül kereső szűr egyszerre a bevallásokban, a NAV-dokumentumokban, az adónaptárban és a nyitott iratokban (ékezet és kis-nagybetű nem számít, több szónál mindegyiknek egyeznie kell). Hibás szinkronnál figyelmeztetés és újrahitelesítés. A „Tárhelykapcsolatok” táblázat tárhelyenként mutatja az állapotot, az utolsó sikert, az élő postafiókot, a telítettséget és a letöltési módot. Alatta egy sorban: Meghatalmazás (jogalap, érvényesség, „hamarosan lejár” jelzés), Értesítési címek (kapcsolattartók; itt jelölhető, ki kapjon naptármeghívót a határidőkről; alattuk két ügyfélszintű kapcsoló: Hátralék-értesítő és Fizetési emlékeztető – bekapcsolva ennek az ügyfélnek minden kapcsolattartója automatikusan megkapja ezeket a leveleket a Beállítások → Szabályok és letöltés lapon megadott gyakorisággal; alapból ki vannak kapcsolva), és Kezelők (csak ha van könyvelő az irodában; itt jelölhető ki, mely könyvelők látják az ügyfelet). A NAV-részek: NAV adószámla (egyenleg, tartozás, túlfizetés stb., a lekérdezés pillanatára), Beadott bevallások a NAV szerint (a nyugta megléte, a NAV-nál törölt bevallások alapból rejtve), NAV-dokumentumok (elmúlt fél év), NAV adónaptár utalási adatokkal. A bevallások és dokumentumok első 10, a nyitott iratok első 12 sora látszik, gombbal kinyitható. NAV-kimutatások (adószámla PDF és XLSX, törzsadat PDF, biztosítotti bejelentések XLSX) az asztali alkalmazásból kérhetők le; iratként kerülnek az ügyfélhez.",
+      "buttons": [
+        {
+          "label": "Minden ügyfél",
+          "does": "Vissza az ügyféllistához."
+        },
+        {
+          "label": "Újrahitelesítés",
+          "does": "Lejárt tárhely-hitelesítés megújítása."
+        },
+        {
+          "label": "Naptármeghívót kap a határidőkről (jelölő)",
+          "does": "A kapcsolattartó naptármeghívót kap a nyitott határidőkről. Csak vezető vagy admin; a küldést a Beállítások → E-mail értesítő lapon kell bekapcsolni."
+        },
+        {
+          "label": "Hátralék-értesítő / Fizetési emlékeztető (kapcsoló)",
+          "does": "Az ügyfélnek automatikusan menő hátralék-értesítő, illetve fizetési emlékeztető be- vagy kikapcsolása. Csak vezető vagy admin."
+        },
+        {
+          "label": "Kezelők mentése",
+          "does": "A kijelölt könyvelők látják az ügyfelet. A vezető és az admin minden ügyfelet lát. Csak vezető vagy admin."
+        },
+        {
+          "label": "Mind a N megjelenítése / Kevesebb megjelenítése",
+          "does": "Rövidített lista kinyitása vagy becsukása."
+        },
+        {
+          "label": "+ N törölt bevallás megjelenítése / törölt bevallások elrejtése",
+          "does": "A NAV-nál törölt bevallások megjelenítése áthúzva."
+        },
+        {
+          "label": "Kimutatások lekérése a NAV-tól",
+          "does": "Az asztali alkalmazás a saját kódos belépőddel letölti a NAV-kimutatásokat; a lekérdezés pár percig tarthat. Csak asztali alkalmazásban, ha a szerveren engedélyezett."
+        },
+        {
+          "label": "Minden irat a bejövő nézetben",
+          "does": "A Bejövő iratok ügyfélnézetére vált."
+        }
+      ],
+      "related": [
+        "clients",
+        "upo",
+        "concepts.meghatalmazas",
+        "concepts.szerepkorok"
+      ]
+    },
+    {
+      "key": "sync",
+      "title": "Naplók: Szinkronnapló",
+      "summary": "Tárhelyenként a legutóbbi szinkron állapota és eredménye, a listázás és a teljes szinkron indítása.",
+      "where": "Bal oldali sáv, utolsó ikon („Naplók”), „Szinkronnapló” fül. Pötty jelzi, ha valamelyik ügyfél szinkronja hibás.",
+      "details": "A listázás csak megnézi, mi érkezett: iratot nem nyit meg és nem vesz át. A szinkronizálás be is lép a kapcsolattal, és a NAV ügyfélportált is frissíti. A táblázat tárhelyenként mutatja az állapotot (Kész, Részben kész, Beavatkozás kell, Fut, Sorban), az utolsó sikert és az eredményt; a hibás sorok kerülnek előre. Hiba után a korábbi adatok megmaradnak „nem naprakész” jelzéssel; átvételt a rendszer újrapróbálkozásból sem indít. Az oldal alján a helyi adók (önkormányzati portál) kártyája látható.",
+      "buttons": [
+        {
+          "label": "Listázás most",
+          "does": "A tárhelyek levéllistájának lekérése, megnyitás és átvétel nélkül."
+        },
+        {
+          "label": "Szinkronizálás",
+          "does": "Teljes szinkron belépővel: belépés, Tárhely, majd NAV ügyfélportál. Több belépőnél választható egy vagy „Mindet, egymás után”."
+        },
+        {
+          "label": "Újrahitelesítés",
+          "does": "A „Beavatkozás kell” állapotú tárhely újbóli belépése."
+        },
+        {
+          "label": "Ügyfél neve",
+          "does": "Az ügyfél adatlapjának megnyitása."
+        },
+        {
+          "label": "Szinkronnapló / Auditnapló",
+          "does": "Váltás a két napló között."
+        }
+      ],
+      "related": [
+        "sync.asp",
+        "audit",
+        "settings.portals",
+        "settings.schedule"
+      ]
+    },
+    {
+      "key": "sync.asp",
+      "title": "Helyi adók – önkormányzati portál",
+      "summary": "Az E-Önkormányzat Portálról beolvasott adószámla-kivonatok, bevallások és folyamatban lévő ügyek önkormányzatonként.",
+      "where": "Naplók → Szinkronnapló, az oldal alján.",
+      "details": "Saját néven (magánszemélyként) a kódos Ügyfélkapu+ belépővel a kapuszinkron naponta egyszer a háttérben automatikusan is frissíti a helyi adókat. Ügyfelekhez (cégekhez, egyéni vállalkozókhoz) azért van szükség az osztott képernyős ablakra, mert az önkormányzati portálon a szerepkörváltást CAPTCHA védi a robotbejárás ellen: bal oldalon az ügyfelek pipálható listája áll (egy kattintásos adószám-másolással), jobb oldalon az E-Önkormányzat Portál automatikus Ügyfélkapu+ belépéssel. A szerepkörváltás után a program automatikusan kiolvassa az idei adószámla-kivonatot, a benyújtott bevallások listáját és a folyamatban lévő ügyek számát, azonnal elmenti, és zöld pipát tesz az ügyfél mellé. A saját nevedben beolvasott adatot csak te látod.",
+      "buttons": [
+        {
+          "label": "Beolvasás az önkormányzati portálról",
+          "does": "Megnyitja az osztott képernyős szinkronablakot az ügyféllistával és az E-Önkormányzat Portállal, automatikus Ügyfélkapu+ belépéssel és élő pipákkal."
+        },
+        {
+          "label": "Megnyitás (PDF)",
+          "does": "A mentett adószámla-kivonat megnyitása."
+        }
+      ],
+      "related": [
+        "sync",
+        "client.page"
+      ]
+    },
+    {
+      "key": "audit",
+      "title": "Naplók: Auditnapló",
+      "summary": "Csak bővíthető, módosíthatatlan napló minden fontos eseményről.",
+      "where": "Naplók → „Auditnapló” fül.",
+      "details": "Bejegyzés nem módosítható és nem törölhető; ezt az adatbázis kényszeríti ki. Oszlopai: időpont, ki, mi történt, ügyfél, bizonyíték, szabályzat. Az átvétellel és elutasítással kapcsolatos sorok kiemelve látszanak. Ide kerülnek például a letöltési szabályok módosításai, a felülíró szabályok és az AI-kapcsolat (MCP) hívásai. Könyvelő a saját ügyfelei és a saját műveletei eseményeit látja.",
+      "buttons": [
+        {
+          "label": "Mindenki (szereplő szűrő)",
+          "does": "Szűrés a szereplőre (Rendszer vagy munkatárs)."
+        }
+      ],
+      "related": [
+        "sync",
+        "concepts.szerepkorok",
+        "settings.mcp"
+      ]
+    },
+    {
+      "key": "notif",
+      "title": "Értesítések",
+      "summary": "A neked szóló események: új irat szabály alapján, átvételi jóváhagyás, határidő-emlékeztető, leállt szinkron, meghatalmazás.",
+      "where": "Bal oldali sáv alsó része, csengő ikon (a szám az olvasatlanokat mutatja). A felugró ablakból az „Összes megtekintése” nyitja a teljes listát.",
+      "details": "Fajták: Új irat szabály alapján (ha egy szabály azonnali értesítést ír elő); Átvételi jóváhagyás (vezetőként döntésre vár, kérelmezőként a döntés eredménye); Határidő-emlékeztető (csak megerősített határidejű, rád osztott iratról, alapból 5, 2 és 1 nappal előtte); Leállt szinkron (tárhelyenként naponta legfeljebb egyszer); Meghatalmazás (14 és 3 nappal a lejárat előtt, és egyszer utána). Az értesítésre kattintva a kapcsolódó irat vagy nézet nyílik meg. A teljes lista az utolsó 30 értesítést mutatja.",
+      "buttons": [
+        {
+          "label": "Összes olvasottá tétele",
+          "does": "Minden értesítés olvasott lesz."
+        },
+        {
+          "label": "Összes megtekintése →",
+          "does": "A teljes Értesítések oldal megnyitása."
+        }
+      ],
+      "related": [
+        "settings.device",
+        "settings.mail",
+        "rules"
+      ]
+    },
+    {
+      "key": "rules",
+      "title": "Érkezési szabályok",
+      "summary": "Az érkező iratok prioritását, felelősét, értesítését és tárhelyes letöltési módját meghatározó szabályok.",
+      "where": "Beállítások → „Szabályok és letöltés” fül, felső rész.",
+      "details": "Bal oldalon a szabályok listája (a jelvény a verziót vagy az „Auto (felülírt)” módot mutatja), jobbra a kiválasztott szabály: Prioritás (Sürgős, Normál, Alacsony), Felelős (vagy kézi kiosztás), Értesítés (Nincs, Felelősnek azonnal, Vezetőnek azonnal, Reggeli összesítő) és Letöltés a tárhelyről. A letöltési módok: „Csak kézi gombra”, „Kézi (a nyugtákat az irattípus szabálya tölti le)”, és „Automatikus letöltés – ismert, kézi típusú iratokra is (irodai felülírás)”. A felülírás esetén a szinkron az ide illeszkedő, ismert, kézi típusú iratokat is letölti és kibontja, ami átvételnek számíthat és elindíthatja a határidőt; ismeretlen és „csak lista” típusra nem hat, és a ténye a módosíthatatlan auditnaplóba kerül. Az ismeretlen típus szabálya zárolt: mindig felülvizsgálati sorba kerül. A mentett szabály a később érkező iratokra érvényes.",
+      "buttons": [
+        {
+          "label": "Szárazfutás",
+          "does": "Előnézet: mely meglévő iratokra illene a szabály. Semmi nem változik, értesítés nem megy ki."
+        },
+        {
+          "label": "Szabály mentése",
+          "does": "Új verzióként menti a szabályt. Csak vezető vagy admin."
+        },
+        {
+          "label": "Elvetés",
+          "does": "A nem mentett módosítások eldobása."
+        }
+      ],
+      "related": [
+        "settings.rules",
+        "concepts.letoltesi_szabaly",
+        "concepts.atvetel"
+      ]
+    },
+    {
+      "key": "settings",
+      "title": "Beállítások",
+      "summary": "Az iroda és a gép beállításai öt fülön: Belépők és rendszerek, E-mail értesítő, Munkatársak és szerepkörök, Szabályok és letöltés, Ez a gép (és az AI-kapcsolat).",
+      "where": "Bal oldali sáv alsó része, fogaskerék ikon („Beállítások”).",
+      "details": "A Beállítások fejléce az iroda nevét mutatja, alatta a fülek. A legtöbb irodai beállítást csak vezető vagy admin módosíthatja; munkatársat és az AI-kapcsolatot csak admin kezelheti. A gépre vonatkozó beállítások (értesítések, alkalmazászár, titoktár) csak az adott gépre és felhasználóra hatnak, és egy részük csak az asztali alkalmazásban érhető el.",
+      "buttons": [
+        {
+          "label": "Belépők és rendszerek",
+          "does": "Ügyfélkapu+/DÁP belépők, szinkron, ütemezés."
+        },
+        {
+          "label": "E-mail értesítő",
+          "does": "SMTP, határidő-emlékeztetők, naptármeghívók."
+        },
+        {
+          "label": "Munkatársak és szerepkörök",
+          "does": "Felhasználók és szerepkörük."
+        },
+        {
+          "label": "Szabályok és letöltés",
+          "does": "Érkezési szabályok, irattípusonkénti letöltési szabály, saját irattípusok, tárhelyműveletek szabályzata."
+        },
+        {
+          "label": "Ez a gép",
+          "does": "Rendszerértesítések, háttérfutás, alkalmazászár, titoktár, élő csatlakozó, megjelenés."
+        }
+      ],
+      "related": [
+        "settings.portals",
+        "settings.schedule",
+        "settings.mail",
+        "settings.team",
+        "settings.rules",
+        "settings.device",
+        "settings.mcp"
+      ]
+    },
+    {
+      "key": "settings.portals",
+      "title": "Beállítások: Belépők és rendszerek",
+      "summary": "Az Ügyfélkapu+ vagy DÁP belépők kezelése, a belépőnként engedélyezett rendszerek és a kézi szinkron.",
+      "where": "Beállítások → „Belépők és rendszerek” fül. Az Ügyfelek nézet „Belépők kezelése” gombja és a fiók ablaka is ide visz.",
+      "details": "A belépő a saját Ügyfélkapu+ vagy DÁP azonosításod; a meghatalmazásokon át több ügyfelet is lefed. A jelszó és a hitelesítő kulcs a gép kulcstartójában marad (macOS Kulcskarika, Windows DPAPI), a szerverre nem kerül. Hitelesítési módok: ÜK+ Hitelesítő (automata, TOTP-kulccsal), ÜK+ E-mailes kód, DÁP QR-kód. A belépő kártyáján az élő 6 jegyű kód (kattintva másolható), a Tárhely és a NAV ügyfélportál állapota (Rendben, Jóváhagyás kell, Még nem futott), a saját belépőnél NAV-összefoglaló (adószámla, hiányzó bevallás), a kikapcsolt rendszerek és az utolsó hiba látszik. A belépő űrlapján megadható: megnevezés, értesítési e-mail, megjegyzés, felhasználónév, jelszó, hitelesítő kulcs (16/32 karakteres kulcs, otpauth:// URI, Google Authenticator export vagy QR-kép), hogy mely rendszerekbe léphet be (Cégkapu tárhelyek, Saját értesítési tárhely, Hivatali kapu tárhelyek, NAV ügyfélportál; a kikapcsolthoz a szinkron hozzá sem nyúl), a magánlevelek kiszűrése (saját adóazonosító és cégadószám), az ügyfélajánlás köre, a talált Cégkapuk automatikus felvétele ügyfélként, és az automatikus letöltési szabályok engedélyezése a kapcsolatnál. A felügyelet nélküli szinkron böngészőablak nélkül lép be, és csak az automatikusnak jelölt iratokat (nyugtákat) tölti le; csak TOTP-kulcsos belépővel működik, és a szerveren engedélyezett élő listázást igényli.",
+      "buttons": [
+        {
+          "label": "Új belépő",
+          "does": "Belépő felvétele az űrlapon. Csak vezető vagy admin."
+        },
+        {
+          "label": "Minden ügyfél szinkronizálása",
+          "does": "Felügyelet nélküli szinkron minden TOTP-kulcsos belépővel: belépés, listázás, a nyugták automatikus letöltése, saját belépőnél napi egyszer NAV-portál olvasás. Asztali alkalmazásban, vezetőnek vagy adminnak."
+        },
+        {
+          "label": "Szinkron / Újrakapcsolás",
+          "does": "Egy belépő szinkronja (Tárhely és NAV ügyfélportál); ha a belépő jóváhagyást kér, előbb újrakapcsol."
+        },
+        {
+          "label": "Beállítás",
+          "does": "A belépő hitelesítőjének és beállításainak szerkesztése. Csak vezető vagy admin."
+        },
+        {
+          "label": "N ügyfél",
+          "does": "Az ügyféllista szűrése erre a belépőre."
+        },
+        {
+          "label": "QR-kód kép betöltése",
+          "does": "A hitelesítő kulcs kiolvasása QR-képből (asztali alkalmazásban)."
+        },
+        {
+          "label": "Mentés / Mentés és összekapcsolás indítása",
+          "does": "A belépő mentése, illetve mentés után azonnali összekapcsolás."
+        },
+        {
+          "label": "Kapcsolat törlése",
+          "does": "A belépő és a gépen tárolt kulcs törlése."
+        }
+      ],
+      "related": [
+        "settings.schedule",
+        "clients",
+        "sync",
+        "concepts.sajat_tarhely"
+      ]
+    },
+    {
+      "key": "settings.schedule",
+      "title": "Ütemezett szinkron (automata frissítés)",
+      "summary": "A gépen futó, időzített felügyelet nélküli szinkron be- és kikapcsolása, időpontjai, napjai és belépői.",
+      "where": "Beállítások → Belépők és rendszerek, „Ütemezett szinkron ezen a gépen” kártya. Az ablak címsorában az „Utoljára frissült” és a „Következő frissítés” / „Automata frissítés: …” jelvény látszik; a frissítés jelvényre kattintva meglévő belépő(k)nél azonnal elindul a teljes szinkron, belépő hiányában pedig ide visz.",
+      "details": "Csak az asztali alkalmazásban, vezetőnek vagy adminnak érhető el, és csak akkor fut, ha a KapuMail fut és be vagy jelentkezve; zárolt alkalmazásnál a feloldásig vár, kimaradt futásból csak a legutóbbit pótolja. Az alapbeállítás: munkanapokon 8, 12 és 16 órakor, minden belépőre. Állítható a mód (fix időpontok, vagy néhány óránként egy napi időablakban), a napok (munkanapokon, minden nap, kiválasztott napokon) és a belépők (hitelesítő kulcs nélküli belépő nem ütemezhető). Két futás között legalább 3 óra kell, mert minden futás valódi belépés az állami oldalakra a felhasználó nevében. Munkanapos módban megadhatók az áthelyezett munkanapok és a pihenőnapok. A futás a TOTP-kulcsos belépőkkel listáz, és csak az automatikusnak jelölt iratokat (nyugtákat) tölti le; hibás jelszó után a belépőt nem próbálja újra. Mentés után nincs azonnali futás. A kézzel indított szinkront az időzítés nem érinti. Nem fut, ha ki van kapcsolva, ha a szerveren nincs bekapcsolva az élő listázás, vagy ha minden belépő ki van hagyva.",
+      "buttons": [
+        {
+          "label": "Ütemezett szinkron ezen a gépen (jelölő)",
+          "does": "Az ütemezés be- vagy kikapcsolása."
+        },
+        {
+          "label": "+ Időpont / × (időpont törlése)",
+          "does": "Fix időpont hozzáadása vagy törlése (3 órás távolsággal)."
+        },
+        {
+          "label": "Időzítés mentése",
+          "does": "Az időpontok, napok és belépők mentése ellenőrzés után."
+        },
+        {
+          "label": "Alapértelmezés visszaállítása",
+          "does": "Az alapértékek betöltése; az „Időzítés mentése” gombbal lép életbe."
+        },
+        {
+          "label": "Napok mentése",
+          "does": "Az áthelyezett munkanapok és pihenőnapok mentése (ÉÉÉÉ-HH-NN, vesszővel)."
+        }
+      ],
+      "related": [
+        "settings.portals",
+        "sync",
+        "concepts.letoltesi_szabaly"
+      ]
+    },
+    {
+      "key": "settings.mail",
+      "title": "Beállítások: E-mail értesítő",
+      "summary": "Az iroda saját levelezőjének (SMTP) beállítása, feladó neve és válaszcím, határidő-emlékeztetők és naptármeghívók az ügyfeleknek.",
+      "where": "Beállítások → „E-mail értesítő” fül.",
+      "details": "Az SMTP kártyán adható meg a kiszolgáló, port, titkosítás (STARTTLS vagy SSL/TLS), felhasználónév, jelszó, feladó címe és neve; ezen mennek ki az ügyfélértesítők. A feladó neve jelenik meg a küldő neveként minden kimenő levélen; üresen az iroda neve. Alatta a Válaszcím: ha meg van adva, az iroda minden kimenő levelére (ügyfélértesítő, hátralék-értesítő, fizetési emlékeztető, irat-továbbítás, naptármeghívó, határidő-emlékeztető, összesítő) ez kerül válaszcímként; üresen a feladó címére érkeznek a válaszok. Beállítás nélkül az értesítők nem mennek ki valódi levélként (csak a szerver naplójába kerülnek), vagy a szerver alapértelmezett levelezőjén mennek. A mentett jelszó nem látszik vissza. A Határidő-emlékeztetők csak megerősített határidőre mennek, a felelősnek, 5, 2 és 1 nappal előtte választhatóan, és e-mailben is kérhetők (ehhez SMTP kell). A Naptármeghívók az ügyfél kapcsolattartójának küldik a nyitott határidőket a következő 60 napra; változásnál ugyanaz az esemény frissül, teljesüléskor lemondás megy. Csak annak megy, akinél az ügyfél adatlapján be van jelölve. Választható, hogy a becsült határidő is kimenjen-e „(becsült)” jelöléssel. A módosítás vezetőnek vagy adminnak engedett.",
+      "buttons": [
+        {
+          "label": "Mentés",
+          "does": "Az SMTP-beállítás mentése."
+        },
+        {
+          "label": "Válaszcím mentése",
+          "does": "A válaszcím mentése; üres mezővel törlődik. Vezető vagy admin."
+        },
+        {
+          "label": "Tesztlevél küldése",
+          "does": "Tesztlevél a saját címedre."
+        },
+        {
+          "label": "Beállítás törlése",
+          "does": "Az SMTP-beállítás törlése."
+        },
+        {
+          "label": "5 / 2 / 1 nappal előtte",
+          "does": "Az emlékeztetők időzítése."
+        },
+        {
+          "label": "E-mailben is menjen ki a felelősnek",
+          "does": "Az emlékeztető e-mailben is (SMTP szükséges)."
+        },
+        {
+          "label": "Naptármeghívók küldése",
+          "does": "A naptármeghívók be- vagy kikapcsolása (SMTP szükséges)."
+        },
+        {
+          "label": "A becsült határidő is menjen ki",
+          "does": "Kikapcsolva csak a megerősített határidő és a NAV-adónaptár megy."
+        },
+        {
+          "label": "Küldés most",
+          "does": "A kiküldésre váró meghívók azonnali elküldése."
+        }
+      ],
+      "related": [
+        "message.notice",
+        "client.page",
+        "concepts.hatarido"
+      ]
+    },
+    {
+      "key": "settings.team",
+      "title": "Beállítások: Munkatársak és szerepkörök",
+      "summary": "Az iroda felhasználói, szerepkörük és hogy hány ügyfelet látnak; új munkatárs felvétele.",
+      "where": "Beállítások → „Munkatársak és szerepkörök” fül.",
+      "details": "A táblázat minden munkatársat mutat monogrammal, szerepkörrel (admin, vezető, könyvelő), és hogy hány ügyfelet lát (könyvelőnél a hozzárendelt ügyfelek száma, a többieknél minden ügyfél). Új munkatársat csak admin vehet fel névvel, e-mail-címmel és szerepkörrel. A könyvelő ügyfeleit az ügyfél adatlapjának Kezelők kártyáján lehet kijelölni.",
+      "buttons": [
+        {
+          "label": "Munkatárs felvétele",
+          "does": "Új felhasználó rögzítése. Csak admin."
+        }
+      ],
+      "related": [
+        "concepts.szerepkorok",
+        "client.page"
+      ]
+    },
+    {
+      "key": "settings.rules",
+      "title": "Beállítások: Szabályok és letöltés",
+      "summary": "Érkezési szabályok, saját irattípusok, irattípusonkénti beállítások (Joghatály, Nem kell, Kezdő állapot, Letöltés, Email-ben kiküldés, Archiválás), új ügyfelek alapértelmezett állapota, automatikus értesítések és a tárhelyműveletek szabályzata.",
+      "where": "Beállítások → „Szabályok és letöltés” fül.",
+      "details": "Felül az érkezési szabályok (lásd: rules). A „Saját irattípusok” kártyán az iroda maga vehet fel típust névvel, kulcsszavakkal (a feladó nevében, a tárhely típusnevében vagy a tárgyban, egész szóként keres; kis-nagybetű és ékezet nem számít) és letöltési szabállyal (Kézi, megerősítéssel vagy Csak lista). A saját típus megelőzi a beépített listát, és mentéskor a még kézzel be nem sorolt iratok is átsorolódnak. A „Letöltési szabály irattípusonként” táblázat csoportonként mutatja a típusokat, oszloponként (a fejléc ⓘ jele magyarázza; keskeny ablakban vízszintesen görgethető): Joghatály (hány nap a határidő a joghatályos irat átvételétől; a kezdőnapot nem számoljuk, hétvégére vagy ünnepre eső utolsó nap a következő munkanapra tolódik; ha az iratnak nincs határideje, becsült határidőként kerül be; üres = nincs); Nem kell (az ilyen irat nem jelenik meg a listákban, nem töltődik le és nem megy ki e-mailben, de megmarad, és az Archivált mappa „Nem kell típusúak” szűrőjével visszanézhető; a nyugta típusoknál figyelmeztetés: a NAV elfogadó nyugtánál ne jelöld be); Kezdő állapot (új, kiosztott, folyamatban, ellenőrzésre vár, kész; ha szabály felelőst rendel hozzá, kiosztott lesz); Letöltés (Automatikus: a szinkron magától letölti; Kézi, megerősítéssel: csak ember töltheti le; Csak lista: a program nem tölti le – a vezető szigoríthat, az alapértéknél lazább szabályt csak admin állíthat); Email-ben kiküldés (nincs küldés, adózónak, felelősnek vagy mindkettőnek; csak az iroda saját SMTP-jén, inaktív ügyfélnek nem; letöltött iratnál mellékletként, különben csak értesítésként, a küldés soha nem indít letöltést); Archiválás (az új irat beérkezéskor archivált és kész lesz; megerősített határidejű irat nem archiválódik automatikusan). Minden változás azonnal mentődik és az auditnaplóba kerül; vezető vagy admin állíthatja. A tábla alatt az „Új ügyfelek” kártyán állítható, hogy a program által felvett új ügyfél (tárhely-levélből, ÜPO-ról, új cégkapuból) aktív vagy inaktív legyen; a kézzel felvett ügyfél mindig aktív. Az „Értesítések” kártyán: összesítő e-mail a munkatársaknak N naponta (mindenkinek a saját ügyfeleiről: hiányzó vagy elutasított bevallás, tartozás, új ügyfél, „Reggeli összesítő” szabályú új iratok; üres összesítő nem megy), hátralék-értesítő az adózónak N naponta (a NAV szerinti tartozás a lekérdezés idejével; 7 napnál régebbi lekérdezésből nem megy), és fizetési emlékeztető az adózónak 1, 3, 5, 7, 14 vagy 30 nappal az esedékesség előtt (utalási adatokkal, összeg nélkül). 0 nap = kikapcsolva. Az adózónak menő levelek automatikusan, jóváhagyás nélkül mennek, de csak azoknak az ügyfeleknek, akiknél az adatlapon bekapcsoltad, csak aktív ügyfélnek és csak az iroda saját SMTP-jén; SMTP nélkül a kártya figyelmeztet, hogy nem mennek ki. Napi egyszer futnak (reggel 7-kor; az asztali alkalmazás indításkor és óránként pótolja a kimaradt futást), egy levél egy napon egyszer sem ismétlődik. Ismeretlen típusú iratot a program soha nem tölt le magától. Legalul a „Tárhelyműveletek szabályzata” tábla mutatja műveletenként a lehetséges joghatást, a jóváhagyási igényt, hogy futhat-e háttérben, és az élő tárhelyen érvényes állapotot; ezt a szerver kényszeríti ki, a felületről nem módosítható.",
+      "buttons": [
+        {
+          "label": "Típus felvétele / Mentés",
+          "does": "Saját irattípus felvétele vagy szerkesztett változat mentése. Vezető vagy admin."
+        },
+        {
+          "label": "Szerkesztés / Törlés",
+          "does": "Saját típus szerkesztése vagy törlése (törléskor az iratok a többi típus szerint sorolódnak át, vagy ismeretlenné válnak)."
+        },
+        {
+          "label": "Letöltési szabály választó",
+          "does": "Az irattípus letöltési szabályának beállítása."
+        },
+        {
+          "label": "Joghatály (nap)",
+          "does": "Az irattípus joghatályos határideje napokban (1–365), üresen nincs."
+        },
+        {
+          "label": "Nem kell (jelölő)",
+          "does": "Az irattípus iratai rejtve maradnak, nem töltődnek le és nem mennek ki e-mailben."
+        },
+        {
+          "label": "Kezdő állapot választó",
+          "does": "A beérkező irat belső állapota."
+        },
+        {
+          "label": "Email-ben kiküldés választó",
+          "does": "Nincs küldés / Adózónak / Felelősnek / Mindkettőnek."
+        },
+        {
+          "label": "Archiválás (jelölő)",
+          "does": "Az új irat beérkezéskor archivált és kész lesz."
+        },
+        {
+          "label": "Aktív / Inaktív (Új ügyfelek)",
+          "does": "A tárhely-levélből, ÜPO-ról vagy új cégkapuból felvett ügyfél kezdő állapota."
+        },
+        {
+          "label": "Összesítő / Hátralék-értesítő (N nap)",
+          "does": "A küldés gyakorisága napokban, 0 = ki."
+        },
+        {
+          "label": "Fizetési emlékeztető napjai (jelölők)",
+          "does": "Hány nappal az esedékesség előtt menjen emlékeztető."
+        }
+      ],
+      "related": [
+        "rules",
+        "concepts.letoltesi_szabaly",
+        "concepts.atvetel"
+      ]
+    },
+    {
+      "key": "settings.device",
+      "title": "Beállítások: Ez a gép",
+      "summary": "A géphez kötött beállítások: rendszerértesítések, háttérfutás, alkalmazászár, helyi titoktár, élő tárhely-csatlakozó, megjelenés.",
+      "where": "Beállítások → „Ez a gép” fül.",
+      "details": "Rendszerértesítések: az új értesítésekről a gép értesítési központjában is szól, amíg a KapuMail fut; csak erre a gépre és felhasználóra vonatkozik. Asztali alkalmazásban kérhető, hogy bezárt ablaknál is a háttérben fusson (a tálca/menüsor ikonjáról nyitható újra, ott a „Kilépés” állítja le). Alkalmazászár (csak asztali alkalmazásban): PIN-kód, Touch ID-val is, automatikus zárolás tétlenség után; a gép alvása és a képernyő zárolása után mindig zár. A PIN csak a gépen, lenyomatként tárolódik; bekapcsoláskor egyszer megjelenő helyreállító kódot kapsz, amellyel elfelejtett PIN esetén újat állíthatsz be. Helyi titoktár: mutatja, hogy a belépők jelszavai és TOTP-kulcsai az operációs rendszer kulcstartójában vannak, a szerverre nem kerülnek. Élő tárhely-csatlakozó: az élő kapcsolat előfeltételei a gépen, az éppen élő belépés és a postafiókok hozzárendelése. Megjelenés: tömör lista.",
+      "buttons": [
+        {
+          "label": "Rendszerértesítések bekapcsolása",
+          "does": "Gépi értesítések be- vagy kikapcsolása."
+        },
+        {
+          "label": "Próbaértesítés",
+          "does": "Teszt rendszerértesítés."
+        },
+        {
+          "label": "Bezárt ablaknál is fusson a háttérben",
+          "does": "Az ablak bezárása csak elrejti a programot."
+        },
+        {
+          "label": "Bekapcsolás / Kikapcsolás / Zárolás most / Zár kikapcsolása",
+          "does": "Az alkalmazászár kezelése."
+        },
+        {
+          "label": "Letöltés szövegfájlba / Elmentettem",
+          "does": "A helyreállító kód mentése; utána már nem látható."
+        },
+        {
+          "label": "Tárolás / Próbatitok törlése",
+          "does": "Próbaérték tárolása a titoktárban a működés ellenőrzéséhez (ne valódi jelszó)."
+        },
+        {
+          "label": "Kapcsolat bontása",
+          "does": "Az éppen élő tárhely-belépés lezárása."
+        },
+        {
+          "label": "Tömör lista",
+          "does": "Több irat fér ki egy képernyőre."
+        }
+      ],
+      "related": [
+        "notif",
+        "settings.portals"
+      ]
+    },
+    {
+      "key": "settings.mcp",
+      "title": "Beállítások: AI-kapcsolat (MCP)",
+      "summary": "AI-asszisztens (Claude, ChatGPT) bekötése az iroda adataihoz MCP-n át, személyes tokenekkel vagy OAuth-tal. Csak admin kezelheti.",
+      "where": "Beállítások → „AI-kapcsolat (MCP)” fül (csak adminnak látszik).",
+      "details": "Az irodai kapcsoló az MCP-t egészében be- vagy kikapcsolja; alapból ki van kapcsolva. Bekapcsolás előtt adatfeldolgozói szerződés és adatvédelmi hatásvizsgálat szükséges, mert az AI-szolgáltató a neki átadott adatok adatfeldolgozója. Személyes MCP-token hozható létre névvel, szinttel és opcionális lejárattal; a token csak egyszer, létrehozáskor látszik, utána nem kérhető vissza. Szintek: olvasás (ügyfelek, iratok és szövegük, határidők, adónaptár, feladatok, napló, állapotok, beállítások titkok nélkül, súgó); munka (ezen felül teendő és jegyzet felvétele, irat belső állapota, felelőse, határidő megerősítése); admin (ezen felül beállítások, SMTP, naptármeghívók, szabályok, munkatársak és ügyfélkezelők). A szint sosem adhat többet, mint a felhasználó szerepköre: egy könyvelő az MCP-n át sem lát más ügyfelet. A lap kész beállítási mintát ad: Claude Code és Claude Desktop esetén helyi (stdio) indítás a php artisan mcp:start iratkapu paranccsal, a tokennel az IRATKAPU_MCP_TOKEN környezeti változóban; ChatGPT és claude.ai connector esetén csak szerver módban, a https://<szerver>/mcp címen, OAuth-belépéssel és magyar nyelvű engedélyező oldallal. Az új OAuth-kapcsolat olvasási szinttel indul, az admin emelheti. Az aktív kapcsolatok listája mutatja a tokeneket és OAuth-klienseket az utolsó használattal, és bármelyik visszavonható. Az MCP az állami oldalak felé semmit nem indít (átvétel, letöltés, NAV- vagy önkormányzati lekérdezés, szinkron), titkot (portáljelszó, hitelesítőkód, SMTP-jelszó) nem ad vissza, a kockázatos admin művelet megerősítés nélkül csak előnézetet ad, és minden hívás bekerül az auditnaplóba. A lap alján a legutóbbi AI-hívások listája látszik. Helyi módban, az asztali alkalmazásban külön kártya szól a közvetítőről („ChatGPT / claude.ai a közvetítőn át”). A ChatGPT és a claude.ai az interneten fut, a gépet közvetlenül nem éri el; a KapuMail-közvetítőn (mcp.kapumail.hu) át mégis csatlakozhat. A program kifelé kapcsolódik, befelé semmit nem nyit meg, csak az AI-kapcsolat kérései mennek át, és csak addig, amíg a KapuMail fut. A kártyán látszik a connector címe (https://mcp.kapumail.hu/<azonosító>/mcp). A csatlakozáshoz egyszer használható, 10 percig érvényes csatlakozási kódot kell kérni, és itt kell eldönteni, hogy az AI csak olvashat vagy dolgozhat is. A ChatGPT-ben megnyíló KapuMail-oldalon ezt a kódot kell beírni, majd „Engedélyezem”.",
+      "buttons": [
+        {
+          "label": "AI-kapcsolat engedélyezése (jelölőnégyzet)",
+          "does": "Az MCP-hozzáférés be- vagy kikapcsolása az egész irodában; kikapcsolva minden token és OAuth-kapcsolat elutasításra kerül."
+        },
+        {
+          "label": "Token létrehozása",
+          "does": "Új személyes token megnevezéssel, a munkatárssal, akinek a nevében fut (Kinek a nevében), szinttel (olvasás / munka / admin) és lejárattal (nincs, 30 nap, 90 nap, 1 év). A token csak most látszik, és beíródik a lenti beállítási mintákba."
+        },
+        {
+          "label": "Másolás ikon",
+          "does": "A token vagy a beállítási minta (Claude Desktop, Claude Code, ChatGPT / claude.ai connector címe) vágólapra másolása."
+        },
+        {
+          "label": "Szint (lenyíló az OAuth-kapcsolatok táblájában)",
+          "does": "Az OAuth-kapcsolat szintjének emelése vagy csökkentése; az új kapcsolat olvasási szinten indul."
+        },
+        {
+          "label": "Visszavonás",
+          "does": "A token vagy az OAuth-kapcsolat azonnali letiltása; az OAuth-nál a kiadott hozzáférési tokenek is érvénytelenek lesznek."
+        },
+        {
+          "label": "Elérhető a közvetítőn át (jelölőnégyzet)",
+          "does": "A közvetítő-kapcsolat be- vagy kikapcsolása ezen a gépen; alapból ki van kapcsolva. Csak akkor választható, ha az AI-kapcsolat engedélyezve van."
+        },
+        {
+          "label": "Csatlakozási kód kérése",
+          "does": "8 jegyű, 10 percig érvényes, egyszer használható kód a ChatGPT / claude.ai csatlakoztatásához, a kiválasztott szinttel (Csak olvas / Dolgozhat is). Öt rossz próbálkozás után a kód érvénytelen."
+        }
+      ],
+      "related": [
+        "audit",
+        "concepts.szerepkorok",
+        "concepts.atvetel"
+      ]
+    },
+    {
+      "key": "kapu",
+      "title": "Kapu (AI-segéd)",
+      "summary": "Beszélgetés Kapuval, az iroda AI-segédjével: kérdezhetsz az iratokról, határidőkről, ügyfelekről, és a beállításokat is átállítja, ha jóváhagyod.",
+      "where": "Csak az asztali alkalmazásban. A fekete sáv alján, közvetlenül a harang (Értesítések) alatt a beszédbuborék-ikon („Kapu”). Bekapcsolt Kapunál a fekete sáv tetején a plüss logó is Kaput nyitja („Kapu – beszélgetés”).",
+      "details": "A középső oszlopban a beszélgetéseid listája (cím, motor, időpont, az utolsó válasz első sora); a felső kereső ilyenkor a beszélgetésekben keres. Jobbra maga a beszélgetés, alul a beviteli doboz: Enter küld, Shift+Enter új sort kezd. A motor melletti gombbal választható a modell, a kisebbtől/gyorsabbtól a nagyobbig/okosabbig (pl. ChatGPT: GPT-6 Luna – gyors, GPT-6 Sol – kiegyensúlyozott, az alap, GPT-6 Astra – legokosabb); a választás a beszélgetéssel együtt megmarad, és a motor alapja is ez lesz az új beszélgetésekhez. A válasz fejléce mutatja, melyik motor és modell válaszolt (pl. „Kapu · ChatGPT · GPT-6 Sol”). Üres beszélgetésben a javasolt kérdések fölött a „Beszéljünk élőszóban” gomb élő hangos beszélgetést indít (ChatGPT vagy Antigravity motorral; Claude-dal nem érhető el). Futás közben Kapu „gondolkodik”, alatta látszik, mit csinál éppen; ilyenkor a küldés helyén a leállítás gomb van. A válaszban a lila címkék (irat, ügyfél, határidő, beállítás) kattintásra megnyitják a KapuMail megfelelő nézetét; ha az irat nincs a betöltött adatok közt, vagy nincs hozzá jogod, ezt jelzi. Beállítás módosításakor Kapu előbb egy jóváhagyó kártyát mutat (régi → új érték): a „Mehet” jóváhagyja és Kapu végrehajtja, a „Mégse” elveti; 10 perc után a kérés lejár. A beszélgetések csak ezen a gépen, titkosítva tárolódnak; a kérdések és a Kapu által lekért adatok a választott AI-szolgáltatóhoz kerülnek. Ha az iroda AI-kapcsolata ki van kapcsolva, vagy a motorba nem vagy belépve, Kapu ezt kártyán jelzi, a teendő gombjával.",
+      "buttons": [
+        {
+          "label": "Új beszélgetés",
+          "does": "Üres beszélgetést nyit, javasolt kérdésekkel."
+        },
+        {
+          "label": "… (sor menüje) → Beszélgetés törlése",
+          "does": "Az adott beszélgetés törlése erről a gépről."
+        },
+        {
+          "label": "Összes törlése",
+          "does": "Minden Kapu-beszélgetés törlése erről a gépről, megerősítés után."
+        },
+        {
+          "label": "Motor (pl. Claude)",
+          "does": "A motor kiválasztása: Claude, ChatGPT vagy Antigravity. Másik motorra váltáskor új beszélgetés indul."
+        },
+        {
+          "label": "Modell (pl. GPT-6 Sol)",
+          "does": "A motor modelljének kiválasztása, gyorstól okosig, rövid jelzéssel (gyors, kiegyensúlyozott, legokosabb). A beszélgetés modellje a következő kérdéstől változik, és az új beszélgetések is ezzel indulnak."
+        },
+        {
+          "label": "Beszéljünk élőszóban",
+          "does": "Üres beszélgetésben élő hangos beszélgetést indít Kapuval (ha Claude-on állsz, de van összekötött ChatGPT vagy Antigravity motor, automatikusan átvált rá; ha egyik sincs összekötve, szürke marad és megmondja, mivel lehet hangon beszélni)."
+        },
+        {
+          "label": "Gyors promptok és + (Saját gyors prompt hozzáadása)",
+          "does": "Üres beszélgetésben a nyitó tippek bármelyikére kattintva a hozzá tartozó promptot küldi el Kapunak. Rámutatáskor (hover) minden gyors prompt jobb szélén megjelenik a szerkesztés (ceruza) és a törlés (kuka) gomb: a szerkesztés felugró ablakban nyitja meg a címet és a promptot, a kuka megerősítés után törli a gombot. A sor végén a szaggatott körvonalas + gombbal új saját gyors prompt vehető fel (Cím + Prompt + Mentés)."
+        },
+        {
+          "label": "KapuMail-logó (a fekete sáv tetején)",
+          "does": "Az asztali alkalmazásban mindig Kapuhoz visz: ha nincs összekötött élő hangos kapcsolat, rámutatáskor a szövegbuborékos Kapu jelenik meg, és kattintásra a Kapu-beszélgetésre visz; ha Kapu be van kapcsolva és a ChatGPT vagy az Antigravity élő hang össze van kötve, rámutatáskor a telefonkagylós Kapu jelenik meg, kattintásra pedig (szükség esetén átváltva rá) rögtön elindul az élő hangos beszélgetés."
+        },
+        {
+          "label": "Hangszóró",
+          "does": "A kész válaszok felolvasása be vagy ki. Új üzenet vagy kattintás a beszélgetésbe leállítja."
+        },
+        {
+          "label": "Mikrofon",
+          "does": "Élő hangos beszélgetés Kapuval (ha Claude-on állsz, de van összekötött ChatGPT vagy Antigravity motor, automatikusan átvált rá; ha nincs, jelzi, mivel lehet hangon beszélni)."
+        },
+        {
+          "label": "Fogaskerék",
+          "does": "A Kapu beállításai (Beállítások → Kapu)."
+        },
+        {
+          "label": "Mehet / Mégse",
+          "does": "A jóváhagyó kártyán: a javasolt beállítás-módosítás jóváhagyása vagy elvetése."
+        }
+      ],
+      "related": [
+        "settings.kapu",
+        "settings.mcp"
+      ]
+    },
+    {
+      "key": "settings.kapu",
+      "title": "Beállítások: Kapu",
+      "summary": "Kapu be- és kikapcsolása, az AI-motor kiválasztása és belépése, felolvasás, adatvédelmi tudnivalók.",
+      "where": "Beállítások → „Kapu” fül (csak az asztali alkalmazásban, minden felhasználónak).",
+      "details": "Kapu bekapcsolásakor a KapuMail a nevedben egy Kapu-hozzáférést kér: csak olvasni tud, és a beállításokat csak jóváhagyással módosíthatja; az iroda adminja az AI-kapcsolat lapon látja és visszavonhatja. Három motor közül választhatsz (Claude, ChatGPT, Antigravity), mindegyik a saját előfizetéseddel fut ezen a gépen; a kártyán látszik, hogy telepítve van-e és be vagy-e lépve. A „Belépés” Terminál-ablakot nyit a szolgáltató belépéséhez; a program 2 másodpercenként figyeli, legfeljebb 10 percig, és belépés után magától továbblép. A felolvasás a kész válaszokat a gép magyar hangján olvassa fel. Adatvédelem: a kérdések és a Kapu által lekért adatok a választott szolgáltatóhoz kerülnek, amely ezekre nézve adatfeldolgozó (adatfeldolgozói szerződés és DPIA kell).",
+      "buttons": [
+        {
+          "label": "Kapu bekapcsolása",
+          "does": "Kapu be- vagy kikapcsolása ezen a gépen; bekapcsoláskor Kapu-hozzáférést kér."
+        },
+        {
+          "label": "Belépés",
+          "does": "Terminált nyit a motor belépéséhez, és figyeli, mikor sikerül."
+        },
+        {
+          "label": "Parancs másolása",
+          "does": "A belépés parancsát a vágólapra teszi, ha a Terminál nem nyílt meg."
+        },
+        {
+          "label": "Mégse",
+          "does": "A belépés figyelésének leállítása."
+        },
+        {
+          "label": "Újra ellenőrzöm",
+          "does": "A motorok állapotának újbóli lekérdezése (pl. telepítés után)."
+        },
+        {
+          "label": "Kapu válaszainak felolvasása",
+          "does": "Felolvasás be vagy ki."
+        }
+      ],
+      "related": [
+        "kapu",
+        "settings.mcp"
+      ]
+    },
+    {
+      "key": "account",
+      "title": "Fiók ablak",
+      "summary": "A saját KapuMail-fiókod adatai, a belépők gyors elérése, billentyűparancsok és kijelentkezés.",
+      "where": "Bal oldali sáv legalja, a monogramod.",
+      "details": "Mutatja a neved, e-mail-címed, szerepköröd és az irodát. A KapuMail-fiók nem azonos a tárhely (Ügyfélkapu, Cégkapu) azonosításával. Helyi, egyfelhasználós módban nincs jelszó: a programot a gép zárja védi.",
+      "buttons": [
+        {
+          "label": "Belépők kezelése",
+          "does": "A Beállítások → Belépők és rendszerek fülre visz."
+        },
+        {
+          "label": "Billentyűparancsok",
+          "does": "A billentyűparancsok listája."
+        },
+        {
+          "label": "Kijelentkezés",
+          "does": "Kilépés a fiókból."
+        }
+      ],
+      "related": [
+        "settings.portals",
+        "shortcuts"
+      ]
+    },
+    {
+      "key": "concepts.atvetel",
+      "title": "Fogalom: átvétel és joghatás",
+      "summary": "Az irat hivatalos átvétele jogi következménnyel jár (indulhat a határidő), ezért a program soha nem veszi át magától.",
+      "where": "Irat részletei: „Hivatalos állapot” sor, zárolt tartalom, „Átvétel kérése jóváhagyással”; Beállítások → Szabályok és letöltés: tárhelyműveletek szabályzata.",
+      "details": "A tartalom megnyitása vagy letöltése a hivatalos tárhelyen átvételnek számíthat, és elindíthatja az eljárási határidőket; az átvétel nem vonható vissza. Ha az iratot nem veszik át, a kézbesítési igazolás szerinti napon beáll a kézbesítési vélelem, és a határidő ettől számít. Ezért a hivatalos állapot (Listázva, Átvételre vár, Átvett, Kézbesítési vélelem) csak a tárhely igazolása alapján változik, a belső jelölések (olvasott, kész, archivált) nem érintik. Átvételt csak ember kérhet, és vezető vagy admin hagyhatja jóvá, aki nem lehet azonos a kérelmezővel; könyvelő nem hagyhat jóvá. Lejárt meghatalmazásnál tárhelyművelet nem indítható. A törlés és a küldés soha nem engedélyezett. A listázás joghatása nincs bizonyítva, ezért élő listázáshoz a szerveren külön engedély kell. Az élő tárhelyen már megnyitott vagy tartós tárba tett irat a tárhely jelzése szerint már átvett; ez nem a KapuMail művelete. A nyugták és tájékoztatók nem átvételkötelesek. Ez nem jogi tanácsadás.",
+      "buttons": [],
+      "related": [
+        "message",
+        "concepts.letoltesi_szabaly",
+        "concepts.hatarido",
+        "concepts.meghatalmazas"
+      ]
+    },
+    {
+      "key": "concepts.hatarido",
+      "title": "Fogalom: megerősített és becsült határidő",
+      "summary": "A megerősített határidőt ember ellenőrizte vagy forrásból biztos; a becsültet a program számolta vagy kinyerte, még senki nem ellenőrizte.",
+      "where": "Irat részletei → Határidő fül; Határidők naptár; lista határidő-címkéi.",
+      "details": "A becsült határidő ≈ jellel és szaggatott kártyával jelenik meg, a megerősített tömör kártyával. A Határidő fül mutatja a forrást, és ha a dátumot az irat szövegéből nyerte ki a program, az idézett szövegrészt is. Ha a dátum korábbi, mint az irat érkezése, figyelmeztetés jelzi, hogy valószínűleg korábbi iratra hivatkozik. A „Megerősítem a dátumot” gombbal válik megerősítetté, a megerősítő nevével. Határidő-emlékeztető csak megerősített határidőre megy. Átvételre váró iratnál a határidő az átvételig nem ismert, a program nem találgat. A NAV adónaptár tételei a feltételes tételek kivételével megerősítettnek számítanak.",
+      "buttons": [
+        {
+          "label": "Megerősítem a dátumot",
+          "does": "A becsült határidő megerősítése."
+        },
+        {
+          "label": "Rögzítés",
+          "does": "Határidő kézi rögzítése, ha nincs."
+        }
+      ],
+      "related": [
+        "cal",
+        "message",
+        "settings.mail"
+      ]
+    },
+    {
+      "key": "concepts.meghatalmazas",
+      "title": "Fogalom: meghatalmazás",
+      "summary": "Az ügyfél tárhelyéhez csak érvényes meghatalmazással szabad hozzáférni; a program ezt nem ellenőrzi, a felhasználó erősíti meg.",
+      "where": "Ügyfél felvétele (varázsló, felderített postafiók, ajánlott ügyfél); ügyféladatlap Meghatalmazás kártya; ügyféllista Meghatalmazás oszlopa.",
+      "details": "Ügyfél felvételekor be kell jelölni, hogy van érvényes meghatalmazás; a belépési adat ismerete önmagában nem jogosít fel. Megadható a lejárat napja; üresen hagyva határozatlan idejű. 30 napon belüli lejáratnál „hamarosan lejár” jelzés látszik, és értesítés megy 14 és 3 nappal előtte, majd egyszer a lejárat után. Lejárt meghatalmazással tárhelyművelet nem indítható. A szinkron által a belépő mögött talált, „felderítve” jelölésű Cégkapuk meghatalmazását a KapuMail nem ellenőrizte. A saját tárhelyhez nem kell meghatalmazás.",
+      "buttons": [],
+      "related": [
+        "client.page",
+        "client.wizard",
+        "clients.discovered",
+        "concepts.atvetel"
+      ]
+    },
+    {
+      "key": "concepts.szerepkorok",
+      "title": "Fogalom: szerepkörök (admin, vezető, könyvelő)",
+      "summary": "Az admin és a vezető minden ügyfelet lát és irodai beállításokat kezel; a könyvelő csak a hozzárendelt ügyfeleit látja.",
+      "where": "Beállítások → Munkatársak és szerepkörök; ügyféladatlap → Kezelők.",
+      "details": "Könyvelő: csak azokat az ügyfeleket és iratokat látja, amelyekhez az ügyfél adatlapján kezelőként hozzárendelték; az auditnaplóban a saját ügyfelei és műveletei eseményeit látja; átvételt kérhet, de nem hagyhat jóvá. Vezető: minden ügyfelet lát, felvehet ügyfelet és belépőt, menthet szabályt, jóváhagyhat mások által kért átvételt, szigoríthatja a letöltési szabályt. Admin: a vezető jogain felül munkatársat vehet fel, az alapértéknél lazább letöltési szabályt állíthat be, és kezeli az AI-kapcsolatot (MCP). A saját átvételi kérését senki nem hagyhatja jóvá. Az MCP-n át is ugyanezek a korlátok érvényesek. Egyfelhasználós (helyi) módban nincs Kezelők kártya és „Nekem kiosztott” mappa.",
+      "buttons": [],
+      "related": [
+        "settings.team",
+        "client.page",
+        "settings.mcp",
+        "audit"
+      ]
+    },
+    {
+      "key": "concepts.sajat_tarhely",
+      "title": "Fogalom: saját tárhely",
+      "summary": "A belépő gazdájának saját értesítési tárhelye; a levelei csak neki látszanak, amíg ügyfélhez nem sorolja őket.",
+      "where": "Ügyfelek nézet („saját tárhely” jelvény), felderített postafiók („Ez a saját tárhelyem”), irat részletei (besoroló sáv), belépő beállítása (Saját értesítési tárhely rendszer, magánlevelek kiszűrése).",
+      "details": "A saját tárhelyre a képviselt ügyfeleknek szóló NAV-iratok is érkezhetnek. A program csak akkor sorol be ilyen iratot magától, ha a levél leírásában pontosan egy általad látott ügyfél adószáma vagy adóazonosító jele áll; egyébként a saját gyűjtőben marad, ahol kézzel besorolható. Ha a név alapján valószínű ügyfél van, a program javasolja. Besorolás után az iratot mindenki látja, aki az ügyfelet látja; a „Vissza a saját tárhelyre” gombbal visszatehető, és onnantól a program nem sorolja be újra. A belépő beállításánál megadott saját adóazonosító jel és cégadószám alapján a magánlevelek nem kerülnek ügyfél alá. A saját tárhely leveleinek tárgyából a program ügyfelet is ajánlhat.",
+      "buttons": [],
+      "related": [
+        "message",
+        "clients.discovered",
+        "settings.portals"
+      ]
+    },
+    {
+      "key": "concepts.letoltesi_szabaly",
+      "title": "Fogalom: letöltési szabály irattípusonként",
+      "summary": "Az irat típusa dönti el, letöltheti-e a program: automatikusan, csak kézzel megerősítéssel, vagy egyáltalán nem (csak lista).",
+      "where": "Beállítások → Szabályok és letöltés; az irat fejlécének jelvénye.",
+      "details": "Automatikus: a szinkron magától letölti (jellemzően nyugták, visszaigazolások). Kézi: csak ember töltheti le, megerősítés után, mert a letöltés átvételnek számíthat. Csak lista: a program nem tölti le, az irat a hivatalos tárhelyen vehető át. Ismeretlen típusú iratot a program soha nem tölt le magától. Egy érkezési szabály felülírással engedélyezheti az ismert, kézi típusok automatikus letöltését; ez az auditnaplóba kerül. Belépőnként kikapcsolható az automatikus letöltés, és a szerveren külön engedélyezni kell az élő letöltést. Egy futás legfeljebb 50 iratot tölt le automatikusan, a többi a következő szinkronra marad.",
+      "buttons": [],
+      "related": [
+        "settings.rules",
+        "rules",
+        "concepts.atvetel"
+      ]
+    },
+    {
+      "key": "concepts.hivatalos_vs_belso",
+      "title": "Fogalom: hivatalos állapot és irodai feldolgozás",
+      "summary": "Két külön állapot: a hivatalos (a tárhely szerint) és a belső munkafolyamat (az iroda szerint).",
+      "where": "Irat részletei, a fejléc alatti két állapotsor.",
+      "details": "Hivatalos állapot: Listázva, Átvételre vár, Átvett vagy Kézbesítési vélelem; nyugtánál és tájékoztatásnál „nincs átvételi joghatás”. Csak a tárhely igazolása alapján változik. Irodai feldolgozás: Új, Osztályozandó, Kiosztott, Folyamatban, Ellenőrzésre vár, Kész; kattintással állítható, mellette a felelős. Az olvasottnak jelölés, a kész, az archiválás és a címkék csak belső műveletek. Átvételre váró irat nem zárható le készként.",
+      "buttons": [],
+      "related": [
+        "message",
+        "concepts.atvetel"
+      ]
+    },
+    {
+      "key": "shortcuts",
+      "title": "Billentyűparancsok",
+      "summary": "Gyors lépkedés és belső műveletek billentyűvel az iratlistában.",
+      "where": "Bárhol a Bejövő iratoknál; a lista a ? billentyűvel vagy a fiók ablakában a „Billentyűparancsok” gombbal jelenik meg.",
+      "details": "J vagy ↓: következő irat. K vagy ↑: előző irat. Enter: megnyitás, ugrás a részletekre. /: keresés. X: kijelölés. A: kiosztás nekem. U: olvasott / olvasatlan. E: kész. Esc: vissza a listához, menü bezárása. ?: a súgó. A billentyűk nem működnek, amíg beviteli mezőben gépelsz, vagy párbeszédablak van nyitva.",
+      "buttons": [],
+      "related": [
+        "inbox",
+        "inbox.contextmenu"
+      ]
+    }
+  ]
+}

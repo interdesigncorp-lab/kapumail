@@ -1,0 +1,103 @@
+<?php
+use App\Http\Controllers\AppController as A;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/login', [A::class, 'loginForm'])->name('login');
+Route::post('/login', [A::class, 'login'])->middleware('throttle:10,1');
+Route::post('/local/enter', [A::class, 'localEnter'])->middleware('throttle:20,1');
+// MCP-közvetítő (ADR-013): párosító oldal a ChatGPT / claude.ai OAuth-bejelentkezéséhez; csak közvetített kérésre él.
+Route::get('/mcp-connect', [\App\Http\Controllers\McpConnectController::class, 'form']);
+Route::post('/mcp-connect', [\App\Http\Controllers\McpConnectController::class, 'submit'])->middleware('throttle:10,1');
+Route::get('/mcp-connect/kesz', [\App\Http\Controllers\McpConnectController::class, 'done']);
+// Szerződési feltételek olvasása bejelentkezés nélkül is (ÁSZF, adatkezelés, adatfeldolgozás)
+Route::get('/legal/{doc}', [\App\Http\Controllers\TermsController::class, 'page'])->whereIn('doc', ['aszf', 'adatkezeles', 'adatfeldolgozas']);
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [A::class, 'logout']);
+    Route::get('/', [A::class, 'index']);
+    // Kapu-chat felülete (ADR-014): csak a felsorolt fájlok, a vezérlő ellenőrzi a nevet.
+    Route::get('/ui/{f}', [A::class, 'uiAsset'])->where('f', '[A-Za-z0-9._-]+');
+    Route::prefix('api')->group(function () {
+        Route::get('state', [A::class, 'state']);
+        Route::post('messages/bulk', [A::class, 'bulk']);
+        Route::post('messages/{id}/action', [A::class, 'messageAction']);
+        Route::post('messages/{id}/tasks', [A::class, 'addTask']);
+        Route::post('messages/{id}/notes', [A::class, 'addNote']);
+        Route::post('messages/{id}/receive', [A::class, 'requestReceive'])->middleware(\App\Http\Middleware\RequireActiveTrial::class);
+        Route::post('messages/{id}/reassign', [A::class, 'reassignMessage']);
+        Route::post('messages/{id}/live-download', [A::class, 'liveDownload'])->middleware(\App\Http\Middleware\RequireActiveTrial::class);
+        Route::post('messages/{id}/live-download-check', [A::class, 'liveDownloadCheck'])->middleware(\App\Http\Middleware\RequireActiveTrial::class);
+        Route::post('messages/{id}/upload', [A::class, 'upload']);
+        Route::post('es3/open', [A::class, 'openEs3']);
+        Route::get('messages/{id}/notice', [A::class, 'noticePreview']);
+        Route::post('messages/{id}/notice', [A::class, 'noticeSend']);
+        Route::post('clients/{id}/contacts', [A::class, 'addContact']);
+        Route::post('documents/{id}/revalidate', [A::class, 'revalidate']);
+        Route::post('tasks/{id}', [A::class, 'toggleTask']);
+        Route::post('approvals/{id}', [A::class, 'decide'])->middleware(\App\Http\Middleware\RequireActiveTrial::class);
+        Route::post('sync', [A::class, 'syncNow'])->middleware(\App\Http\Middleware\RequireActiveTrial::class);
+        Route::post('mailboxes/{id}/reauth', [A::class, 'reauth']);
+        Route::post('mailboxes/{id}/live', [A::class, 'mapLive']);
+        Route::post('live/ingest', [A::class, 'liveIngest'])->middleware(\App\Http\Middleware\RequireActiveTrial::class);
+        Route::post('portals', [A::class, 'savePortal']);
+        Route::post('portals/{id}/status', [A::class, 'portalStatus']);
+        Route::delete('portals/{id}', [A::class, 'deletePortal']);
+        Route::post('types/{typeId}/policy', [A::class, 'setTypePolicy']);
+        Route::post('types/{typeId}/settings', [A::class, 'setTypeSettings']);
+        Route::post('types', [A::class, 'saveCustomType']);
+        Route::delete('types/{typeId}', [A::class, 'deleteCustomType']);
+        Route::post('rules/{id}/dry', [A::class, 'ruleDry']);
+        Route::post('rules/{id}', [A::class, 'ruleSave']);
+        Route::post('clients', [A::class, 'addClient']);
+        Route::post('clients/{id}/users', [A::class, 'clientUsers']);
+        Route::post('clients/{id}/active', [A::class, 'setClientActive']);
+        Route::post('clients/{id}/notices', [A::class, 'setClientNotices']);
+        Route::post('discovered/{id}', [A::class, 'resolveDiscovered']);
+        Route::post('discovered-subjects/{id}', [A::class, 'resolveSubject']);
+        Route::post('nav/ingest', [A::class, 'navIngest'])->middleware(\App\Http\Middleware\RequireActiveTrial::class);
+        Route::get('nav/targets', [A::class, 'navTargets'])->middleware(\App\Http\Middleware\RequireActiveTrial::class);
+        Route::post('nav/ingest-clients', [A::class, 'navIngestClients'])->middleware(\App\Http\Middleware\RequireActiveTrial::class);
+        Route::post('nav/exports', [A::class, 'navExports'])->middleware(\App\Http\Middleware\RequireActiveTrial::class);
+        Route::post('asp/ingest', [\App\Http\Controllers\AspController::class, 'ingest'])->middleware(\App\Http\Middleware\RequireActiveTrial::class);
+        Route::get('asp/statements/{id}/pdf', [\App\Http\Controllers\AspController::class, 'pdf']);
+        Route::post('users', [A::class, 'invite']);
+        Route::post('onboarding/done', [A::class, 'onboardingDone']);
+        Route::get('terms', [\App\Http\Controllers\TermsController::class, 'show']);
+        Route::post('terms/accept', [\App\Http\Controllers\TermsController::class, 'accept']);
+        Route::post('profile', [A::class, 'saveProfile']);
+        Route::post('settings', [A::class, 'settings']);
+        Route::post('settings/smtp', [A::class, 'saveSmtp']);
+        Route::post('settings/smtp/test', [A::class, 'testSmtp'])->middleware('throttle:6,1');
+        Route::delete('settings/smtp', [A::class, 'deleteSmtp']);
+        Route::post('views', [A::class, 'saveView']);
+        Route::delete('views/{id}', [A::class, 'deleteView']);
+        Route::get('notifications/last', [A::class, 'notificationsLast']);
+        Route::post('notifications/read', [A::class, 'readNotifications']);
+        Route::get('documents/{id}', [A::class, 'document']);
+        Route::get('export', [A::class, 'export']);
+        Route::get('export/documents', [\App\Http\Controllers\LicenseController::class, 'exportDocuments']);
+        Route::get('license', [\App\Http\Controllers\LicenseController::class, 'show']);
+        Route::post('license/activate', [\App\Http\Controllers\LicenseController::class, 'activate'])->middleware('throttle:12,1');
+        Route::delete('license', [\App\Http\Controllers\LicenseController::class, 'deactivate'])->middleware('throttle:12,1');
+        Route::get('calendar.ics', [A::class, 'calendarFile']);
+        Route::post('settings/calendar', [A::class, 'calendarSettings']);
+        Route::post('contacts/{id}/calendar', [A::class, 'contactCalendar']);
+        Route::post('calendar/invites/sync', [A::class, 'calendarSync'])->middleware('throttle:12,1');
+        // AI-kapcsolat (MCP) beállításai és az asztali alkalmazás jelentkezése (ADR-012)
+        Route::get('mcp', [\App\Http\Controllers\McpController::class, 'show']);
+        Route::post('settings/mcp', [\App\Http\Controllers\McpController::class, 'setEnabled']);
+        Route::post('mcp/tokens', [\App\Http\Controllers\McpController::class, 'issue']);
+        Route::post('mcp/tokens/{id}', [\App\Http\Controllers\McpController::class, 'tokenLevel']);
+        Route::delete('mcp/tokens/{id}', [\App\Http\Controllers\McpController::class, 'revoke']);
+        Route::post('mcp/grants/{id}', [\App\Http\Controllers\McpController::class, 'grantLevel']);
+        Route::delete('mcp/grants/{id}', [\App\Http\Controllers\McpController::class, 'revokeGrant']);
+        Route::post('desktop/heartbeat', [\App\Http\Controllers\McpController::class, 'heartbeat'])->middleware('throttle:30,1');
+        // Kapu-chat (ADR-014): bármely bejelentkezett felhasználó a saját, szűk szintű tokenjét kéri
+        Route::get('kapu/me', [\App\Http\Controllers\KapuController::class, 'me']);
+        Route::get('kapu/premium', [\App\Http\Controllers\KapuController::class, 'premium'])->middleware('throttle:30,1');
+        Route::post('kapu/token', [\App\Http\Controllers\KapuController::class, 'issue']);
+        Route::delete('kapu/token', [\App\Http\Controllers\KapuController::class, 'revoke']);
+        Route::get('kapu/confirm/{id}', [\App\Http\Controllers\KapuController::class, 'confirmation']);
+        Route::post('kapu/confirm/{id}', [\App\Http\Controllers\KapuController::class, 'approve'])->middleware('throttle:30,1');
+        Route::post('mcp/pairing', [\App\Http\Controllers\McpController::class, 'pairing'])->middleware('throttle:10,1');
+    });
+});

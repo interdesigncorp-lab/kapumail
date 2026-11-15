@@ -1,0 +1,45 @@
+#!/usr/bin/env node
+// Hamis `codex app-server` (JSON-RPC a szabványos be- és kimeneten) a kapu-voice teszthez.
+// Viselkedés: FAKE_VOICE JSON {account:'chatgpt'|'apikey'|null, log, noAnswer, transcript, config}.
+// A log fájlba soronként: {method, params?} és induláskor {start:{args, env, codexHome, auth}}.
+const fs = require('node:fs');
+const path = require('node:path');
+const s = JSON.parse(process.env.FAKE_VOICE || '{}');
+const log = (o) => { if (s.log) fs.appendFileSync(s.log, JSON.stringify(o) + '\n'); };
+const home = process.env.CODEX_HOME || '';
+let auth = null;
+try { auth = JSON.parse(fs.readFileSync(path.join(home, 'auth.json'), 'utf8')); } catch { /* nincs */ }
+log({ start: { args: process.argv.slice(2), env: Object.keys(process.env), codexHome: home, auth, cwd: process.cwd(), pid: process.pid } });
+const out = (o) => process.stdout.write(JSON.stringify(o) + '\n');
+let buf = '';
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', (d) => {
+  buf += d;
+  let i;
+  while ((i = buf.indexOf('\n')) >= 0) { const l = buf.slice(0, i); buf = buf.slice(i + 1); if (l.trim()) handle(JSON.parse(l)); }
+});
+process.stdin.on('end', () => process.exit(0));
+function handle(m) {
+  log({ method: m.method, params: m.params, authNow: fs.existsSync(path.join(home, 'auth.json')) });
+  if (m.id === undefined) return;
+  const ok = (result) => out({ id: m.id, result });
+  switch (m.method) {
+    case 'initialize': return ok({ userAgent: 'fake' });
+    case 'account/read': return ok({ account: s.account === null ? null : { type: s.account || 'chatgpt' } });
+    case 'config/read': return ok({ config: s.config || { mcp_servers: { mine: {} } } });
+    case 'thread/start': return ok({ thread: { id: 'thr-1' } });
+    case 'thread/realtime/start':
+      ok({});
+      if (!s.noAnswer) setTimeout(() => out({ method: 'thread/realtime/sdp', params: { threadId: 'thr-1', sdp: 'v=0\r\nfake-answer\r\n' } }), 20);
+      if (s.transcript) setTimeout(() => {
+        out({ method: 'thread/realtime/transcript/delta', params: { threadId: 'thr-1', role: 'user', delta: 'Mi jár' } });
+        out({ method: 'thread/realtime/transcript/done', params: { threadId: 'thr-1', role: 'user', text: s.transcript } });
+        out({ method: 'thread/realtime/transcript/done', params: { threadId: 'thr-1', role: 'user', text: s.transcript } });
+      }, 80);
+      return;
+    case 'thread/realtime/appendText': return ok({});
+    case 'thread/realtime/stop': ok({}); return setTimeout(() => process.exit(0), 10);
+    default: return out({ id: m.id, error: { code: -32601, message: 'unknown' } });
+  }
+}
+setInterval(() => {}, 1000);

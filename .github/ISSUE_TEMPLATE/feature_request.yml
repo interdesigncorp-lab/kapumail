@@ -1,0 +1,72 @@
+name: "✨ Új funkció kérése (Feature Request)"
+description: "Javasolj új funkciót, munkafolyamat-fejlesztést vagy integrációt a KapuMailhez."
+title: "[Funkció]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Köszönjük, hogy segítesz jobbá tenni a KapuMailt! Kérjük, írd le minél pontosabban a javasolt funkciót.
+        > **Adatvédelmi figyelmeztetés:** Soha ne írj vagy csatolj valós ügyfélnevet, adószámot, jelszót vagy éles hivatalos dokumentumot (`.es3`, PDF) nyilvános Issue-ba! Kizárólag fiktív mintaadatokat használj.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Milyen könyvelői vagy ügyviteli problémát old meg?"
+      description: "Írd le a jelenlegi helyzetet és azt, hogy miért lenne hasznos a javasolt változtatás a napi munkában."
+      placeholder: "Pl.: Sok ügyfélnél nehéz gyorsan kiszűrni azokat az átvett határozatokat, amelyekhez még nincs belső felelős rendelve..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: "Javasolt működés és felületi megjelenés"
+      description: "Hogyan működjön a funkció a gyakorlatban? Hol jelenjen meg a felületen, és mi történjen kattintáskor?"
+      placeholder: "Pl.: A Bejövő iratok szűrősávjában jelenjen meg egy 'Felelős nélkül' gyorsszűrő jelvény..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: "Érintett terület"
+      options:
+        - "Bejövő iratok, szűrők és belső munkafolyamat"
+        - "Ügyfélkapu+ / DÁP / Cégkapu / Hivatali tárhely szinkron"
+        - "NAV ügyfélportál (adónaptár, adószámla, bevallások)"
+        - "Önkormányzati ASP portál (helyi adók)"
+        - "Határidő-számítás, szabálymotor és értesítések"
+        - "ES3 / ASiC-E olvasó és hitelesség-ellenőrzés"
+        - "Kapu-chat helyi AI-asszisztens (MCP)"
+        - "Exportálás, archiválás és adatmentés"
+        - "Asztali keret (macOS / Windows, titoktár, zárolás)"
+        - "Egyéb"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: legal_gate
+    attributes:
+      label: "Érint-e joghatású műveletet vagy állami portálkérést?"
+      description: "A KapuMail szigorúan elválasztja a belső munkát a joghatást kiváltó hivatalos átvételtől."
+      options:
+        - "Nem – kizárólag helyi megjelenítést, szűrést vagy belső munkafolyamatot érint"
+        - "Igen – olvasó jellegű lekérdezést érint külső portálon"
+        - "Igen – küldemény letöltését vagy hivatalos átvételét érinti"
+        - "Nem vagyok benne biztos"
+    validations:
+      required: true
+
+  - type: textarea
+    id: mockup
+    attributes:
+      label: "Képernyőterv, vázlat vagy referencia (opcionális)"
+      description: "Húzz ide vázlatot vagy jelölt képernyőképet (kizárólag mintaadatokkal!), ha segíti a megértést."
+
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: "Megvalósítás"
+      options:
+        - label: "Szívesen el is készítem ezt a funkciót Pull Requestben (a CONTRIBUTING.md szabályai szerint), ha a javaslat zöld utat kap."
