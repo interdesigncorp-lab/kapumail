@@ -15,7 +15,7 @@ class ManageUsers extends IratkapuTool
 {
     protected string $name = 'manage_users';
 
-    protected string $description = 'Munkatársak kezelése – admin szint és admin szerepkörű felhasználó kell hozzá, valamint `confirm: true`. Műveletek: invite (új munkatárs: név, e-mail, szerepkör; jelszót a belépési oldalon állít be), set_role (szerepkör módosítása monogram alapján). Szerepkörök: admin, vezeto, konyvelo. Helyi (egygépes) módban nincs több munkatárs. Ügyfelek kezelőit a set_client_handlers állítja.';
+    protected string $description = 'Munkatársak kezelése (admin szerepkörű felhasználó). Műveletek: invite (új munkatárs: név, e-mail, szerepkör; jelszót a belépési oldalon állít be), set_role (szerepkör módosítása monogram alapján). Szerepkörök: admin, vezeto, konyvelo. Helyi (egygépes) módban nincs több munkatárs. Ügyfelek kezelőit a set_client_handlers állítja.';
 
     protected string $level = 'admin';
 

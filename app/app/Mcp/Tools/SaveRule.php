@@ -13,7 +13,7 @@ class SaveRule extends IratkapuTool
 {
     protected string $name = 'save_rule';
 
-    protected string $description = 'Iratkezelési szabály módosítása (új verzió, a régi megmarad) – admin szint, vezető vagy admin felhasználó, `confirm: true`. Állítható: prioritás (Sürgős, Normál, Alacsony), felelős (monogram), értesítés (Nincs, Felelősnek azonnal, Vezetőnek azonnal, Reggeli összesítő). A zárolt szabálynak csak az értesítése módosítható. A letöltési módot (automatikus letöltés) az MCP nem állítja: annak joghatása miatt a felületen kell dönteni róla.';
+    protected string $description = 'Iratkezelési szabály módosítása (új verzió, a régi megmarad, vezető vagy admin felhasználó). Állítható: prioritás (Sürgős, Normál, Alacsony), felelős (monogram), értesítés (Nincs, Felelősnek azonnal, Vezetőnek azonnal, Reggeli összesítő). A zárolt szabálynak csak az értesítése módosítható. A letöltési módot (automatikus letöltés) az MCP nem állítja: annak joghatása miatt a felületen kell dönteni róla.';
 
     protected string $level = 'admin';
 

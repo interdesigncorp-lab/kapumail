@@ -12,7 +12,7 @@ class ConfigureSmtp extends IratkapuTool
 {
     protected string $name = 'configure_smtp';
 
-    protected string $description = 'Az iroda e-mail küldése (SMTP) – admin szint, `confirm: true` kell hozzá. Műveletek: save (beállítás mentése; üres jelszónál a korábbi marad), test (tesztlevél a kapcsolat gazdájának címére), delete (beállítás törlése). A jelszót a felhasználónak magának kell beírnia a felületen; ha mégis itt adja meg, titkosítva tárolódik, és válaszban soha nem jön vissza.';
+    protected string $description = 'Az iroda e-mail küldése (SMTP). Műveletek: save (beállítás mentése; üres jelszónál a korábbi marad), test (tesztlevél a kapcsolat gazdájának címére), delete (beállítás törlése). A jelszót a felhasználónak magának kell beírnia a felületen; ha mégis itt adja meg, titkosítva tárolódik, és válaszban soha nem jön vissza.';
 
     protected string $level = 'admin';
 

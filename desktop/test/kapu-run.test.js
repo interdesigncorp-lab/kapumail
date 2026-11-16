@@ -118,7 +118,7 @@ test('buildArgs codex: read-only sandbox, üres cwd, mcp kapcsolók', async () =
     'mcp_servers.kapumail.default_tools_approval_mode=approve']) assert.ok(cs.includes(c), c);
   assert.ok(!cs.includes('web_search=disabled'));
   const off = a.flatMap((x, i) => (x === '--disable' ? [a[i + 1]] : []));
-  for (const f of ['shell_tool', 'unified_exec', 'view_image', 'browser_use', 'computer_use', 'memories', 'plugins']) assert.ok(off.includes(f), f);
+  for (const f of ['shell_tool', 'unified_exec', 'view_image', 'browser_use', 'computer_use', 'memories', 'plugins', 'code_mode', 'code_mode_host']) assert.ok(off.includes(f), f);
   // a token értéke sosem kerül a parancssorba, csak a környezetbe
   assert.ok(!a.some((x) => x.includes(TOKEN)));
   assert.ok(a.every((x) => !/["\n\r]/.test(x)));
@@ -621,6 +621,31 @@ test('parser: webes keresés és irat_teendok_elemzese aktivitások mindhárom m
     },
   });
   assert.deepStrictEqual(ev6, [{ type: 'activity', text: 'Elemzem az irat teendőit…' }]);
+});
+
+test('parser: resolve_code, resolve_tax_code és list_taxpayer_tables aktivitások', () => {
+  assert.strictEqual(R.activityFor('resolve_code'), 'Feloldom a nyomtatvány- vagy adókódot…');
+  assert.strictEqual(R.activityFor('resolve_tax_code'), 'Feloldom a nyomtatvány- vagy adókódot…');
+  assert.strictEqual(R.activityFor('list_taxpayer_tables'), 'Megnézem az adózói táblákat…');
+
+  const pCodex = R.createParser('codex');
+  const ev1 = pCodex.line({
+    type: 'item.started',
+    item: { id: 'rc_1', type: 'mcp_tool_call', server: 'kapumail', tool: 'resolve_code' },
+  });
+  assert.deepStrictEqual(ev1, [{ type: 'activity', text: 'Feloldom a nyomtatvány- vagy adókódot…' }]);
+
+  const ev2 = pCodex.line({
+    type: 'item.started',
+    item: { id: 'ltt_1', type: 'mcp_tool_call', server: 'kapumail', tool: 'list_taxpayer_tables' },
+  });
+  assert.deepStrictEqual(ev2, [{ type: 'activity', text: 'Megnézem az adózói táblákat…' }]);
+
+  const ev3 = pCodex.line({
+    type: 'item.started',
+    item: { id: 'rtc_1', type: 'mcp_tool_call', server: 'kapumail', tool: 'resolve_tax_code' },
+  });
+  assert.deepStrictEqual(ev3, [{ type: 'activity', text: 'Feloldom a nyomtatvány- vagy adókódot…' }]);
 });
 
 test('prepare claude: a megszakítás leállítja a belépés frissítését', async () => {

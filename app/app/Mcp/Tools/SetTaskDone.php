@@ -10,7 +10,7 @@ class SetTaskDone extends IratkapuTool
 {
     protected string $name = 'set_task_done';
 
-    protected string $description = 'Teendő késznek jelölése vagy újranyitása (munka szint).';
+    protected string $description = 'Teendő késznek jelölése vagy újranyitása.';
 
     protected string $level = 'munka';
 

@@ -10,7 +10,7 @@ class UpdateMessage extends IratkapuTool
 {
     protected string $name = 'update_message';
 
-    protected string $description = 'Irat belső kezelése, ugyanúgy, mint a felületen (munka szint). Műveletek:
+    protected string $description = 'Irat belső kezelése, ugyanúgy, mint a felületen. Műveletek:
 - assign: felelős kijelölése (`to`: monogram);
 - status: belső állapot (`to`: uj, oszt, kiosztott, folyamatban, ell, kesz);
 - done: kész / újranyitás;

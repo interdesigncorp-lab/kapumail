@@ -205,4 +205,28 @@ class KapuSzintTest extends TestCase
         $this->as('IA', 'munka');
         IratkapuServer::tool(Tools\UpdateSettings::class, ['reminders' => [5, 1]])->assertHasErrors(['„admin” szintű']);
     }
+
+    public function test_kapu_szint_tools_list_szuri_a_munka_es_admin_eszkozoket(): void
+    {
+        $token = $this->actingAs($this->u('LG'))->postJson('/api/kapu/token', ['device' => 'Teszt'])->json('token');
+        $res = $this->withHeaders(['Authorization' => "Bearer $token", 'Accept' => 'application/json'])
+            ->postJson('/mcp', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/list', 'params' => (object) []])
+            ->assertOk();
+
+        // Látható az olvasó és a kapu extra eszköz
+        $res->assertSee('search_clients')
+            ->assertSee('resolve_code')
+            ->assertSee('get_settings')
+            ->assertSee('update_settings');
+
+        // Rejtve maradnak a munka és az admin eszközök
+        $res->assertDontSee('create_task')
+            ->assertDontSee('set_task_done')
+            ->assertDontSee('add_note')
+            ->assertDontSee('update_message')
+            ->assertDontSee('save_rule')
+            ->assertDontSee('configure_smtp')
+            ->assertDontSee('manage_users')
+            ->assertDontSee('manage_client');
+    }
 }

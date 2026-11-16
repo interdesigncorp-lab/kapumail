@@ -23,6 +23,11 @@ abstract class IratkapuTool extends Tool
     /** A futtatáshoz szükséges szint: olvasas | munka | admin. */
     protected string $level = 'olvasas';
 
+    public function level(): string
+    {
+        return $this->level;
+    }
+
     /** Kockázatos művelet: `confirm: true` nélkül csak előnézetet ad. */
     protected bool $needsConfirm = false;
 

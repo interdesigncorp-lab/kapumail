@@ -53,6 +53,9 @@ const ACTIVITY = {
   connections_status: 'Megnézem a kapcsolatokat…',
   audit_log: 'Átnézem a naplót…',
   irat_teendok_elemzese: 'Elemzem az irat teendőit…',
+  list_taxpayer_tables: 'Megnézem az adózói táblákat…',
+  resolve_code: 'Feloldom a nyomtatvány- vagy adókódot…',
+  resolve_tax_code: 'Feloldom a nyomtatvány- vagy adókódot…',
   // webes keresés
   WebSearch: 'Keresek a hivatalos oldalakon…',
   web_search: 'Keresek a hivatalos oldalakon…',
@@ -101,7 +104,8 @@ function withPersona(message, text, sessionId) {
 }
 
 const CODEX_DISABLE = ['shell_tool', 'unified_exec', 'view_image', 'apps', 'browser_use', 'computer_use', 'in_app_browser',
-  'multi_agent', 'hooks', 'goals', 'memories', 'plugins', 'image_generation', 'tool_suggest', 'skill_mcp_dependency_install'];
+  'multi_agent', 'hooks', 'goals', 'memories', 'plugins', 'image_generation', 'tool_suggest', 'skill_mcp_dependency_install',
+  'code_mode', 'code_mode_host'];
 
 /**
  * buildArgs(engine, {message, sessionId?, mcpFile?, persona?, cwd?, extra?, model?, timeoutSec?}) → string[]

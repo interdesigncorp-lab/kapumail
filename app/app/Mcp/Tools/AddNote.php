@@ -10,7 +10,7 @@ class AddNote extends IratkapuTool
 {
     protected string $name = 'add_note';
 
-    protected string $description = 'Belső jegyzet egy irathoz a kapcsolat gazdájának nevében (munka szint). Az ügyfél nem látja.';
+    protected string $description = 'Belső jegyzet egy irathoz a kapcsolat gazdájának nevében. Az ügyfél nem látja.';
 
     protected string $level = 'munka';
 

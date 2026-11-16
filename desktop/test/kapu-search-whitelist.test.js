@@ -9,6 +9,7 @@ const path = require('node:path');
 const WHITELIST = {
   GROUP_A: [
     'nav.gov.hu',
+    'onlineszamla.nav.gov.hu',
     'njt.hu',
     'magyarkozlony.hu',
     'mnb.hu',
@@ -136,11 +137,16 @@ function buildWhitelistedSearchQuery(userQuestion, targetDomain = 'nav.gov.hu') 
 test('Scenario 6: Fehérlistás keresési domainek ellenőrzése (Group A, B, C)', () => {
   // Group A domainek elfogadása
   assert.ok(isDomainWhitelisted('nav.gov.hu'));
+  assert.ok(isDomainWhitelisted('onlineszamla.nav.gov.hu'));
   assert.ok(isDomainWhitelisted('njt.hu'));
   assert.ok(isDomainWhitelisted('magyarkozlony.hu'));
   assert.ok(isDomainWhitelisted('mnb.hu'));
   assert.ok(isDomainWhitelisted('eur-lex.europa.eu'));
   assert.ok(isDomainWhitelisted('birosag.hu'));
+
+  const oszVal = validateSearchQuery('site:onlineszamla.nav.gov.hu számla adatok');
+  assert.strictEqual(oszVal.valid, true);
+  assert.deepStrictEqual(oszVal.domains, ['onlineszamla.nav.gov.hu']);
 
   // Group B domainek elfogadása
   assert.ok(isDomainWhitelisted('e-cegjegyzek.hu'));
@@ -249,6 +255,7 @@ test('Scenario 6: persona.md integritásának ellenőrzése a fehérlistás szab
 
   // A persona szövegének kötelezően tartalmaznia kell a fehérlistás protokoll elemeit
   assert.ok(personaText.includes('site:nav.gov.hu'));
+  assert.ok(personaText.includes('site:onlineszamla.nav.gov.hu'));
   assert.ok(personaText.includes('site:njt.hu'));
   assert.ok(personaText.includes('site:magyarkozlony.hu'));
   assert.ok(personaText.includes('Group A'));

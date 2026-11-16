@@ -24,7 +24,7 @@ class UpdateSettings extends IratkapuTool
 {
     protected string $name = 'update_settings';
 
-    protected string $description = 'Iroda-beállítások módosítása (admin szint vagy Kapu, vezető vagy admin felhasználó). Határidő-emlékeztetők: hány nappal előtte (1, 2, 5), e-mailben is menjen-e; naptármeghívók az ügyfelek kapcsolattartóinak (be/ki, becsült határidő is menjen-e); válaszcím, feladónév; új ügyfelek alapértelmezett aktivitása; összesítő és hátralék-értesítő gyakorisága; fizetési emlékeztető napjai; irattípusonkénti beállítások. Kapu-kapcsolatnál az első hívás nem módosít, hanem jóváhagyást kér: mutasd meg a felhasználónak az összefoglalót, és a jóváhagyás után hívd újra ugyanezekkel az adatokkal és a kapott confirm_id-val.';
+    protected string $description = 'Iroda-beállítások módosítása (vezető vagy admin felhasználó). Határidő-emlékeztetők: hány nappal előtte (1, 2, 5), e-mailben is menjen-e; naptármeghívók az ügyfelek kapcsolattartóinak (be/ki, becsült határidő is menjen-e); válaszcím, feladónév; új ügyfelek alapértelmezett aktivitása; összesítő és hátralék-értesítő gyakorisága; fizetési emlékeztető napjai; irattípusonkénti beállítások. Kapu-kapcsolatnál az első hívás nem módosít, hanem jóváhagyást kér: mutasd meg a felhasználónak az összefoglalót, és a jóváhagyás után hívd újra ugyanezekkel az adatokkal és a kapott confirm_id-val.';
 
     protected string $level = 'admin';
 

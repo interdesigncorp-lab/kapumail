@@ -220,6 +220,21 @@ final class FormCatalog
             ];
         }
 
+        // Családnév önálló megadása (pl. HIPAK, KIVA, A60)
+        if (isset($families[$code])) {
+            $fam = $families[$code];
+
+            return [
+                'code' => $code,
+                'base_code' => $code,
+                'org' => (string) ($fam['org'] ?? 'NAV'),
+                'kind' => (string) ($fam['kind'] ?? 'bevallas'),
+                'short' => (string) ($fam['short'] ?? $code),
+                'title' => (string) ($fam['title'] ?? ($fam['short'] ?? $code)),
+                'sent_type' => $fam['sent_type'] ?? null,
+            ];
+        }
+
         // ÁNYK részlap-utótag (pl. 2608A, 2608M, 2665A, 2665M -> 2608, 2665)
         if (preg_match('/^([0-9]{2}[A-Z0-9]{2,12}?)[AM]$/', $code, $sub) && isset($forms[$sub[1]])) {
             $base = $sub[1];

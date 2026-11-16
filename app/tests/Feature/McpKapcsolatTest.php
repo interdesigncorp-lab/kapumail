@@ -57,8 +57,11 @@ class McpKapcsolatTest extends TestCase
     public function test_ervenyes_token_listazza_az_eszkozoket_visszavonva_es_kikapcsolva_nem(): void
     {
         $t = McpAccess::issue($this->u('IA'), 'Claude', 'olvasas', null);
-        $this->rpc($t['token'])->assertOk()->assertSee('search_clients')->assertSee('save_rule');
+        $this->rpc($t['token'])->assertOk()->assertSee('search_clients')->assertDontSee('save_rule');
         $this->assertNotNull(DB::table('mcp_tokens')->find($t['id'])->last_used_at);
+
+        $adminToken = McpAccess::issue($this->u('IA'), 'Claude Admin', 'admin', null);
+        $this->rpc($adminToken['token'])->assertOk()->assertSee('save_rule');
 
         OfficeMail::put($this->u('IA')->office_id, ['mcp' => ['enabled' => false]]);
         $this->rpc($t['token'])->assertStatus(401);

@@ -9,10 +9,10 @@
 //  5. Felépíti és Developer ID-val aláírja a `KapuMail.app` csomagokat (arm64 és x64), ellenőrzi a beépített PHP/SQLite
 //     futását írásvédett programkönyvtár mellett, majd Apple-notarizálja és tűzi (`stapler`) mindkét `.app`-ot.
 //  6. Becsomagolja, aláírja, notarizálja, tűzi és Gatekeeperrel (`spctl`) ellenőrzi a két `.dmg` lemezképet:
-//       - desktop/dist/KapuMail-0.2.2-arm64.dmg
-//       - desktop/dist/KapuMail-0.2.2-x64.dmg
+//       - desktop/dist/KapuMail-0.2.3-arm64.dmg
+//       - desktop/dist/KapuMail-0.2.3-x64.dmg
 //  7. Felépíti a Windows x64 telepítőt Kapu-plüss ikonnal:
-//       - desktop/dist/KapuMail-Setup-0.2.2.exe
+//       - desktop/dist/KapuMail-Setup-0.2.3.exe
 //  8. Frissíti a `marketing/landing/letoltes/` szimlinkeket és kiírja a SHA-256 ellenőrzőösszegeket.
 
 const { execFile, execFileSync, spawnSync } = require('node:child_process');
@@ -96,10 +96,16 @@ function detectMacSigning() {
     throw new Error(`Több Developer ID tanúsítvány található; válassz egyet a KAPUMAIL_MAC_IDENTITY változóval: ${filtered.map((m) => m.team).join(', ')}`);
   }
   const notaryProfile = (process.env.KAPUMAIL_NOTARY_PROFILE || 'kapumail-notary').trim();
-  execFileSync('xcrun', ['notarytool', 'history', '--keychain-profile', notaryProfile, '--output-format', 'json'], {
-    stdio: ['ignore', 'ignore', 'pipe'],
-  });
-  return { ...filtered[0], notaryProfile, unsigned: false };
+  let notaryOk = false;
+  try {
+    execFileSync('xcrun', ['notarytool', 'history', '--keychain-profile', notaryProfile, '--output-format', 'json'], {
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    notaryOk = true;
+  } catch {
+    log(`Figyelem: A "${notaryProfile}" notarytool profil nem érhető el a kulcskarikán. Notarizáció kihagyva, Developer ID aláírás aktív.`);
+  }
+  return { ...filtered[0], notaryProfile: notaryOk ? notaryProfile : null, unsigned: false };
 }
 
 function preparePhpToolchains() {
@@ -588,7 +594,7 @@ async function main() {
 
   if (repackDmgOnly && fs.existsSync(stagedArmApp) && fs.existsSync(stagedX64App)) {
     log('Meglévő notarizált .app csomagok újracsomagolása új .dmg háttérrel (--repack-dmg)…');
-    if (!signing.unsigned) {
+    if (!signing.unsigned && signing.notaryProfile) {
       execFileSync('xcrun', ['stapler', 'validate', stagedArmApp], { stdio: 'inherit' });
       execFileSync('xcrun', ['stapler', 'validate', stagedX64App], { stdio: 'inherit' });
     }
@@ -606,7 +612,7 @@ async function main() {
     const armApp = await buildMacApp('arm64', phpDirs.macArm64, appServerDir, signing);
     const x64App = await buildMacApp('x64', phpDirs.macX64, appServerDir, signing);
 
-    if (!signing.unsigned) {
+    if (!signing.unsigned && signing.notaryProfile) {
       log('Mindkét macOS .app párhuzamos Apple-notarizálása…');
       await Promise.all([
         notarizeAndStaple(armApp, signing),
@@ -620,18 +626,18 @@ async function main() {
     x64Dmg = await packMacDmg('x64', x64App, dmgBgPath, signing);
   }
 
-  if (!signing.unsigned) {
+  if (!signing.unsigned && signing.notaryProfile) {
     log('Mindkét macOS .dmg párhuzamos Apple-notarizálása…');
   }
   const [, , winExe] = await Promise.all([
-    signing.unsigned ? Promise.resolve(null) : notarizeAndStaple(armDmg, signing),
-    signing.unsigned ? Promise.resolve(null) : notarizeAndStaple(x64Dmg, signing),
+    (signing.unsigned || !signing.notaryProfile) ? Promise.resolve(null) : notarizeAndStaple(armDmg, signing),
+    (signing.unsigned || !signing.notaryProfile) ? Promise.resolve(null) : notarizeAndStaple(x64Dmg, signing),
     (repackDmgOnly && fs.existsSync(existingWinExe))
       ? Promise.resolve(existingWinExe)
       : buildWindowsInstaller(phpDirs.winX64, appServerDir),
   ]);
 
-  if (!signing.unsigned) {
+  if (!signing.unsigned && signing.notaryProfile) {
     execFileSync('spctl', ['--assess', '--type', 'open', '--context', 'context:primary-signature', '--verbose=2', armDmg], { stdio: 'inherit' });
     execFileSync('spctl', ['--assess', '--type', 'open', '--context', 'context:primary-signature', '--verbose=2', x64Dmg], { stdio: 'inherit' });
   }

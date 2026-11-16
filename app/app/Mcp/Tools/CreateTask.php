@@ -10,7 +10,7 @@ class CreateTask extends IratkapuTool
 {
     protected string $name = 'create_task';
 
-    protected string $description = 'Teendő felvétele egy irathoz a kapcsolat gazdájának nevében (munka szint).';
+    protected string $description = 'Teendő felvétele egy irathoz a kapcsolat gazdájának nevében.';
 
     protected string $level = 'munka';
 

@@ -12,7 +12,7 @@ class ManageClient extends IratkapuTool
 {
     protected string $name = 'manage_client';
 
-    protected string $description = 'Ügyfél adatainak kezelése – admin szint, vezető vagy admin felhasználó, `confirm: true`. Műveletek:
+    protected string $description = 'Ügyfél adatainak kezelése (vezető vagy admin felhasználó). Műveletek:
 - set_handlers: kezelő könyvelők (`users`: monogramok listája; a lista a teljes új állapot);
 - set_active: aktív / inaktív (`active`);
 - add_contact: kapcsolattartó / értesítési cím (`name`, `email`, `role`);
