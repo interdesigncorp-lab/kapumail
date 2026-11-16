@@ -214,7 +214,8 @@ test('parser: a szakmai eszközök saját feliratot kapnak mindhárom motorban; 
   const ag = g.line({ event: 'step_update', step_update: { step_type: 'tool', tool_name: 'call_mcp_tool', step_index: 1, state: 'RUNNING', tool_info: { parameters: { ServerName: 'kapumail_szakmai', ToolName: 'jog_szakasz' } } } });
   assert.deepStrictEqual(ag, [{ type: 'activity', text: 'Megnézem a jogszabályhelyet…' }]);
   assert.strictEqual(R.activityFor('ismeretlen_eszkoz'), 'Dolgozom rajta…');
-  for (const t of ['jog_kereses', 'jog_szakasz', 'jog_valtozasok', 'jog_diff', 'official_sources_search', 'official_source_get',
+  for (const t of ['jog_kereses', 'jog_szakasz', 'jog_valtozasok', 'jog_diff', 'jog_idoallapot_osszehasonlitas',
+    'official_exchange_rate', 'official_sources_search', 'official_source_get',
     'official_source_verify', 'official_source_history', 'official_source_status', 'official_answer_check']) {
     assert.notStrictEqual(R.activityFor(t), 'Dolgozom rajta…', t);
   }
@@ -225,4 +226,7 @@ test('persona: a szakmai eszközök szabályai benne vannak', () => {
   assert.match(p, /nem hiteles jogforrás/);
   assert.match(p, /njt\.hu/);
   assert.match(p, /vonatkozási nap/);
+  assert.match(p, /jog_valtozasok/);
+  assert.match(p, /idoallapotok/);
+  assert.match(p, /isError/);
 });

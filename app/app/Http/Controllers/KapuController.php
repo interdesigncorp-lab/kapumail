@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Iratkapu\Audit;
+use App\Iratkapu\OfficeMail;
 use App\Iratkapu\PremiumMcp;
 use App\Mcp\KapuConfirm;
 use App\Mcp\McpAccess;
@@ -43,6 +44,10 @@ class KapuController extends Controller
         $u = Auth::user();
         $device = trim((string) ($r->validate(['device' => 'nullable|string|max:200'])['device'] ?? ''));
         $name = 'Kapu – '.($device !== '' ? mb_substr($device, 0, 60) : 'ez a gép');
+        if ($u->role === 'admin' && ! McpAccess::enabled((int) $u->office_id)) {
+            OfficeMail::put((int) $u->office_id, ['mcp' => ['enabled' => true] + (OfficeMail::settings((int) $u->office_id)['mcp'] ?? [])]);
+            Audit::log($u->office_id, $u, 'AI-kapcsolat (MCP) automatikusan bekapcsolva a Kapu-chat indításakor, saját felelősségre (ÁSZF 10. pont)');
+        }
         // Ugyanarra a gépre egyszerre egy token él: az újabb a régit visszavonja (egy tranzakcióban, hogy ne maradjon két élő token).
         $t = DB::transaction(function () use ($u, $name) {
             DB::table('mcp_tokens')->where('user_id', $u->id)->where('level', 'kapu')->where('name', $name)->whereNull('revoked_at')

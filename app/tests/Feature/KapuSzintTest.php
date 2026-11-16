@@ -138,6 +138,34 @@ class KapuSzintTest extends TestCase
         $this->assertNull(McpAccess::fromToken($t));
     }
 
+    public function test_admin_kapu_token_kerese_automatikusan_bekapcsolja_az_mcp_kapcsolatot_nem_admine_nem(): void
+    {
+        $ia = $this->u('IA');
+        $lg = $this->u('LG');
+        OfficeMail::put($ia->office_id, ['mcp' => ['enabled' => false]]);
+
+        $tNonAdmin = $this->actingAs($lg)->postJson('/api/kapu/token', ['device' => 'Könyvelő gép'])->assertOk()->json('token');
+        $this->assertFalse(McpAccess::enabled($ia->office_id));
+        $this->assertNull(McpAccess::fromToken($tNonAdmin));
+
+        $tAdmin = $this->actingAs($ia)->postJson('/api/kapu/token', ['device' => 'Admin gép'])->assertOk()->json('token');
+        $this->assertTrue(McpAccess::enabled($ia->office_id));
+        $this->assertNotNull(McpAccess::fromToken($tAdmin));
+        $this->assertTrue(DB::table('audit_events')->where('office_id', $ia->office_id)->where('action', 'like', '%AI-kapcsolat (MCP) automatikusan bekapcsolva%')->exists());
+    }
+
+    public function test_helyi_fiok_letrehozasakor_az_mcp_alapbol_be_van_kapcsolva(): void
+    {
+        $this->withHeaders(['User-Agent' => 'Mozilla/5.0 KapuMail-Desktop/0.1.0 (local)'])
+            ->postJson('/local/enter', ['secret' => str_repeat('a', 40)])
+            ->assertOk()
+            ->assertJson(['ok' => true, 'created' => true]);
+
+        $localOffice = DB::table('offices')->where('name', 'Saját iroda')->orderByDesc('id')->first();
+        $this->assertNotNull($localOffice);
+        $this->assertTrue(McpAccess::enabled((int) $localOffice->id));
+    }
+
     public function test_admin_listaban_latszik_es_visszavonhato(): void
     {
         $this->actingAs($this->u('LG'))->postJson('/api/kapu/token', ['device' => 'Laptop'])->assertOk();

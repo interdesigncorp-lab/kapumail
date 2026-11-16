@@ -104,7 +104,7 @@ class AppController extends Controller
         $created = false;
         if (! $oid) {
             DB::transaction(function () use ($d, $ts, &$oid) {
-                $o = $oid = DB::table('offices')->insertGetId(['name' => 'Saját iroda', 'settings' => json_encode(['reminders' => [5, 2, 1], 'local' => true, 'onboarding' => 'pending'])] + $ts);
+                $o = $oid = DB::table('offices')->insertGetId(['name' => 'Saját iroda', 'settings' => json_encode(['reminders' => [5, 2, 1], 'local' => true, 'onboarding' => 'pending', 'mcp' => ['enabled' => true]])] + $ts);
                 DB::table('users')->insert(['name' => 'Saját fiók', 'email' => self::LOCAL_EMAIL, 'password' => Hash::make($d['secret']), 'office_id' => $o, 'role' => 'admin', 'initials' => 'ÉN'] + $ts);
                 // Kiinduló szabályok: ugyanazok, mint a mintairodában, felelős nélkül.
                 foreach ([
