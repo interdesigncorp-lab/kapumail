@@ -67,12 +67,20 @@ const ACTIVITY = {
   jog_diff: 'Összevetem a jogszabály két állapotát…',
   jog_idoallapot_osszehasonlitas: 'Összevetem az anyagi és eljárási időállapotot…',
   official_exchange_rate: 'Megnézem a hivatalos MNB-árfolyamot…',
+  official_vat_check: 'Ellenőrzöm a közösségi vagy hazai adószámot…',
+  official_base_rate: 'Megnézem a jegybanki alapkamatot…',
+  official_inflation: 'Megnézem a hivatalos inflációs adatokat…',
+  official_teaor_lookup: 'Keresem a TEÁOR-kódot…',
   official_sources_search: 'Keresem a hivatalos könyvelői forrást…',
   official_source_get: 'Megnyitom a hivatalos forrást…',
   official_source_verify: 'Ellenőrzöm a forrás érvényességét…',
   official_source_history: 'Megnézem a forrás változásait…',
   official_source_status: 'Megnézem a források állapotát…',
   official_answer_check: 'Ellenőrzöm a választ a forrásokon…',
+  ado_szamitas: 'Kiszámolom az adót és a járulékokat…',
+  forras_ellentmondas_vizsgalat: 'Összevetem a források esetleges ellentmondásait…',
+  jogszabaly_valtozas_hatasvizsgalat: 'Elemzem a jogszabályváltozás hatását…',
+  szakmai_kutatas: 'Átfogó szakmai kutatást végzek…',
 };
 const BUSY = 'Dolgozom rajta…';
 const activityFor = (tool) => ACTIVITY[tool] || BUSY;
@@ -104,8 +112,7 @@ function withPersona(message, text, sessionId) {
 }
 
 const CODEX_DISABLE = ['shell_tool', 'unified_exec', 'view_image', 'apps', 'browser_use', 'computer_use', 'in_app_browser',
-  'multi_agent', 'hooks', 'goals', 'memories', 'plugins', 'image_generation', 'tool_suggest', 'skill_mcp_dependency_install',
-  'code_mode', 'code_mode_host'];
+  'multi_agent', 'hooks', 'goals', 'memories', 'plugins', 'image_generation', 'tool_suggest', 'skill_mcp_dependency_install'];
 
 /**
  * buildArgs(engine, {message, sessionId?, mcpFile?, persona?, cwd?, extra?, model?, timeoutSec?}) → string[]
@@ -287,16 +294,45 @@ function createParser(engine) {
     return out;
   }
 
+  function codexExecTools(src) {
+    if (!src) return [];
+    const found = [];
+    const re = /\btools(?:\.|\[['"])(?:(?:mcp__)?([a-z0-9_]+)__([a-z0-9_]+)|(web_search))(?:['"]\])?\s*\(/g;
+    let m;
+    while ((m = re.exec(src)) !== null) {
+      if (m[3] || (m[1] === 'web' && m[2] === 'run')) found.push('web_search');
+      else found.push(OWN_SERVERS.has(m[1]) ? m[2] : '');
+    }
+    return found;
+  }
+
   function codex(o) {
     const out = [];
     if (o.type === 'thread.started') return session(o.thread_id);
     const item = isObj(o.item) ? o.item : null;
+    if (item && item.type === 'error') {
+      st.lastError = str(item.message) || resultText(item.error) || st.lastError;
+      if (EARLY_SIGNED_OUT.test(st.lastError) && !MCP_LINE.test(st.lastError)) st.early = 'signed_out';
+      return out;
+    }
     if (item && item.type === 'mcp_tool_call') {
       const tool = OWN_SERVERS.has(item.server) && typeof item.tool === 'string' ? item.tool : '';
       out.push(...activity(tool, item.id));
       if (o.type === 'item.completed') {
         const failed = item.status === 'failed' || Boolean(item.error);
         out.push(...toolResult(item.result, failed));
+        if (item.error) out.push(...toolResult(item.error, true));
+      }
+      return out;
+    }
+    if (item && item.type === 'custom_tool_call' && item.name === 'exec') {
+      const baseKey = str(item.id) || str(item.call_id) || `exec:${st.activities.size}`;
+      const tools = codexExecTools(str(item.input) || str(item.arguments) || '');
+      if (tools.length) tools.forEach((t, idx) => out.push(...activity(t, `${baseKey}:${idx}`)));
+      else out.push(...activity('', baseKey));
+      if (o.type === 'item.completed') {
+        const failed = item.status === 'failed' || Boolean(item.error);
+        out.push(...toolResult(item.output ?? item.result, failed));
         if (item.error) out.push(...toolResult(item.error, true));
       }
       return out;

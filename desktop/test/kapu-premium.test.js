@@ -215,8 +215,10 @@ test('parser: a szakmai eszközök saját feliratot kapnak mindhárom motorban; 
   assert.deepStrictEqual(ag, [{ type: 'activity', text: 'Megnézem a jogszabályhelyet…' }]);
   assert.strictEqual(R.activityFor('ismeretlen_eszkoz'), 'Dolgozom rajta…');
   for (const t of ['jog_kereses', 'jog_szakasz', 'jog_valtozasok', 'jog_diff', 'jog_idoallapot_osszehasonlitas',
-    'official_exchange_rate', 'official_sources_search', 'official_source_get',
-    'official_source_verify', 'official_source_history', 'official_source_status', 'official_answer_check']) {
+    'official_exchange_rate', 'official_vat_check', 'official_base_rate', 'official_inflation', 'official_teaor_lookup',
+    'official_sources_search', 'official_source_get',
+    'official_source_verify', 'official_source_history', 'official_source_status', 'official_answer_check',
+    'ado_szamitas', 'forras_ellentmondas_vizsgalat', 'jogszabaly_valtozas_hatasvizsgalat', 'szakmai_kutatas']) {
     assert.notStrictEqual(R.activityFor(t), 'Dolgozom rajta…', t);
   }
 });
@@ -227,6 +229,10 @@ test('persona: a szakmai eszközök szabályai benne vannak', () => {
   assert.match(p, /njt\.hu/);
   assert.match(p, /vonatkozási nap/);
   assert.match(p, /jog_valtozasok/);
+  assert.match(p, /jog_diff/);
   assert.match(p, /idoallapotok/);
   assert.match(p, /isError/);
+  assert.match(p, /Promise\.all/);
+  assert.match(p, /Promise\.allSettled/);
+  assert.match(p, /await/);
 });

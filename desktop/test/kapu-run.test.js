@@ -118,7 +118,9 @@ test('buildArgs codex: read-only sandbox, üres cwd, mcp kapcsolók', async () =
     'mcp_servers.kapumail.default_tools_approval_mode=approve']) assert.ok(cs.includes(c), c);
   assert.ok(!cs.includes('web_search=disabled'));
   const off = a.flatMap((x, i) => (x === '--disable' ? [a[i + 1]] : []));
-  for (const f of ['shell_tool', 'unified_exec', 'view_image', 'browser_use', 'computer_use', 'memories', 'plugins', 'code_mode', 'code_mode_host']) assert.ok(off.includes(f), f);
+  for (const f of ['shell_tool', 'unified_exec', 'view_image', 'browser_use', 'computer_use', 'memories', 'plugins']) assert.ok(off.includes(f), f);
+  // GPT-6 modellek (tool_mode: code_mode_only) az izolált V8 code_mode_host-on át hívják az MCP-eszközöket
+  assert.ok(!off.includes('code_mode') && !off.includes('code_mode_host'));
   // a token értéke sosem kerül a parancssorba, csak a környezetbe
   assert.ok(!a.some((x) => x.includes(TOKEN)));
   assert.ok(a.every((x) => !/["\n\r]/.test(x)));
@@ -646,6 +648,54 @@ test('parser: resolve_code, resolve_tax_code és list_taxpayer_tables aktivitás
     item: { id: 'rtc_1', type: 'mcp_tool_call', server: 'kapumail', tool: 'resolve_tax_code' },
   });
   assert.deepStrictEqual(ev3, [{ type: 'activity', text: 'Feloldom a nyomtatvány- vagy adókódot…' }]);
+});
+
+test('parser codex: item.type=error rögzül lastError-ba, és custom_tool_call exec is ad magyar aktivitást', () => {
+  const p = R.createParser('codex');
+  assert.deepStrictEqual(p.line({
+    type: 'item.completed',
+    item: { id: 'item_0', type: 'error', message: 'Code Mode is unavailable because code-mode host is disabled.' },
+  }), []);
+  assert.strictEqual(p.state.lastError, 'Code Mode is unavailable because code-mode host is disabled.');
+
+  const ev1 = p.line({
+    type: 'item.started',
+    item: { id: 'ctc_1', type: 'custom_tool_call', name: 'exec', input: 'const r = await tools.mcp__kapumail__resolve_code({code:"EUFAD37"});' },
+  });
+  assert.deepStrictEqual(ev1, [{ type: 'activity', text: 'Feloldom a nyomtatvány- vagy adókódot…' }]);
+
+  const ev2 = p.line({
+    type: 'item.completed',
+    item: {
+      id: 'ctc_1',
+      type: 'custom_tool_call',
+      name: 'exec',
+      input: 'const r = await tools.mcp__kapumail__resolve_code({code:"EUFAD37"});',
+      output: [{ type: 'input_text', text: JSON.stringify({ needs_approval: true, confirm_id: CONFIRM }) }],
+      status: 'completed',
+    },
+  });
+  assert.deepStrictEqual(ev2, [{ type: 'confirm', id: CONFIRM }]);
+
+  const ev3 = p.line({
+    type: 'item.started',
+    item: {
+      id: 'ctc_2',
+      type: 'custom_tool_call',
+      name: 'exec',
+      input: 'await tools.mcp__kapumail_szakmai__official_exchange_rate({currency:"EUR"}); await tools.web__run({search_query:[{q:"site:mnb.hu eur"}]});',
+    },
+  });
+  assert.deepStrictEqual(ev3, [
+    { type: 'activity', text: 'Megnézem a hivatalos MNB-árfolyamot…' },
+    { type: 'activity', text: 'Keresek a hivatalos oldalakon…' },
+  ]);
+
+  const ev4 = p.line({
+    type: 'item.started',
+    item: { id: 'ctc_3', type: 'custom_tool_call', name: 'exec', input: 'const x = ALL_TOOLS.length;' },
+  });
+  assert.deepStrictEqual(ev4, [{ type: 'activity', text: 'Dolgozom rajta…' }]);
 });
 
 test('prepare claude: a megszakítás leállítja a belépés frissítését', async () => {

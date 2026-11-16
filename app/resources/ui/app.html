@@ -3183,7 +3183,7 @@ function updWhenTxt(iso){
 function updateCardHtml(){
   const U=window.iratkapuDesktop&&window.iratkapuDesktop.updater;
   if(!U)return '';
-  const st=UPD.state,ver=esc((st&&st.current)||(navigator.userAgent.match(/KapuMail-Desktop\/([\d.]+)/)||[])[1]||'0.2.3');
+  const st=UPD.state,ver=esc((st&&st.current)||(navigator.userAgent.match(/KapuMail-Desktop\/([\d.]+)/)||[])[1]||'0.2.4');
   const renew=!!(OFFICE.license&&OFFICE.license.officialBuild&&!OFFICE.license.canSync);
   const lines=[`<p class="mut" style="margin:0 0 6px">Ez a KapuMail <b>${ver}</b>.</p>`];
   if(st&&!st.enabled){

@@ -6,14 +6,14 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/Licenc-GNU%20AGPLv3-6d28d9" alt="GNU AGPLv3"></a>
-  <a href="https://kapumail.hu"><img src="https://img.shields.io/badge/Kiad%C3%A1s-v0.2.3-7c3aed" alt="v0.2.3"></a>
+  <a href="https://kapumail.hu"><img src="https://img.shields.io/badge/Kiad%C3%A1s-v0.2.4-7c3aed" alt="v0.2.4"></a>
   <a href="https://kapumail.hu"><img src="https://img.shields.io/badge/M%C5%B1k%C3%B6d%C3%A9s-Local%20First%20(macOS%20%C2%B7%20Windows)-059669" alt="Local First"></a>
   <a href="../../issues/new?template=feature_request.yml"><img src="https://img.shields.io/badge/%C3%9Aj%20funkci%C3%B3%20k%C3%A9r%C3%A9se-Feature%20Request-2563eb" alt="Feature Request"></a>
 </p>
 
 A **KapuMail** helyi adattárolású (*local-first*) asztali dokumentumközpont, amely egyetlen átlátható felületen gyűjti és rendezi az ügyfelek **Ügyfélkapu+-**, **DÁP-**, **Cégkapu-** és **hivatali tárhelyének** küldeményeit, valamint a **NAV ügyfélportál** és az **önkormányzati ASP portál** adatait — szigorúan elválasztva a belső feldolgozást a joghatást kiváltó hivatalos átvételi műveletektől.
 
-Weboldal és hivatalos aláírt telepítők: **https://kapumail.hu** · Kiadási verzió: **0.2.3**
+Weboldal és hivatalos aláírt telepítők: **https://kapumail.hu** · Kiadási verzió: **0.2.4**
 
 ---
 
@@ -29,7 +29,7 @@ Weboldal és hivatalos aláírt telepítők: **https://kapumail.hu** · Kiadási
 
 ---
 
-## Főbb funkciók és képességek (`0.2.3`)
+## Főbb funkciók és képességek (`0.2.4`)
 
 - **Élő tárhely- és portálkapcsolatok:** Ügyfélkapu+ (KAÜ / TOTP), DÁP QR, Cégkapu és Hivatali tárhely küldeményeinek szinkronizálása, továbbá a NAV ügyfélportál (adónaptár, adószámla, bevallások) és az önkormányzati ASP portál (helyi adók) áttekintése.
 - **Hordozható helyi architektúra (*Local-first*):** Az asztali alkalmazás beágyazott, hordozható PHP 8.4 CLI futtatókörnyezetet és helyi SQLite adatbázist futtat közvetlenül a felhasználó saját gépén (`<userData>/local-server`), külső felhős adattárolás nélkül.
@@ -82,7 +82,7 @@ npm run build:oss
 ```
 *(vagy közvetlenül: `KAPUMAIL_OFFICIAL_BUILD=0 node scripts/build-release.js --unsigned`)*
 
-A parancs letölti a hordozható PHP 8.4 futtatókörnyezetet, előkészíti a tiszta Laravel alkalmazásszervert, és lefordítja a telepítőket a `desktop/dist/` mappába (`KapuMail-0.2.3-arm64.dmg`, `KapuMail-0.2.3-x64.dmg`, `KapuMail-Setup-0.2.3.exe`).
+A parancs letölti a hordozható PHP 8.4 futtatókörnyezetet, előkészíti a tiszta Laravel alkalmazásszervert, és lefordítja a telepítőket a `desktop/dist/` mappába (`KapuMail-0.2.4-arm64.dmg`, `KapuMail-0.2.4-x64.dmg`, `KapuMail-Setup-0.2.4.exe`).
 
 ---
 
