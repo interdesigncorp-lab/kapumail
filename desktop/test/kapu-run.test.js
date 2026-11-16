@@ -698,6 +698,97 @@ test('parser codex: item.type=error rögzül lastError-ba, és custom_tool_call 
   assert.deepStrictEqual(ev4, [{ type: 'activity', text: 'Dolgozom rajta…' }]);
 });
 
+test('parser codex: valós dupla-kódolt code_mode_host exec kimenetből confirm és mcp_off is kinyerődik', () => {
+  const realConfirm = 'e2bb8311-c623-4a42-9c27-a2cb89a59e2c';
+  const p = R.createParser('codex');
+  const ev = p.line({
+    type: 'item.completed',
+    item: {
+      id: 'ctc_real',
+      type: 'custom_tool_call',
+      name: 'exec',
+      input: 'const x=await tools.mcp__kapumail__update_settings({reminders:[5,1]}); text(x);\n',
+      output: [
+        { type: 'input_text', text: 'Script completed\nWall time 0.0 seconds\nOutput:\n' },
+        { type: 'input_text', text: JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({ needs_approval: true, confirm_id: realConfirm }) }] }) },
+      ],
+      status: 'completed',
+    },
+  });
+  assert.deepStrictEqual(ev, [
+    { type: 'activity', text: 'Előkészítem a beállítás módosítását…' },
+    { type: 'confirm', id: realConfirm },
+  ]);
+
+  // Ha az MCP-hívás hibát ad az exec belsejében (isError: true), de maga a JS szkript completed: mcp_off lesz
+  const pOff = R.createParser('codex');
+  pOff.line({
+    type: 'item.completed',
+    item: {
+      id: 'ctc_off',
+      type: 'custom_tool_call',
+      name: 'exec',
+      input: 'const x=await tools.mcp__kapumail__get_settings({}); text(x);\n',
+      output: [
+        { type: 'input_text', text: 'Script completed\nWall time 0.0 seconds\nOutput:\n' },
+        { type: 'input_text', text: JSON.stringify({ isError: true, content: [{ type: 'text', text: 'Nincs érvényes MCP-hozzáférés.' }] }) },
+      ],
+      status: 'completed',
+    },
+  });
+  assert.strictEqual(pOff.end({ code: 0 }).code, 'mcp_off');
+
+  // Sikeres (isError nélkül) szövegben nem riaszt tévesen
+  const pOk = R.createParser('codex');
+  pOk.line({
+    type: 'item.completed',
+    item: {
+      id: 'ctc_ok',
+      type: 'custom_tool_call',
+      name: 'exec',
+      input: 'const x=await tools.mcp__kapumail__get_client({client_id:1}); text(x);\n',
+      output: [
+        { type: 'input_text', text: JSON.stringify({ content: [{ type: 'text', text: 'Nincs érvényes MCP-hozzáférés? Nem, csak jegyzet.' }] }) },
+      ],
+      status: 'completed',
+    },
+  });
+  pOk.line({ type: 'item.completed', item: { id: 'm1', type: 'agent_message', text: 'Rendben.' } });
+  assert.strictEqual(pOk.end({ code: 0 }).type, 'final');
+});
+
+test('parser codex: JS komment nem ad hamis aktivitást, változóba mentett / destrukturált tools és signed_out megmarad', () => {
+  const p = R.createParser('codex');
+  const ev1 = p.line({
+    type: 'item.started',
+    item: {
+      id: 'ctc_c1',
+      type: 'custom_tool_call',
+      name: 'exec',
+      input: [
+        '// Ne hívjuk: tools.mcp__kapumail__update_settings({reminders:[1]})',
+        '/* tools.mcp__kapumail__audit_log({}) */',
+        'const u = "https://mnb.hu/arfolyamok";',
+        'const fn = tools.mcp__kapumail__get_settings;',
+        'const { mcp__kapumail__resolve_code: rc } = tools;',
+        'await fn({}); await rc({code:"EUFAD37"}); await tools[`mcp__kapumail_szakmai__jog_szakasz`]?.({slug:"Áfa tv.",paragrafus:"37"});',
+      ].join('\n'),
+    },
+  });
+  assert.deepStrictEqual(ev1, [
+    { type: 'activity', text: 'Megnézem a beállításokat…' },
+    { type: 'activity', text: 'Feloldom a nyomtatvány- vagy adókódot…' },
+    { type: 'activity', text: 'Megnézem a jogszabályhelyet…' },
+  ]);
+
+  // item.type=error (OAuth token has expired) + utólagos hiba + turn.completed üres válasszal → signed_out (nem failed)
+  const pSignOut = R.createParser('codex');
+  pSignOut.line({ type: 'item.completed', item: { id: 'e1', type: 'error', message: 'OAuth token has expired' } });
+  pSignOut.line({ type: 'error', message: 'Stream closed before response' });
+  pSignOut.line({ type: 'turn.completed' });
+  assert.strictEqual(pSignOut.end({ code: 0 }).code, 'signed_out');
+});
+
 test('prepare claude: a megszakítás leállítja a belépés frissítését', async () => {
   const ac = new AbortController();
   let aborted = false;

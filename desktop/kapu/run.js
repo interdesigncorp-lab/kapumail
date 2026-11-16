@@ -262,6 +262,27 @@ function createParser(engine) {
     st.confirms.add(id);
     return [{ type: 'confirm', id }];
   };
+  const execToolResults = (v, failed = false) => {
+    const out = [...toolResult(v, failed)];
+    for (const line of resultText(v).split('\n')) {
+      const t = line.trim();
+      if (!t || (t[0] !== '{' && t[0] !== '[')) continue;
+      try {
+        const parsed = JSON.parse(t);
+        for (const p of (Array.isArray(parsed) ? parsed : [parsed])) {
+          if (!isObj(p)) continue;
+          const innerFailed = failed || p.isError === true || p.is_error === true || Boolean(p.error);
+          out.push(...toolResult(p, innerFailed));
+        }
+      } catch { /* nem JSON sor */ }
+    }
+    return out;
+  };
+  const recordError = (msg) => {
+    if (!msg) return;
+    st.lastError = st.lastError ? `${st.lastError}\n${msg}`.slice(-4096) : msg;
+    if (EARLY_SIGNED_OUT.test(msg) && !MCP_LINE.test(msg)) st.early = 'signed_out';
+  };
 
   function claude(o) {
     const out = [];
@@ -294,14 +315,27 @@ function createParser(engine) {
     return out;
   }
 
+  function mapExecTool(raw) {
+    if (raw === 'web_search' || raw === 'WebSearch' || raw === 'web__run') return 'web_search';
+    const m = /^(?:mcp__)?([a-z0-9_]+?)__([a-z0-9_]+)$/i.exec(raw);
+    if (!m) return null;
+    return OWN_SERVERS.has(m[1]) ? m[2] : '';
+  }
+
   function codexExecTools(src) {
     if (!src) return [];
+    const clean = src.replace(/'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|`(?:\\.|[^`\\])*`|\/\/[^\n]*|\/\*[\s\S]*?\*\//g, (m) => (m[0] === '/' ? ' ' : m));
     const found = [];
-    const re = /\btools(?:\.|\[['"])(?:(?:mcp__)?([a-z0-9_]+)__([a-z0-9_]+)|(web_search))(?:['"]\])?\s*\(/g;
+    const re = /\btools\s*(?:\.\s*([A-Za-z0-9_]+)|\[\s*['"`]([A-Za-z0-9_]+)['"`]\s*\])|\{\s*([^}]+)\}\s*=\s*tools\b/g;
     let m;
-    while ((m = re.exec(src)) !== null) {
-      if (m[3] || (m[1] === 'web' && m[2] === 'run')) found.push('web_search');
-      else found.push(OWN_SERVERS.has(m[1]) ? m[2] : '');
+    while ((m = re.exec(clean)) !== null) {
+      const names = m[3]
+        ? m[3].split(',').map((p) => p.split(':')[0].split('=')[0].trim()).filter(Boolean)
+        : [m[1] || m[2]];
+      for (const n of names) {
+        const mapped = mapExecTool(n);
+        if (mapped !== null) found.push(mapped);
+      }
     }
     return found;
   }
@@ -311,8 +345,7 @@ function createParser(engine) {
     if (o.type === 'thread.started') return session(o.thread_id);
     const item = isObj(o.item) ? o.item : null;
     if (item && item.type === 'error') {
-      st.lastError = str(item.message) || resultText(item.error) || st.lastError;
-      if (EARLY_SIGNED_OUT.test(st.lastError) && !MCP_LINE.test(st.lastError)) st.early = 'signed_out';
+      recordError(str(item.message) || resultText(item.error));
       return out;
     }
     if (item && item.type === 'mcp_tool_call') {
@@ -332,7 +365,7 @@ function createParser(engine) {
       else out.push(...activity('', baseKey));
       if (o.type === 'item.completed') {
         const failed = item.status === 'failed' || Boolean(item.error);
-        out.push(...toolResult(item.output ?? item.result, failed));
+        out.push(...execToolResults(item.output ?? item.result, failed));
         if (item.error) out.push(...toolResult(item.error, true));
       }
       return out;
@@ -345,8 +378,7 @@ function createParser(engine) {
     if (o.type === 'turn.failed') st.failure = resultText(o.error) || 'turn.failed';
     // A felső szintű `error` sor nem mindig végzetes (újrapróbálás): csak megjegyezzük.
     if (o.type === 'error') {
-      st.lastError = str(o.message) || st.lastError;
-      if (EARLY_SIGNED_OUT.test(st.lastError) && !MCP_LINE.test(st.lastError)) st.early = 'signed_out';
+      recordError(str(o.message) || resultText(o.error));
     }
     if (o.type === 'turn.completed' && st.final === null) st.final = '';
     return out;
@@ -405,7 +437,7 @@ function createParser(engine) {
       if (st.mcpOff) return err('mcp_off');
       if (st.final !== null && st.failure === null && (code === 0 || code === null)) {
         const text = st.final.trim();
-        return text ? { type: 'final', text } : err('failed');
+        if (text) return { type: 'final', text };
       }
       if (SIGNED_OUT.test(evidence)) return err('signed_out');
       return err('failed');
