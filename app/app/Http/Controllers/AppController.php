@@ -27,6 +27,7 @@ use App\Iratkapu\SignatureCheck;
 use App\Iratkapu\SubmissionPairing;
 use App\Iratkapu\SyncService;
 use App\Iratkapu\Taxonomy;
+use App\Iratkapu\TaxpayerDataTables;
 use App\Iratkapu\TaxPayment;
 use App\Iratkapu\TypeActions;
 use App\Iratkapu\TypeSettings;
@@ -836,6 +837,7 @@ class AppController extends Controller
             'documents.*.caseType' => 'nullable|string|max:200', 'documents.*.caseNo' => 'nullable|string|max:40', 'documents.*.krNo' => 'nullable|string|max:60',
             'documents.*.submittedAt' => ['nullable', 'string', 'regex:/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$/'], 'documents.*.arrivedAt' => ['nullable', 'string', 'regex:/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$/'],
             'documents.*.downloadedAt' => ['nullable', 'string', 'regex:/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$/'], 'documents.*.files' => 'nullable|integer|min:0|max:1000',
+            'taxpayerTables' => 'nullable|array',
         ]);
         $portal = DB::table('portal_connections')->where('office_id', $u->office_id)->find((int) $d['portalId']);
         abort_if(! $portal, 404);
@@ -893,10 +895,13 @@ class AppController extends Controller
         $subjectClient = $this->navSubjectClient($u, $portal, $d['subject'] ?? null, $self);
         $ret = array_key_exists('returns', $d) && $d['returns'] !== null ? $this->navReturns($u, $subjectClient, $d['returns']) : null;
         $docs = array_key_exists('documents', $d) && $d['documents'] !== null ? $this->navDocuments($u, $subjectClient, $d['documents']) : null;
+        $tt = (config('iratkapu.nav_queries') && $subjectClient && is_array($d['taxpayerTables'] ?? null))
+            ? TaxpayerDataTables::syncClientSnapshot((int) $u->office_id, (int) $subjectClient->id, $d['taxpayerTables'])
+            : null;
         DB::table('portal_connections')->where('id', $portal->id)->update(['upo_state' => 'ok', 'upo_at' => now(), 'updated_at' => now()]);
         Audit::log($u->office_id, $u, 'NAV-portál adatai fogadva: '.count($seen)." képviselt adózó, ebből $suggested ajánlat".($cal ? ", {$cal['upserted']} adónaptár-tétel" : ''), ['evidence' => 'csak olvasás, a belépő saját nevében', 'policy' => 'ADR-010, A kör']);
 
-        return ['ok' => true, 'known' => $known, 'suggested' => $suggested, 'total' => count($seen), 'calendar' => $cal, 'returns' => $ret, 'documents' => $docs];
+        return ['ok' => true, 'known' => $known, 'suggested' => $suggested, 'total' => count($seen), 'calendar' => $cal, 'returns' => $ret, 'documents' => $docs] + ($tt !== null ? ['taxpayerTables' => $tt] : []);
     }
 
     /** A NAV-nál kiválasztott adózóhoz tartozó ügyfél: látott, aktív ügyfél; a belépő saját adatainál a saját gyűjtője. Különben null. */
@@ -909,7 +914,7 @@ class AppController extends Controller
             return null;
         }
         $client = $this->navSwitchClients($u)->where(fn ($q) => $q->where('tax', $id)->orWhere('tax', 'like', "$id-%"))->first();
-        if (! $client && $taxId && in_array($taxId, $self, true)) {
+        if (! $client && (($taxId && in_array($taxId, $self, true)) || ($stem && in_array($stem, $self, true)))) {
             $client = ClientDiscovery::ownCollector($u, $portal);
         }
 
@@ -1077,7 +1082,9 @@ class AppController extends Controller
         if (! config('iratkapu.nav_switch')) {
             return ['enabled' => false, 'ids' => []];
         }
-        $today = DB::table('nav_client_snapshots')->where('office_id', $u->office_id)->where('fetched_at', '>=', now()->startOfDay())->pluck('client_id')->all();
+        $today = $r->boolean('force')
+            ? []
+            : DB::table('nav_client_snapshots')->where('office_id', $u->office_id)->where('fetched_at', '>=', now()->startOfDay())->pluck('client_id')->all();
         $ids = $this->navSwitchClients($u)->whereNotIn('id', $today)->orderBy('name')->pluck('tax')->map(fn ($t) => self::navIdOf($t))->filter()->unique()->values()->take(15)->all();
 
         return ['enabled' => true, 'ids' => $ids];
@@ -1113,6 +1120,7 @@ class AppController extends Controller
             'clients.*.documents.*.caseType' => 'nullable|string|max:200', 'clients.*.documents.*.caseNo' => 'nullable|string|max:40', 'clients.*.documents.*.krNo' => 'nullable|string|max:60',
             'clients.*.documents.*.submittedAt' => ['nullable', 'string', 'regex:/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$/'], 'clients.*.documents.*.arrivedAt' => ['nullable', 'string', 'regex:/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$/'],
             'clients.*.documents.*.downloadedAt' => ['nullable', 'string', 'regex:/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$/'], 'clients.*.documents.*.files' => 'nullable|integer|min:0|max:1000',
+            'clients.*.taxpayerTables' => 'nullable|array',
         ]);
         $portal = $this->navPortalOf($u, (int) $d['portalId']);
         $self = array_map('strval', $portal->self_identifiers ? (json_decode($portal->self_identifiers, true) ?: []) : []);
@@ -1121,6 +1129,8 @@ class AppController extends Controller
         $obligations = 0;
         $returns = 0;
         $documents = 0;
+        $hasTt = false;
+        $ttTotals = ['insured_persons' => 0, 'employers' => 0, 'efo_declarations' => 0, 'efo_quotas' => 0, 'reconciliations' => 0];
         $names = [];
         foreach ($d['clients'] as $c) {
             $id = $c['stem'] ?? ($c['taxId'] ?? null);
@@ -1146,13 +1156,20 @@ class AppController extends Controller
             if (isset($c['documents'])) {
                 $documents += $this->navDocuments($u, $client, $c['documents']) ?? 0;
             }
+            if (config('iratkapu.nav_queries') && is_array($c['taxpayerTables'] ?? null)) {
+                $hasTt = true;
+                $sc = TaxpayerDataTables::syncClientSnapshot((int) $u->office_id, (int) $client->id, $c['taxpayerTables']);
+                foreach ($ttTotals as $tk => $tv) {
+                    $ttTotals[$tk] += (int) ($sc[$tk] ?? 0);
+                }
+            }
             $saved++;
             $names[] = $client->name;
         }
         Audit::log($u->office_id, $u, "NAV-portál: $saved ügyfél adatai fogadva képviselet-váltással".($skipped ? ", $skipped kihagyva" : '').($d['restored'] ? '' : ' – A VISSZAVÁLTÁS A SAJÁT PROFILRA NEM VOLT IGAZOLHATÓ'),
             ['evidence' => 'képviselet-váltás a belépő munkamenetében, utána csak olvasás', 'policy' => 'ADR-010, B kör']);
 
-        return ['ok' => true, 'saved' => $saved, 'skipped' => $skipped, 'obligations' => $obligations, 'returns' => $returns, 'documents' => $documents, 'restored' => (bool) $d['restored'], 'clients' => $names];
+        return ['ok' => true, 'saved' => $saved, 'skipped' => $skipped, 'obligations' => $obligations, 'returns' => $returns, 'documents' => $documents, 'restored' => (bool) $d['restored'], 'clients' => $names] + ($hasTt ? ['taxpayerTables' => $ttTotals] : []);
     }
 
     /**
@@ -1199,8 +1216,16 @@ class AppController extends Controller
             }
             $row = DB::table('tax_obligations')->where('client_id', $client->id)->where('external_key', $key)->first();
             if ($row) {
-                $settled = in_array($row->status, ['submitted', 'rejected'], true);
-                DB::table('tax_obligations')->where('id', $row->id)->update(['title' => $title, 'conditional' => (bool) ($ob['conditional'] ?? false), 'status' => $settled ? $row->status : $status, 'updated_at' => now()]);
+                $stalePair = empty($row->period_end) && ! empty($row->submitted_at) && ! empty($row->due_date)
+                    && substr((string) $row->submitted_at, 0, 7) < substr((string) $row->due_date, 0, 7);
+                $settled = ! $stalePair && in_array($row->status, ['submitted', 'rejected'], true);
+                $upd = ['title' => $title, 'conditional' => (bool) ($ob['conditional'] ?? false), 'status' => $settled ? $row->status : $status, 'updated_at' => now()];
+                if ($stalePair) {
+                    $upd['receipt_message_id'] = null;
+                    $upd['submitted_at'] = null;
+                    $upd['error_at'] = null;
+                }
+                DB::table('tax_obligations')->where('id', $row->id)->update($upd);
             } else {
                 DB::table('tax_obligations')->insert(['office_id' => $u->office_id, 'client_id' => $client->id, 'source' => 'nav', 'external_key' => $key, 'form_code' => $formCode, 'title' => $title,
                     'period_start' => $ob['periodStart'] ?? null, 'period_end' => $ob['periodEnd'] ?? null, 'due_date' => $ob['dueDate'], 'conditional' => (bool) ($ob['conditional'] ?? false), 'status' => $status,
@@ -1709,7 +1734,7 @@ class AppController extends Controller
                 }
                 $existing = DB::table('messages')->find($existing->id);
                 if ($auto = DownloadPolicy::autoDecision($existing, $mb)) {
-                    $out['autoDownload'][] = self::autoDownloadRow($existing->id, $l, $existing->folder ?? $folder, $auto);
+                    $out['autoDownload'][] = self::autoDownloadRow($existing->id, $l, $existing->folder ?? $folder, $auto, $existing);
                 }
 
                 continue;
@@ -1763,7 +1788,7 @@ class AppController extends Controller
             }
             $fresh = DB::table('messages')->find($id);
             if ($auto = DownloadPolicy::autoDecision($fresh, $mb)) {
-                $out['autoDownload'][] = self::autoDownloadRow($id, $l, $folder, $auto);
+                $out['autoDownload'][] = self::autoDownloadRow($id, $l, $folder, $auto, $fresh);
             }
             $out['created']++;
             $stat[$mb->id]['created']++;
@@ -1838,7 +1863,7 @@ class AppController extends Controller
                     continue;
                 }
                 if ($auto = DownloadPolicy::autoDecision($m, $box)) {
-                    $out['autoDownload'][] = self::autoDownloadRow($m->id, ['eid' => self::liveEid($m->source_id), 'mailbox' => $box->live_ref], $m->folder ?: 'BEERKEZETT', $auto);
+                    $out['autoDownload'][] = self::autoDownloadRow($m->id, ['eid' => self::liveEid($m->source_id), 'mailbox' => $box->live_ref], $m->folder ?: 'BEERKEZETT', $auto, $m);
                 }
             }
         }
@@ -2087,9 +2112,14 @@ class AppController extends Controller
     }
 
     /** Az automatikus letöltési sor egy eleme: `via` = 'type' (a típus szabálya) vagy 'rule' (felülíró szabály). */
-    private static function autoDownloadRow(int $messageId, array $l, string $folder, array $auto): array
+    private static function autoDownloadRow(int $messageId, array $l, string $folder, array $auto, ?object $msg = null): array
     {
+        $subj = trim((string) (($msg->subject ?? null) ?: ($l['desc'] ?? '') ?: ($l['type'] ?? '')));
+        $snd = trim((string) (($msg->sender_full ?? null) ?: ($msg->sender ?? null) ?: ($l['senderFull'] ?? '') ?: ($l['sender'] ?? '')));
+
         return ['id' => "m$messageId", 'eid' => $l['eid'], 'mailbox' => $l['mailbox'], 'folder' => $folder, 'via' => $auto['via'],
+            'subject' => $subj !== '' ? mb_substr($subj, 0, 120) : null,
+            'sender' => $snd !== '' ? mb_substr($snd, 0, 80) : null,
             'priority' => $folder === 'ELKULDOTT' ? 50 : 10,
             'ruleId' => $auto['rule']->id ?? null, 'ruleName' => $auto['rule']->name ?? null, 'override' => $auto['via'] === 'rule'];
     }

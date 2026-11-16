@@ -12,9 +12,10 @@ const path = require('node:path');
 const ENGINES = ['claude', 'codex', 'agy'];
 const ENGINE_LABEL = { claude: 'Claude', codex: 'ChatGPT', agy: 'Antigravity' };
 const API_KEYS = ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GEMINI_API_KEY', 'GOOGLE_API_KEY', 'GOOGLE_GENAI_API_KEY'];
-// A gyerekfolyamatból kiszűrt változók: az API-kulcsok, és ami az előfizetés helyett más fiókra,
+const MCP_TOKENS = ['IRATKAPU_MCP_TOKEN', 'KAPUMAIL_MCP_TOKEN', 'KAPUMAIL_SZAKMAI_TOKEN'];
+// A gyerekfolyamatból kiszűrt változók: az API-kulcsok, MCP tokenek és ami az előfizetés helyett más fiókra,
 // átjáróra vagy felhőre terelné a CLI-t (vagy más állapotmappára, mint amit a Kapu kezel).
-const STRIP_ENV = [...API_KEYS, 'ANTHROPIC_AUTH_TOKEN', 'ANTHROPIC_BASE_URL', 'CLAUDE_CODE_USE_BEDROCK', 'CLAUDE_CODE_USE_VERTEX', 'OPENAI_BASE_URL', 'CODEX_HOME'];
+const STRIP_ENV = [...API_KEYS, ...MCP_TOKENS, 'ANTHROPIC_AUTH_TOKEN', 'ANTHROPIC_BASE_URL', 'CLAUDE_CODE_USE_BEDROCK', 'CLAUDE_CODE_USE_VERTEX', 'OPENAI_BASE_URL', 'CODEX_HOME'];
 const STATUS_TIMEOUT_MS = 8000;
 const MODELS_TIMEOUT_MS = 5000;
 const CLAUDE_CATALOG_URL = 'https://downloads.claude.ai/model-catalog/v1/catalog.json';

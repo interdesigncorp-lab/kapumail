@@ -697,6 +697,10 @@ class DeadlineExtractor
         if (! $m || ($m->folder ?? null) === 'ELKULDOTT') {
             return null;
         }
+        $subjAndType = ($m->subject ?? '').' '.($m->live_type ?? '');
+        if (preg_match('/letöltési\s+igazolás|letoltesiigazolas/iu', $subjAndType)) {
+            return null;
+        }
         $isReceipt = (bool) $m->receipt
             || in_array($m->type_id, ['nav.nyugta.elfogado', 'nav.nyugta.elutasito'], true)
             || (bool) preg_match('/(elfogad[oó]|elutas[ií]t[oó]|hib[aá]s)\s+nyugta/iu', $m->subject);
@@ -711,6 +715,10 @@ class DeadlineExtractor
             return null;
         }
 
+        $arrDate = substr((string) $m->arrived_at, 0, 10) ?: now()->toDateString();
+        $maxDueDate = Carbon::parse($arrDate)->endOfMonth()->toDateString();
+        $minDueDate = Carbon::parse($arrDate)->subMonths(2)->startOfMonth()->toDateString();
+
         $q = DB::table('tax_obligations')->where('client_id', $m->client_id);
         $ob = null;
         if ($barcode) {
@@ -719,16 +727,18 @@ class DeadlineExtractor
         if (! $ob && $formCode) {
             $ob = (clone $q)
                 ->whereRaw('UPPER(form_code) = ?', [mb_strtoupper($formCode)])
-                ->when($m->period_to, fn ($qq) => $qq->where('period_end', $m->period_to))
+                ->when(
+                    $m->period_to,
+                    fn ($qq) => $qq->where('period_end', $m->period_to),
+                    fn ($qq) => $qq->whereBetween('due_date', [$minDueDate, $maxDueDate])
+                )
                 ->orderByRaw("CASE WHEN status IN ('missing','submittable','conditional') THEN 0 ELSE 1 END")
-                ->orderByDesc('due_date')
+                ->orderBy('due_date', 'asc')
                 ->first();
         }
         if (! $ob) {
             return null;
         }
-
-        $arrDate = substr((string) $m->arrived_at, 0, 10) ?: now()->toDateString();
         DB::table('tax_obligations')->where('id', $ob->id)->update([
             'status' => $rejected ? 'rejected' : 'submitted',
             'receipt_message_id' => $m->id,

@@ -147,3 +147,32 @@ test('már futó szinkronnál nem indít újabb példányt, háttérbe tett szin
   assert.strictEqual(h.calls.syncOv, 2);
   assert.strictEqual(h.calls.portalSync.length, 0);
 });
+
+test('a Szinkronnapló és az Auditnapló a Beállítások fülei között jelenik meg, nem külön oldalsáv-menüként', () => {
+  const railLine = html.match(/const RAIL=\[[^\n]+\];/);
+  assert.ok(railLine, 'RAIL definíció megtalálható');
+  assert.doesNotMatch(railLine[0], /Naplók|'sync'/);
+
+  const setHeadStart = html.indexOf('function setHead(t){');
+  const setHeadEnd = html.indexOf('function polTable()');
+  assert.ok(setHeadStart > 0 && setHeadEnd > setHeadStart);
+  const setHeadFn = new Function(
+    'window', 'OFFICE', 'MEU', 'esc',
+    `${html.slice(setHeadStart, setHeadEnd)}; return setHead;`
+  )(
+    { iratkapuDesktop: { kapu: {} } },
+    { name: 'Teszt Iroda' },
+    { role: 'admin' },
+    s => String(s ?? ''),
+  );
+
+  const syncHead = setHeadFn('sync');
+  assert.match(syncHead, /data-stab="sync" aria-selected="true" aria-pressed="true">Szinkronnapló<\/button>/);
+  assert.match(syncHead, /data-stab="audit" aria-selected="false" aria-pressed="false">Auditnapló<\/button>/);
+
+  const auditHead = setHeadFn('audit');
+  assert.match(auditHead, /data-stab="audit" aria-selected="true" aria-pressed="true">Auditnapló<\/button>/);
+  assert.match(html, /function vSync\(\)\{\s*return `<div class="page full">\$\{setHead\('sync'\)\}/);
+  assert.match(html, /function vAudit\(\)\{[\s\S]*?return `<div class="page full">\$\{setHead\('audit'\)\}/);
+  assert.match(html, /\['settings','rules','sync','audit'\]\.includes\(S\.area\)/);
+});

@@ -593,4 +593,325 @@ test('ui: gyors promptok DOM-sablonja és modáljai – hover ceruza + kuka mind
   assert.match(js, /function openDeletePromptModal\(id\)[\s\S]*?Gyors prompt törlése\?[\s\S]*?data-ksdelok="/, 'kuka kattintásra megerősítő modal nyílik');
   assert.match(css, /\.ke-add\{[^}]*border-radius:50%[^}]*border:1\.5px dashed/, 'a + gomb szaggatott körvonalas karika');
   assert.match(css, /\.ke-p:hover \.ke-pa,\.ke-p:focus-within \.ke-pa\{max-width:60px;opacity:1/, 'hoverre jelenik meg a szerkesztés + kuka ikonsor');
+  assert.match(css, /\.kl-row\.on \.kl-open\{background:#fff;border-color:rgba\(255,255,255,\.95\);box-shadow:0 10px 26px -14px rgba\(60,35,120,\.5\)\}/, 'aktív beszélgetéskártya lila csík és lila keret nélkül');
+});
+
+test('md: GFM-táblázat – igazítások, automatikus számoszlop, kapu: chipek, escape-elt pipe és XSS-védelem', () => {
+  const md = [
+    '| Ügyfél | Esedékesség | Státusz | Összeg | Megjegyzés |',
+    '| :--- | :---: | ---: | --- | --- |',
+    '| [Borostyán Pékség Kft.](kapu:ugyfel/3) | 2026-11-20 | **Feldolgozott** | 1 250 000 Ft | `A | B` kód |',
+    '| Minta Kft. | 2026-11-12 | Függő | -45 200 Ft | a \\| b <script>x</script> |',
+  ].join('\n');
+  const h = KapuMd.render(md);
+  assert.ok(h.includes('<div class="ktbl-w"><div class="ktbl-sc"><table class="ktbl">'));
+  assert.match(h, /<th class="al-l">Ügyfél<\/th>/);
+  assert.match(h, /<th class="al-c">Esedékesség<\/th>/);
+  assert.match(h, /<th class="al-r">Státusz<\/th>/);
+  assert.match(h, /<th class="num">Összeg<\/th>/, 'az összegeket tartalmazó oszlop automatikusan jobbra igazított (num)');
+  assert.match(h, /<th>Megjegyzés<\/th>/);
+  assert.match(h, /<td class="al-l"><button class="kchip" data-cl="3">Borostyán Pékség Kft\.<\/button><\/td>/);
+  assert.match(h, /<td class="num">1 250 000 Ft<\/td>/);
+  assert.match(h, /<td class="num">-45 200 Ft<\/td>/);
+  assert.match(h, /<td><code>A \| B<\/code> kód<\/td>/, 'kódon belüli pipe nem töri szét a cellát');
+  assert.match(h, /<td>a \| b &lt;script&gt;x&lt;\/script&gt;<\/td>/, 'escape-elt pipe és XSS-szűrés cellán belül');
+
+  // Külső pipe nélküli táblázat és dátum/adószám oszlop (nem válik számoszloppá)
+  const md2 = 'Adószám | Határidő\n--- | ---\n12345678-2-41 | 2026. 11. 20.';
+  const h2 = KapuMd.render(md2);
+  assert.ok(h2.includes('<table class="ktbl">'));
+  assert.ok(!h2.includes('class="num"'), 'adószám és dátum nem kap num osztályt');
+});
+
+test('md: címsorok, idézet, kódblokk, elválasztó és áthúzás', () => {
+  const md = [
+    '### 1. Konkrét teendők',
+    '#### Részletek',
+    '> Áfa tv. **120. §** szerinti levonási jog',
+    '',
+    '```',
+    'Alap: 100 000 Ft <tag>',
+    'Áfa:   27 000 Ft',
+    '```',
+    '',
+    'Régi: ~~10 000 Ft~~ → **12 000 Ft**',
+    '',
+    '---',
+    'Tájékoztató jellegű válasz.',
+  ].join('\n');
+  const h = KapuMd.render(md);
+  assert.match(h, /<h3 class="kh3">1\. Konkrét teendők<\/h3>/);
+  assert.match(h, /<h4 class="kh4">Részletek<\/h4>/);
+  assert.match(h, /<blockquote class="kquote"><p>Áfa tv\. <strong>120\. §<\/strong> szerinti levonási jog<\/p><\/blockquote>/);
+  assert.match(h, /<pre class="kpre"><code>Alap: 100 000 Ft &lt;tag&gt;\nÁfa:   27 000 Ft<\/code><\/pre>/);
+  assert.match(h, /<del>10 000 Ft<\/del>/);
+  assert.ok(h.includes('<hr class="khr">'));
+});
+
+test('typing: data-notype eszköztár nem gépelődik ki karakterenként, és üres záróelem sem marad rejtve', () => {
+  const d = stubDom();
+  const root = d.el('div');
+  const wrap = d.add(root, d.el('div'));
+  const bar = d.add(wrap, d.el('div'));
+  bar.dataset = { notype: '1' };
+  d.add(bar, d.textNode('2 sor Másolás CSV'));
+  const td = d.add(wrap, d.el('td'));
+  d.add(td, d.textNode('Borostyán Pékség Kft.'));
+  const emptyTd = d.add(wrap, d.el('td'));
+  const hr = d.add(root, d.el('hr'));
+  const clock = fakeClock();
+  let done = 0;
+  const r = new KapuTyping.Reveal(root, { clock, enabled: () => true, rand: seeded(9), onDone: () => done++ }).start();
+  assert.strictEqual(r.text, 'Borostyán Pékség Kft.', 'a data-notype eszköztár szövege nem kerül a gépelt szövegbe');
+  for (let i = 0; i < 100 && !done; i++) clock.advance(50);
+  assert.strictEqual(done, 1);
+  assert.ok(!emptyTd.classList.contains('kapu-type-hidden'), 'az üres cella sem marad rejtett a végén');
+  assert.ok(!hr.classList.contains('kapu-type-hidden'), 'a záró hr sem marad rejtett a végén');
+});
+
+test('ui: táblázat TSV / CSV export (BOM, pontosvessző, képlet-injekció védelem) és magyar/szám/dátum rendezés', () => {
+  const rows = [
+    ['Ügyfél', 'Összeg', 'Megjegyzés'],
+    ['Borostyán Pékség Kft.', '-45 200 Ft', 'Pontos; "idézett" szöveg'],
+    ['Minta Kft.', '1 250 000 Ft', '=CMD|\' /C calc\'!A0'],
+  ];
+  const tsv = KV.tableToTsv(rows);
+  assert.strictEqual(tsv.split('\n').length, 3);
+  assert.strictEqual(tsv.split('\n')[1], 'Borostyán Pékség Kft.\t-45 200 Ft\tPontos; "idézett" szöveg');
+
+  const csv = KV.tableToCsv(rows);
+  assert.ok(csv.startsWith('\uFEFFÜgyfél;Összeg;Megjegyzés\r\n'), 'UTF-8 BOM + pontosvesszős magyar Excel-formátum');
+  assert.ok(csv.includes(';-45 200 Ft;'), 'negatív számösszeg érintetlen marad');
+  assert.ok(csv.includes('"Pontos; ""idézett"" szöveg"'), 'pontosvessző és idézőjel RFC-4180 szerint idézve');
+  assert.ok(csv.includes(";'=CMD|"), 'Excel képlet-injekció hatástalanítva');
+
+  // Számösszegek rendezése
+  assert.ok(KV.compareTableCells('-45 200 Ft', '0 Ft', 'asc') < 0);
+  assert.ok(KV.compareTableCells('1 250 000 Ft', '200 000 Ft', 'asc') > 0);
+  assert.ok(KV.compareTableCells('1 250 000 Ft', '200 000 Ft', 'desc') < 0);
+  // Magyar és ISO dátumok rendezése
+  assert.ok(KV.compareTableCells('2026. 10. 20.', '2026. 11. 04.', 'asc') < 0);
+  assert.ok(KV.compareTableCells('2026-11-16', '2026-10-16', 'asc') > 0);
+  // Üres / kötőjeles helyőrző mindig a végére kerül (növekvőben és csökkenőben is)
+  assert.ok(KV.compareTableCells('–', '0 Ft', 'asc') > 0);
+  assert.ok(KV.compareTableCells('–', '0 Ft', 'desc') > 0);
+});
+
+test('ui: táblázat-eszköztár, válasz-másolás és persona táblázatszabály bekötve', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const js = fs.readFileSync(path.join(__dirname, '../../app/resources/ui/kapu.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '../../app/resources/ui/kapu.css'), 'utf8');
+  const persona = fs.readFileSync(path.join(__dirname, '../kapu/persona.md'), 'utf8');
+
+  assert.match(js, /function enhanceTables\(el\)/);
+  assert.match(js, /data-ktcopy/);
+  assert.match(js, /data-ktcsv/);
+  assert.match(js, /data-ktsort/);
+  assert.match(js, /data-kcopy="/);
+  assert.match(css, /\.ktbl-w\{/);
+  assert.match(css, /\.ktbl \.num,\.ktbl \.al-r\{text-align:right;font-variant-numeric:tabular-nums/);
+  assert.match(persona, /Markdown-táblázat/);
+});
+
+test('ui: beszélgetéslista 3 fázisú nézetválasztó (részletes, kétsoros, kompakt hoverre nyíló)', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const js = fs.readFileSync(path.join(__dirname, '../../app/resources/ui/kapu.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '../../app/resources/ui/kapu.css'), 'utf8');
+
+  assert.deepStrictEqual(KV.LIST_VIEWS.map((v) => v.id), ['compact', 'two', 'full']);
+  assert.strictEqual(KV.resolveListView('two'), 'two');
+  assert.strictEqual(KV.resolveListView('compact'), 'compact');
+  assert.strictEqual(KV.resolveListView('full'), 'full');
+  assert.strictEqual(KV.resolveListView('ismeretlen'), 'compact');
+  assert.strictEqual(KV.resolveListView(null), 'compact');
+
+  assert.match(js, /class="kl-day-bar"/, 'az első napfejléc sora tartalmazza a jobbra igazított nézetválasztót');
+  assert.match(js, /data-kvbtn/, 'a nézetválasztó ikon gombja');
+  assert.match(js, /class="kl-vmenu" role="menu"/, 'lenyíló választómenü');
+  assert.match(js, /data-kview="' \+ o\.id \+ '"/, 'mindhárom fázis választható a menüből');
+  assert.match(js, /l\.dataset\.kview = view/, 'az aktív fázis a #kapulist data-kview attribútumára kerül');
+  assert.match(js, /e\.__inKapuList = true/, 'a belső kattintás megjelölt, hogy az újrarenderelés után se zárja vissza a globális figyelő');
+  assert.match(js, /K\.vdd = false; K\.menu = null; renderList\(\);\s*\}, true\)/, 'a külső kattintás-figyelő capture fázisban fut az innerHTML csere előtt');
+
+  assert.match(css, /#kapulist\[data-kview="two"\] \.kl-meta\{display:none\}/, 'kétsoros nézetben a középső motorsor rejtve');
+  assert.match(css, /#kapulist\[data-kview="two"\] \.kl-when\{display:inline/, 'kétsoros nézetben az időpont a cím mellett látszik');
+  assert.match(css, /#kapulist\[data-kview="compact"\] \.kl-extra\{display:grid;grid-template-rows:0fr;opacity:0/, 'kompakt nézetben alapból 1 soros (összecsukott)');
+  assert.match(css, /#kapulist\[data-kview="compact"\] \.kl-row:hover \.kl-extra[\s\S]*?grid-template-rows:1fr;opacity:1/, 'kompakt nézetben rámutatásra kinyílik');
+});
+
+test('easter egg: hullámozva felszálló pasztell szívecskék, csillámok, kedves és könyvelős emojik a nagy Kapu felett', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const js = fs.readFileSync(path.join(__dirname, '../../app/resources/ui/kapu.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '../../app/resources/ui/kapu.css'), 'utf8');
+
+  // Készletek pontos ellenőrzése (A változat + jóváhagyott könyvelős/irodai készlet)
+  assert.deepStrictEqual(KV.EASTER_CUTE, ['🥰', '😊', '☺️', '🤗', '✨', '🌸', '🩷', '💜']);
+  assert.deepStrictEqual(KV.EASTER_OFFICE, ['💌', '🧮', '🧾', '📬', '📊', '🗂️', '📎', '☕', '✅', '🤓', '📈']);
+  assert.strictEqual(KV.EASTER_COLORS.length, 5);
+
+  // Hullámzó röppálya: felfelé emelkedik, oldalirányban szinuszosan leng, az elején előtűnik, a végén elhalványul
+  const sample = { x0: 78, y0: 44, rise: 90, drift: 6, amp: 12, freq: 2, phase: 0, maxAlpha: 0.9 };
+  const s0 = KV.stepEasterParticle(sample, 0);
+  const sMid1 = KV.stepEasterParticle(sample, 0.25);
+  const sMid2 = KV.stepEasterParticle(sample, 0.75);
+  const sEnd = KV.stepEasterParticle(sample, 1);
+  assert.strictEqual(s0.alpha, 0);
+  assert.ok(sMid1.alpha > 0.85);
+  assert.strictEqual(sEnd.alpha, 0);
+  assert.ok(sMid1.y < s0.y && sMid2.y < sMid1.y && sEnd.y < sMid2.y, 'monoton felfelé száll');
+  assert.ok(sMid1.x > sample.x0 && sMid2.x < sample.x0 + sample.drift * 0.75, 'oldalirányban hullámzik');
+
+  // Interaktív vezérlő tesztelése kézi órával és csonk DOM-mal
+  let now = 1000;
+  let nextId = 1;
+  const tasks = new Map();
+  let rafCb = null;
+  let reduced = false;
+  const env = {
+    doc: { createElement: fakeEl },
+    now: () => now,
+    rand: seeded(42),
+    disabled: () => reduced,
+    setTimeout: (fn, ms) => { const id = nextId++; tasks.set(id, { fn, at: now + ms }); return id; },
+    clearTimeout: (id) => { tasks.delete(id); },
+    raf: (fn) => { rafCb = fn; return 999; },
+    caf: () => { rafCb = null; },
+  };
+  function advance(ms) {
+    const target = now + ms;
+    while (true) {
+      let earliest = null;
+      for (const [id, t] of tasks) {
+        if (t.at <= target && (!earliest || t.at < earliest.at)) earliest = { id, ...t };
+      }
+      if (!earliest) break;
+      now = earliest.at;
+      tasks.delete(earliest.id);
+      earliest.fn();
+    }
+    now = target;
+    if (rafCb) { const f = rafCb; rafCb = null; f(now); }
+  }
+
+  const slot = fakeEl('span');
+  const hero = fakeEl('span');
+  slot.appendChild(hero);
+  const fx = KV.createHeroEasterEgg(slot, hero, env);
+
+  assert.ok(slot.classList.contains('kav-hero-slot'));
+  assert.strictEqual(fx.layer.className, 'kav-fx');
+  assert.strictEqual(fx.count(), 0);
+
+  // Ráhúzáskor: k-hover + k-happy rugózás, azonnali részecske, majd folyamatos utánpótlás
+  hero.emit('mouseenter');
+  assert.ok(hero.classList.contains('k-hover'));
+  assert.ok(hero.classList.contains('k-happy'));
+  assert.strictEqual(fx.count(), 1);
+
+  advance(900);
+  assert.ok(fx.count() >= 3, 'hover közben folyamatosan születnek az új részecskék');
+  assert.ok(!hero.classList.contains('k-happy'), 'a rugózás 680 ms után visszaáll');
+
+  // Mind a szívecskék/csillámok, mind az emojik előfordulnak nagyobb mintán
+  const kinds = new Set();
+  for (let i = 0; i < 40; i++) {
+    advance(250);
+    const p = fx.spawnOne();
+    if (p) kinds.add(p.kind);
+  }
+  assert.ok(kinds.has('heart'), 'van pasztell szív');
+  assert.ok(kinds.has('cute'), 'van kedves emoji');
+  assert.ok(kinds.has('office'), 'van könyvelős/irodai emoji');
+
+  // Elhúzáskor: k-hover lekerül, új részecske már nem indul, a meglévők szépen elhalványulva eltűnnek
+  hero.emit('mouseleave');
+  assert.ok(!hero.classList.contains('k-hover'));
+  for (let i = 0; i < 20; i++) advance(200);
+  assert.strictEqual(fx.count(), 0);
+  assert.strictEqual(fx.layer.children.length, 0);
+
+  // Kattintásra 4 részecskés örömbuborék-sorozat + minimalista tejüveg idézet-buborék jelenik meg
+  hero.emit('click');
+  advance(350);
+  assert.strictEqual(fx.count(), 4);
+  const firstQ = fx.quoteEl();
+  assert.ok(firstQ && firstQ.className === 'kav-q' && firstQ.parentNode === slot);
+  assert.match(firstQ.children[0].textContent, /^„.+”$/);
+  assert.ok(firstQ.children[1].textContent.length > 0);
+
+  // Újabb kattintás azonnal cseréli a buborékot másik idézetre és másik szerzőre
+  hero.emit('click');
+  const secondQ = fx.quoteEl();
+  assert.ok(secondQ && secondQ !== firstQ && !firstQ.parentNode);
+  assert.notStrictEqual(secondQ.children[0].textContent, firstQ.children[0].textContent);
+  assert.notStrictEqual(secondQ.children[1].textContent, firstQ.children[1].textContent);
+
+  // 6,8 mp után elhalványul (.out), majd lekerül a DOM-ból
+  advance(6800);
+  assert.ok(secondQ.classList.contains('out'));
+  advance(400);
+  assert.strictEqual(fx.quoteEl(), null);
+  assert.ok(!secondQ.parentNode);
+
+  // prefers-reduced-motion mellett a mozgó részecskék leállnak, de kattintásra az idézet továbbra is olvasható
+  reduced = true;
+  advance(50);
+  assert.strictEqual(fx.count(), 0);
+  hero.emit('mouseenter');
+  assert.strictEqual(fx.count(), 0);
+  hero.emit('click');
+  assert.strictEqual(fx.count(), 0);
+  assert.ok(fx.quoteEl() !== null, 'csökkentett mozgásnál is megjelenik az idézet');
+
+  reduced = false;
+  hero.emit('click');
+  assert.strictEqual(fx.count(), 1);
+  hero.isConnected = false;
+  advance(50);
+  assert.strictEqual(fx.count(), 0);
+  assert.strictEqual(fx.quoteEl(), null);
+
+  // Bekötés és stílus ellenőrzése
+  assert.match(js, /if \(opts\.hero\) \{\s*w\.__ke = createHeroEasterEgg\(el, w,/);
+  assert.match(css, /\.kav-hero\.k-happy\{animation:khappy/);
+  assert.match(css, /\.kav-q\{[^}]*background:rgba\(255,255,255,\.80\)/);
+  assert.match(css, /@media \(prefers-reduced-motion:reduce\)\{[^\n]*\.kav-fx\{display:none\}/);
+});
+
+test('easter egg idézetek: 12 szerző, összesen 130 tétel, kevert ismétlésmentes húzás', () => {
+  assert.strictEqual(KV.EASTER_QUOTE_GROUPS.length, 12);
+  assert.strictEqual(KV.EASTER_QUOTES.length, 130);
+  assert.deepStrictEqual(KV.EASTER_QUOTE_GROUPS.map((g) => g.a), [
+    'Warren Buffett · Berkshire Hathaway',
+    'Peter Drucker · Drucker Institute',
+    'Jeff Bezos · Amazon',
+    'Steve Jobs · Apple',
+    'Paul Graham · Y Combinator',
+    'Charlie Munger · Berkshire Hathaway',
+    'Bojár Gábor · Graphisoft',
+    'Rubik Ernő · Rubik-kocka',
+    'Sam Walton · Walmart',
+    'Satya Nadella · Microsoft',
+    'Balogh Petya · STRT',
+    'Laczkovszki Gábor · WiredSign',
+  ]);
+  for (const g of KV.EASTER_QUOTE_GROUPS) {
+    assert.strictEqual(g.qs.length, g.a === 'Laczkovszki Gábor · WiredSign' ? 20 : 10, g.a);
+    for (const q of g.qs) assert.ok(q.length >= 15 && !q.includes('Másolás') && !q.includes('javasolt idézet') && !q.includes('Kedvencem'), q);
+  }
+
+  const pick = KV.createQuotePicker(KV.EASTER_QUOTES, seeded(19));
+  const seen = new Set();
+  for (let i = 0; i < 130; i++) {
+    const item = pick();
+    assert.ok(item && item.q && item.a);
+    seen.add(item.a + '::' + item.q);
+  }
+  assert.strictEqual(seen.size, 130, 'egy teljes 130-as körben minden idézet pontosan egyszer kerül sorra');
+  // Újrakeverés után is érvényes elemet ad
+  const nextCycle = pick();
+  assert.ok(nextCycle && nextCycle.q && nextCycle.a);
 });

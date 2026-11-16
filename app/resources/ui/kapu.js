@@ -262,8 +262,458 @@
     return resolvePrompts(Array.isArray(list) ? list : null).filter(function (p) { return p.id !== id; });
   }
 
+  /* --- táblázat-export (Excel TSV / magyar CSV) és oszloprendezés segédek ------------------------- */
+  function tableToTsv(rows) {
+    return (rows || []).map(function (r) {
+      return (r || []).map(function (c) { return String(c == null ? '' : c).replace(/[\r\n\t]+/g, ' ').trim(); }).join('\t');
+    }).join('\n');
+  }
+  function csvCell(v) {
+    var s = String(v == null ? '' : v).replace(/\r\n?/g, '\n').trim();
+    // Excel képlet-injekció elleni védelem (=, @, illetve nem számmal folytatódó +/-)
+    if (/^[=@]|^[+-](?!\d)/.test(s) && s !== '-' && s !== '+') s = "'" + s;
+    if (/[;"\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+  function tableToCsv(rows) {
+    return '\uFEFF' + (rows || []).map(function (r) {
+      return (r || []).map(csvCell).join(';');
+    }).join('\r\n');
+  }
+  function parseSortDate(s) {
+    var m = /^(\d{4})[-./]\s*(\d{1,2})[-./]\s*(\d{1,2})\.?$/.exec(s);
+    if (!m) return null;
+    return (+m[1]) * 10000 + (+m[2]) * 100 + (+m[3]);
+  }
+  function parseSortNum(s) {
+    if (!s || /\d\s*[-–]\s*\d/.test(s)) return null;
+    var m = /^([+-]?\d[\d\s\u00a0\u202f]*(?:[.,]\d+)?)(?:\s*(?:%|Ft|HUF|EUR|USD|GBP|CHF|eFt|MFt|db|fő|nap|óra))?$/i.exec(s);
+    if (!m) return null;
+    var n = Number(m[1].replace(/[\s\u00a0\u202f]/g, '').replace(',', '.'));
+    return Number.isFinite(n) ? n : null;
+  }
+  function compareTableCells(a, b, dir) {
+    var sa = String(a == null ? '' : a).trim(), sb = String(b == null ? '' : b).trim();
+    var ea = !sa || /^[-–—]$/.test(sa), eb = !sb || /^[-–—]$/.test(sb);
+    if (ea && eb) return 0;
+    if (ea) return 1;
+    if (eb) return -1;
+    var sgn = dir === 'desc' ? -1 : 1;
+    var da = parseSortDate(sa), db = parseSortDate(sb);
+    if (da !== null && db !== null) return (da - db) * sgn;
+    var na = parseSortNum(sa), nb = parseSortNum(sb);
+    if (na !== null && nb !== null) return (na - nb) * sgn;
+    return sa.localeCompare(sb, 'hu', { numeric: true, sensitivity: 'base' }) * sgn;
+  }
+
+  /* --- beszélgetéslista nézetei: alapértelmezetten kompakt (1 sor, rámutatásra nyílik), kétsoros és részletes --- */
+  var LIST_VIEWS = [
+    { id: 'compact', icon: 'k-v1', label: 'Kompakt', hint: 'Egy soros cím, rámutatásra nyílik' },
+    { id: 'two', icon: 'k-v2', label: 'Kétsoros', hint: 'Cím, időpont és előnézet' },
+    { id: 'full', icon: 'k-v3', label: 'Részletes', hint: 'Cím, motor és előnézet (3 sor)' },
+  ];
+  function resolveListView(v) {
+    return v === 'compact' || v === 'two' || v === 'full' ? v : 'compact';
+  }
+
+  /* --- Kapu kabala hover & kattintás easter egg: hullámzó szívecskék/emojik + 120 cégvezetői idézet --- */
+  var EASTER_COLORS = ['#f08bb9', '#a77dff', '#ff9ebb', '#b996ff', '#f598c4'];
+  var EASTER_CUTE = ['🥰', '😊', '☺️', '🤗', '✨', '🌸', '🩷', '💜'];
+  var EASTER_OFFICE = ['💌', '🧮', '🧾', '📬', '📊', '🗂️', '📎', '☕', '✅', '🤓', '📈'];
+  var EASTER_MAX = 12;
+  var EASTER_QUOTE_GROUPS = [
+    { a: 'Warren Buffett · Berkshire Hathaway', qs: [
+      'Egy nagyszerű vállalat tartós versenyelőnnyel védi a nyereségét.',
+      'A vállalkozás valódi értékét nem pusztán a könyv szerinti értéke mutatja.',
+      'A részvény megvásárlásával egy vállalkozás tulajdonosává válsz.',
+      'A hosszú távú üzleti teljesítmény fontosabb a rövid távú árfolyammozgásoknál.',
+      'A jó befektetési döntésekhez érteni kell a vállalkozás működését.',
+      'A számviteli adatok segítik az üzleti gondolkodást, de nem helyettesítik azt.',
+      'Az erős vállalatnak olyan előnye van, amelyet a versenytársak nehezen tudnak lemásolni.',
+      'A vezetőnek a tulajdonosok hosszú távú érdekeit kell képviselnie.',
+      'A hibák beismerése a felelős vállalatvezetés része.',
+      'A vállalkozás értékteremtése fontosabb annál, hogy a piac ma mennyire lelkesedik érte.',
+    ] },
+    { a: 'Peter Drucker · Drucker Institute', qs: [
+      'Az idő a vezető legszűkösebb erőforrása.',
+      'Az eredmények a lehetőségek kihasználásából születnek.',
+      'A hatékony innováció egyszerű és jól körülhatárolt.',
+      'A marketing és az innováció teremti meg az üzleti eredményeket.',
+      'A munkához felelősség, határidő és visszajelzés is tartozik.',
+      'A vezetés célja, hogy magasabbra emelje az emberek jövőképét.',
+      'A jó stratégia önmagában kevés, a megvalósítás minősége döntő.',
+      'Az erőforrásokat a legnagyobb lehetőségekre kell összpontosítani.',
+      'A hosszú távú tervezés a mai döntések jövőbeli következményeiről szól.',
+      'A valódi eredményesség azzal kezdődik, hogy a megfelelő feladatot választjuk.',
+    ] },
+    { a: 'Jeff Bezos · Amazon', qs: [
+      'Az ügyfelek igényeire figyelő vállalat sosem fogy ki a fejlődési lehetőségekből.',
+      'A gyors döntéshozatal a versenyképesség része.',
+      'Nem minden döntés igényel teljes bizonyosságot.',
+      'Az ügyfél elégedettsége fontosabb a vállalati folyamatok kényelménél.',
+      'A jó vezető felismeri, amikor a folyamat fontosabbá vált a célnál.',
+      'A magas minőségi elvárás tanulható és fejleszthető.',
+      'Az ügyfélközpontúság hosszú távú gondolkodást követel.',
+      'A kiváló munkához sokszor több idő kell, mint elsőre gondolnánk.',
+      'A vállalat mérete nem indokolja a vállalkozói gondolkodás elvesztését.',
+      'A hosszú távú értékteremtésért néha rövid távú áldozatot kell vállalni.',
+    ] },
+    { a: 'Steve Jobs · Apple', qs: [
+      'A múlt eseményeinek értelmét gyakran csak később ismerjük fel.',
+      'A megérzésnek és a kíváncsiságnak is helye van a döntéseinkben.',
+      'A kudarc néha megszabadít a korábbi sikerek terhétől.',
+      'A szeretett munka megtalálásához keresni és kísérletezni kell.',
+      'Ne elégedj meg olyan munkával, amelyben nem hiszel.',
+      'Az időnk véges, ezért nem érdemes mások életét élnünk.',
+      'A veszteség új kezdet lehet.',
+      'A bizonytalanság ellenére is bíznunk kell abban, hogy a döntéseink egyszer értelmet nyernek.',
+      'A kíváncsiság olyan tudáshoz vezethet, amelynek később vesszük hasznát.',
+      'Maradj éhes a tudásra, és merj kezdőként gondolkodni.',
+    ] },
+    { a: 'Paul Graham · Y Combinator', qs: [
+      'Az induláskor olyan munkát is vállalj, amelyet később nem lehet automatizálni.',
+      'Az első ügyfeleket gyakran személyesen kell megszerezni.',
+      'A sikeres startup egy valós emberi problémából indul ki.',
+      'Jobb néhány lelkes felhasználó, mint sok közömbös.',
+      'Az első ügyfelek visszajelzéseiből érted meg igazán a termékedet.',
+      'Egy szűk piac is lehet egy nagy vállalkozás kezdete.',
+      'A jó üzleti ötleteket gyakran a megoldatlan hétköznapi problémák rejtik.',
+      'A kezdeti lassú, kézi munka később versenyelőnnyé válhat.',
+      'A termék fejlesztése és az ügyfelek megismerése egymást erősítő feladat.',
+      'Az igazán jó startupötletek sokszor kezdetben jelentéktelennek tűnnek.',
+    ] },
+    { a: 'Charlie Munger · Berkshire Hathaway', qs: [
+      'Az ösztönzők akkor is befolyásolják az embereket, amikor ezt maguk sem veszik észre.',
+      'A rosszul kialakított jutalmazás rossz döntésekhez vezethet.',
+      'Az intelligencia nem véd meg automatikusan a gondolkodási hibáktól.',
+      'Más tudományterületek ismerete javítja a döntéseink minőségét.',
+      'A saját érdekeink torzíthatják azt, amit igaznak szeretnénk látni.',
+      'A korábbi döntésünkhöz való ragaszkodás megakadályozhatja a józan mérlegelést.',
+      'A tömeg véleménye önmagában nem bizonyítja, hogy valami igaz.',
+      'A túlzott magabiztosság veszélyes döntési hiba.',
+      'Az emberi viselkedést több pszichológiai hatás együttesen alakíthatja.',
+      'A bölcs döntéshez fel kell ismernünk saját gondolkodásunk korlátait.',
+    ] },
+    { a: 'Bojár Gábor · Graphisoft', qs: [
+      'A vállalkozói gondolkodás egyik alapja a kockázat vállalása.',
+      'A jó vállalkozó mások képességeit is sikerre tudja vinni.',
+      'Az ügyfél sikere a vállalkozó számára is öröm.',
+      'A kitartás azt jelenti, hogy a sokadik kudarc után is újrakezdünk.',
+      'A sikerhez néha hinnünk kell abban is, ami elsőre lehetetlennek tűnik.',
+      'A jó vállalkozás nem csak pénzügyi mutatókkal mérhető.',
+      'A kiszámítható szabályok segítik a vállalkozások hosszú távú fejlődését.',
+      'A valódi piaci verseny ösztönzi az innovációt.',
+      'A megfelelő üzlettárs kiválasztásánál a gondolkodásmód is döntő.',
+      'A vállalkozóvá válásban a személyiség mellett a tanulásnak is szerepe van.',
+    ] },
+    { a: 'Rubik Ernő · Rubik-kocka', qs: [
+      'A kíváncsiságot nem elfojtani, hanem megőrizni kell.',
+      'Egy probléma megértése és megoldása két különböző feladat.',
+      'A kreativitáshoz a kérdezés szabadságára is szükség van.',
+      'Egy új megoldás keresése közben néha le kell bontanunk valamit.',
+      'A megoldásra fordított időnél fontosabb lehet maga a felismerés.',
+      'A készen kapott tudás nem helyettesíti a saját felfedezést.',
+      'A játék és a tanulás szorosan összetartozhat.',
+      'Az alkotás során a részek és az egész kapcsolatát is meg kell értenünk.',
+      'A sikeres találmány működése még az alkotóját is továbbgondolkodásra késztetheti.',
+      'A gyermekkori kíváncsiság megőrzése a későbbi kreativitás alapja lehet.',
+    ] },
+    { a: 'Sam Walton · Walmart', qs: [
+      'A vállalkozás sikere a munkatársak elkötelezettségén is múlik.',
+      'A nyereséget meg kell osztani azokkal, akik hozzájárulnak a megteremtéséhez.',
+      'A munkatársak motiválásához az elismerés ugyanolyan fontos lehet, mint a pénz.',
+      'A kommunikáció hiánya gyengíti a szervezetet.',
+      'A jó vezető figyel a munkatársak véleményére.',
+      'A sikereket közösen kell megünnepelni.',
+      'Adj többet az ügyfélnek, mint amennyit vár.',
+      'A költségek fegyelmezett kezelése versenyelőnyt jelent.',
+      'Ne félj szembemenni a megszokott üzleti gyakorlattal.',
+      'A sikeres vállalkozás folyamatosan tanul a saját hibáiból.',
+    ] },
+    { a: 'Satya Nadella · Microsoft', qs: [
+      'A kíváncsiság fontosabb lehet annál, mint hogy mindig nálunk legyen a válasz.',
+      'A folyamatos tanulás a vállalati kultúra alapvető része.',
+      'A fejlődéshez néha a régi beidegződéseinket is el kell engednünk.',
+      'A vezetőnek magán is alkalmaznia kell azt a szemléletet, amit a csapatától elvár.',
+      'Az empátia segít felismerni az ügyfelek ki nem mondott igényeit.',
+      'A valódi innovációhoz nyitottnak kell lennünk az új nézőpontokra.',
+      'A vállalat kultúráját tudatosan alakítani kell.',
+      'A változáshoz alkalmazkodó szervezetnek újra és újra tanulnia kell.',
+      'A technológia értékét az adja, hogy mire teszi képessé az embereket.',
+      'A sikeres átalakulás a gondolkodásmód megváltoztatásával kezdődik.',
+    ] },
+    { a: 'Balogh Petya · STRT', qs: [
+      'Ötlettel tele a padlás.',
+      'A legjobb ötlet is értéktelen, ha nem tudod megvalósítani.',
+      'A sikeres vállalkozót nem a kudarc hiánya, hanem a tanulási képessége különbözteti meg.',
+      'A vállalkozói úton minden hibában meg kell keresned a saját felelősségedet.',
+      'Ne növekedj addig, amíg nem bizonyítottad, hogy valódi értéket teremtesz.',
+      'A befektetés nem mindig segítség; a túl korai növekedés akár tönkre is tehet egy céget.',
+      'A jó alapító nem ragaszkodik egy rossz ötlethez, hanem képes változtatni.',
+      'A siker nem jelenti azt, hogy mindent jól csináltál.',
+      'A vállalkozó legfontosabb képességei közé tartozik az alkalmazkodás és az önreflexió.',
+      'A jó vállalkozásnak nemcsak bevételt kell termelnie, hanem nyereséget is meg kell őriznie.',
+    ] },
+    { a: 'Laczkovszki Gábor · WiredSign', qs: [
+      'Nem az határozza meg, hányszor buktam el, hanem hogy hányszor döntöttem úgy: folytatom.',
+      'Nem irányíthatom, mit gondolnak rólam mások. Azt viszont igen, hogy holnap milyen emberként ébredek.',
+      'A vállalkozás nem a bizonytalanság megszüntetéséről szól, hanem arról, hogy megtanulunk benne cselekedni.',
+      'Nem az számít, mennyi mindent építettem, hanem hogy amit létrehoztam, könnyebbé tette-e valaki más életét.',
+      'A körülményekre mindig találhatok kifogást. A döntéseimért azonban nekem kell felelősséget vállalnom.',
+      'Aki ma ugyanúgy gondolkodik, mint tegnap, az lehet, hogy hű önmagához, de nem biztos, hogy fejlődik.',
+      'A bátorság nem a félelem hiánya, hanem az a pillanat, amikor a cél fontosabbá válik nála.',
+      'Nem azért alkotok, mert biztos vagyok a sikerben. Hanem mert nem szeretném úgy leélni az életem, hogy meg sem próbáltam.',
+      'A siker megmutatja, mire vagyok képes. A nehézségek megmutatják, ki vagyok valójában.',
+      'Nem az a dolgom, hogy bebizonyítsam, mások tévedtek. Az a dolgom, hogy megvalósítsam, amiben hiszek.',
+      'Az ember akkor válik igazán szabaddá, amikor már nem mások elismerésétől teszi függővé a saját értékét.',
+      'Nem minden akadály azért kerül elém, hogy megállítson. Van, amelyik azért, hogy megtanuljam, mire vagyok képes.',
+      'Az igazság nem attól válik igazzá, hogy hányan hisznek benne. És nem attól lesz hamis, hogy egyedül maradok vele.',
+      'A pénzt, amit elveszítek, újra megkereshetem. Az időt, amit értelmetlen dolgokra fordítok, soha nem kapom vissza.',
+      'A jellememet nem az mutatja meg, hogyan viselkedem, amikor minden jól alakul, hanem az, hogyan döntök, amikor minden ellenem szól.',
+      'A világ tele van emberekkel, akik elmagyarázzák, miért nem lehet valamit megcsinálni. Én inkább megpróbálom megépíteni.',
+      'Nem az az erős ember, aki minden vitát megnyer, hanem aki képes uralkodni magán akkor is, amikor minden oka meglenne elveszíteni a türelmét.',
+      'A legnagyobb gazdagság nem az, ha mindent megengedhetek magamnak, hanem ha nem kell feladnom az elveimet azért, hogy megéljek.',
+      'Nem bánom, ha tévedtem. Csak azt bánnám, ha a büszkeségem miatt képtelen lennék felismerni és kijavítani.',
+      'Nem választhatom meg mindig, mit hoz elém az élet. De azt igen, hogy az, ami történik velem, megtör vagy bölcsebbé tesz.',
+    ] },
+  ];
+  var EASTER_QUOTES = [];
+  EASTER_QUOTE_GROUPS.forEach(function (g) {
+    g.qs.forEach(function (q) { EASTER_QUOTES.push({ q: q, a: g.a }); });
+  });
+
+  function createQuotePicker(list, rng) {
+    rng = rng || Math.random;
+    var bag = [], lastAuthor = '', lastQuote = '';
+    function refill() {
+      bag = list.map(function (_, i) { return i; });
+      for (var i = bag.length - 1; i > 0; i--) {
+        var j = Math.floor(rng() * (i + 1)) % (i + 1);
+        var tmp = bag[i]; bag[i] = bag[j]; bag[j] = tmp;
+      }
+    }
+    return function next() {
+      if (!list.length) return null;
+      if (!bag.length) refill();
+      var k = bag.length - 1;
+      if (bag.length > 1) {
+        for (var s = k; s >= 0; s--) {
+          var cand = list[bag[s]];
+          if (cand.a !== lastAuthor && cand.q !== lastQuote) {
+            var swap = bag[k]; bag[k] = bag[s]; bag[s] = swap;
+            break;
+          }
+        }
+      }
+      var picked = list[bag.pop()];
+      lastAuthor = picked.a;
+      lastQuote = picked.q;
+      return picked;
+    };
+  }
+  var defaultQuotePicker = createQuotePicker(EASTER_QUOTES);
+
+  function easterHeartSvg(color, size) {
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="' + color + '" aria-hidden="true">' +
+      '<path d="M12 21.15c-.42 0-.83-.14-1.17-.42C6.14 16.86 2.5 13.43 2.5 8.95 2.5 5.68 5.02 3.2 8.15 3.2c1.74 0 3.04.82 3.85 1.88.81-1.06 2.11-1.88 3.85-1.88 3.13 0 5.65 2.48 5.65 5.75 0 4.48-3.64 7.91-8.33 11.78-.34.28-.75.42-1.17.42z"/></svg>';
+  }
+  function easterSparkleSvg(color, size) {
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="' + color + '" aria-hidden="true">' +
+      '<path d="M12 2.5c.35 0 .66.24.75.58l1.42 5.33a3.5 3.5 0 0 0 2.47 2.47l5.33 1.42a.77.77 0 0 1 0 1.5l-5.33 1.42a3.5 3.5 0 0 0-2.47 2.47l-1.42 5.33a.77.77 0 0 1-1.5 0l-1.42-5.33a3.5 3.5 0 0 0-2.47-2.47L2.53 13.8a.77.77 0 0 1 0-1.5l5.33-1.42a3.5 3.5 0 0 0 2.47-2.47l1.42-5.33c.09-.34.4-.58.75-.58z"/></svg>';
+  }
+  function stepEasterParticle(p, t) {
+    var easeRise = 1 - Math.pow(1 - t, 1.35);
+    var wave = Math.sin(t * Math.PI * p.freq + p.phase) * p.amp * (0.4 + 0.6 * t);
+    var x = p.x0 + p.drift * t + wave;
+    var y = p.y0 - p.rise * easeRise;
+    var rot = Math.cos(t * Math.PI * p.freq + p.phase) * 13;
+    var scale = t < 0.16 ? (0.35 + (t / 0.16) * 0.65) : (1 - (t - 0.16) * 0.14);
+    var alpha = t < 0.16 ? (t / 0.16) * p.maxAlpha : t > 0.62 ? ((1 - t) / 0.38) * p.maxAlpha : p.maxAlpha;
+    return { x: x, y: y, rot: rot, scale: scale, alpha: Math.max(0, alpha) };
+  }
+  function createHeroEasterEgg(slot, hero, env) {
+    env = env || {};
+    var doc = env.doc;
+    var now = env.now || function () { return Date.now(); };
+    var later = env.setTimeout || setTimeout, cancel = env.clearTimeout || clearTimeout;
+    var raf = env.raf || function (f) { return later(function () { f(now()); }, 16); };
+    var caf = env.caf || cancel;
+    var rng = env.rand || Math.random;
+    var disabled = env.disabled || function () { return false; };
+    var hidden = env.hidden || function () { return false; };
+    var pickQuote = env.rand ? createQuotePicker(EASTER_QUOTES, rng) : defaultQuotePicker;
+    var size = env.size || 156;
+    var rnd = function (a, b) { return a + rng() * (b - a); };
+
+    slot.classList.add('kav-hero-slot');
+    var layer = doc.createElement('span');
+    layer.className = 'kav-fx';
+    layer.setAttribute('aria-hidden', 'true');
+    slot.appendChild(layer);
+
+    var particles = [], burstTs = [], hovering = false, spawnT = 0, secondT = 0, bounceT = 0, rafId = 0, lastEmoji = '';
+    var qEl = null, qHideT = 0, qRemT = 0;
+
+    function pickEmoji(list) {
+      var idx = Math.floor(rng() * list.length) % list.length;
+      var ch = list[idx];
+      if (list.length > 1 && ch === lastEmoji) ch = list[(idx + 1) % list.length];
+      lastEmoji = ch;
+      return ch;
+    }
+    function clearQuote() {
+      cancel(qHideT); cancel(qRemT); qHideT = 0; qRemT = 0;
+      if (qEl && qEl.parentNode) qEl.parentNode.removeChild(qEl);
+      qEl = null;
+    }
+    function showQuote() {
+      if (!hero.isConnected || hidden()) { clearQuote(); return null; }
+      clearQuote();
+      var item = pickQuote();
+      if (!item) return null;
+      var box = doc.createElement('div');
+      box.className = 'kav-q';
+      box.setAttribute('role', 'status');
+      box.setAttribute('aria-live', 'polite');
+      var qt = doc.createElement('span');
+      qt.className = 'kav-qt';
+      qt.textContent = '„' + item.q + '”';
+      var qa = doc.createElement('span');
+      qa.className = 'kav-qa';
+      qa.textContent = item.a;
+      box.appendChild(qt);
+      box.appendChild(qa);
+      slot.appendChild(box);
+      qEl = box;
+      qHideT = later(function () {
+        if (qEl === box) box.classList.add('out');
+        qRemT = later(function () {
+          if (box.parentNode) box.parentNode.removeChild(box);
+          if (qEl === box) qEl = null;
+        }, 360);
+      }, 6800);
+      return item;
+    }
+    function clearTimers() {
+      cancel(spawnT); cancel(secondT); spawnT = 0; secondT = 0;
+      while (burstTs.length) cancel(burstTs.pop());
+    }
+    function cleanupAll() {
+      hovering = false;
+      hero.classList.remove('k-hover', 'k-happy');
+      clearTimers(); clearQuote(); cancel(bounceT); bounceT = 0;
+      if (rafId) { caf(rafId); rafId = 0; }
+      while (particles.length) {
+        var p = particles.pop();
+        if (p.el.parentNode) p.el.parentNode.removeChild(p.el);
+      }
+    }
+    function bounce() {
+      hero.classList.remove('k-happy');
+      if (hero.offsetWidth !== undefined) void hero.offsetWidth;
+      hero.classList.add('k-happy');
+      cancel(bounceT);
+      bounceT = later(function () { hero.classList.remove('k-happy'); bounceT = 0; }, 680);
+    }
+    function spawnOne() {
+      if (!hero.isConnected) { cleanupAll(); return null; }
+      if (disabled() || particles.length >= EASTER_MAX) return null;
+      var el = doc.createElement('span');
+      el.className = 'kav-p';
+      var r = rng(), kind = 'heart';
+      if (r < 0.52) {
+        var col = EASTER_COLORS[Math.floor(rng() * EASTER_COLORS.length) % EASTER_COLORS.length];
+        var sz = Math.round(rnd(12, 17));
+        if (rng() < 0.22) { kind = 'sparkle'; el.innerHTML = easterSparkleSvg(col, sz - 1); }
+        else el.innerHTML = easterHeartSvg(col, sz);
+      } else {
+        kind = r < 0.77 ? 'cute' : 'office';
+        el.style.fontSize = Math.round(rnd(14.5, 18.5)) + 'px';
+        el.textContent = pickEmoji(kind === 'cute' ? EASTER_CUTE : EASTER_OFFICE);
+      }
+      var p = {
+        el: el, kind: kind,
+        x0: size * 0.5 + rnd(-size * 0.27, size * 0.27),
+        y0: size * 0.28 + rnd(-10, 20),
+        rise: rnd(72, 106),
+        drift: rnd(-20, 20),
+        amp: rnd(9, 16),
+        freq: rnd(1.5, 2.4),
+        phase: rnd(0, Math.PI * 2),
+        maxAlpha: kind === 'heart' || kind === 'sparkle' ? rnd(0.8, 0.92) : rnd(0.86, 0.95),
+        born: now(),
+        life: rnd(1800, 2400),
+      };
+      var s0 = stepEasterParticle(p, 0);
+      el.style.opacity = s0.alpha.toFixed(3);
+      el.style.transform = 'translate3d(' + s0.x.toFixed(1) + 'px,' + s0.y.toFixed(1) + 'px,0) translate(-50%,-50%) scale(' + s0.scale.toFixed(3) + ') rotate(' + s0.rot.toFixed(1) + 'deg)';
+      layer.appendChild(el);
+      particles.push(p);
+      if (!rafId) rafId = raf(tick);
+      return p;
+    }
+    function tick() {
+      rafId = 0;
+      if (!hero.isConnected || disabled()) { cleanupAll(); return; }
+      var cur = now();
+      for (var i = particles.length - 1; i >= 0; i--) {
+        var p = particles[i];
+        var t = (cur - p.born) / p.life;
+        if (t >= 1) {
+          if (p.el.parentNode) p.el.parentNode.removeChild(p.el);
+          particles.splice(i, 1);
+          continue;
+        }
+        var s = stepEasterParticle(p, Math.max(0, t));
+        p.el.style.opacity = s.alpha.toFixed(3);
+        p.el.style.transform = 'translate3d(' + s.x.toFixed(1) + 'px,' + s.y.toFixed(1) + 'px,0) translate(-50%,-50%) scale(' + s.scale.toFixed(3) + ') rotate(' + s.rot.toFixed(1) + 'deg)';
+      }
+      if (particles.length) rafId = raf(tick);
+    }
+    function scheduleNext() {
+      if (!hovering) return;
+      spawnT = later(function () {
+        if (!hovering || !hero.isConnected || disabled()) return;
+        spawnOne();
+        scheduleNext();
+      }, rnd(350, 530));
+    }
+    function burst(n) {
+      if (disabled() || !hero.isConnected) return;
+      bounce();
+      while (burstTs.length) cancel(burstTs.pop());
+      for (var i = 0; i < n; i++) {
+        (function (delay) {
+          if (delay === 0) spawnOne();
+          else burstTs.push(later(function () { spawnOne(); }, delay));
+        })(i * 110);
+      }
+    }
+    hero.addEventListener('mouseenter', function () {
+      if (disabled() || !hero.isConnected) return;
+      hovering = true;
+      hero.classList.add('k-hover');
+      clearTimers();
+      bounce();
+      spawnOne();
+      secondT = later(function () { if (hovering) spawnOne(); }, 155);
+      scheduleNext();
+    });
+    hero.addEventListener('mouseleave', function () {
+      hovering = false;
+      hero.classList.remove('k-hover');
+      cancel(spawnT); cancel(secondT); spawnT = 0; secondT = 0;
+    });
+    hero.addEventListener('click', function () {
+      burst(4);
+      showQuote();
+    });
+
+    return { layer: layer, count: function () { return particles.length; }, quoteEl: function () { return qEl; }, showQuote: showQuote, spawnOne: spawnOne, destroy: cleanupAll };
+  }
+
   if (typeof document === 'undefined') {
-    if (typeof module !== 'undefined' && module.exports) module.exports = { createGate: createGate, createAvatarPlayer: createAvatarPlayer, overlayHold: overlayHold, pickModel: pickModel, modelName: modelName, metaParts: metaParts, canVoice: canVoice, voiceTarget: voiceTarget, logoMode: logoMode, DEFAULT_PROMPTS: DEFAULT_PROMPTS, resolvePrompts: resolvePrompts, upsertPrompt: upsertPrompt, removePrompt: removePrompt };
+    if (typeof module !== 'undefined' && module.exports) module.exports = { createGate: createGate, createAvatarPlayer: createAvatarPlayer, overlayHold: overlayHold, pickModel: pickModel, modelName: modelName, metaParts: metaParts, canVoice: canVoice, voiceTarget: voiceTarget, logoMode: logoMode, DEFAULT_PROMPTS: DEFAULT_PROMPTS, resolvePrompts: resolvePrompts, upsertPrompt: upsertPrompt, removePrompt: removePrompt, tableToTsv: tableToTsv, tableToCsv: tableToCsv, compareTableCells: compareTableCells, LIST_VIEWS: LIST_VIEWS, resolveListView: resolveListView, EASTER_COLORS: EASTER_COLORS, EASTER_CUTE: EASTER_CUTE, EASTER_OFFICE: EASTER_OFFICE, EASTER_QUOTE_GROUPS: EASTER_QUOTE_GROUPS, EASTER_QUOTES: EASTER_QUOTES, createQuotePicker: createQuotePicker, stepEasterParticle: stepEasterParticle, createHeroEasterEgg: createHeroEasterEgg };
     return;
   }
 
@@ -295,6 +745,11 @@
       'k-edit': '<path d="M15.8 4.6a2.1 2.1 0 013 3L8.3 18.1 4 19.5l1.4-4.3L15.8 4.6z"/><path d="M14.2 6.2l3 3"/>',
       'k-trash': '<path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l1 12.5h9l1-12.5"/><path d="M10.2 10.5v6M13.8 10.5v6"/>',
       'k-list': '<path d="M8.5 6.5h11M8.5 12h11M8.5 17.5h11"/><circle cx="4.5" cy="6.5" r=".6"/><circle cx="4.5" cy="12" r=".6"/><circle cx="4.5" cy="17.5" r=".6"/>',
+      'k-v3': '<rect x="3.5" y="4.5" width="17" height="15" rx="3.5"/><path d="M7.5 8.8h9M7.5 12h5.5M7.5 15.2h7.5"/>',
+      'k-v2': '<rect x="3.5" y="5.8" width="17" height="12.4" rx="3.5"/><path d="M7.5 10.2h9M7.5 13.8h6"/>',
+      'k-v1': '<rect x="3.5" y="7.5" width="17" height="9" rx="3.5"/><path d="M7.5 12h7.5"/>',
+      'k-copy': '<rect x="9" y="9" width="10.5" height="10.5" rx="2.2"/><path d="M15 9V6.2A2.2 2.2 0 0012.8 4H6.2A2.2 2.2 0 004 6.2v6.6A2.2 2.2 0 006.2 15H9"/>',
+      'k-dl': '<path d="M12 4.5v10.5M8 11.5l4 4 4-4M5 19.5h14"/>',
       // A szolgáltatók jelei (CLI_MARK): Claude – Simple Icons (CC0), Codex/OpenAI és Antigravity – LobeHub icons (MIT).
       'p-claude': '<path fill-rule="nonzero" d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/>',
       'p-codex': '<path fill-rule="evenodd" d="M8.086.457a6.105 6.105 0 013.046-.415c1.333.153 2.521.72 3.564 1.7a.117.117 0 00.107.029c1.408-.346 2.762-.224 4.061.366l.063.03.154.076c1.357.703 2.33 1.77 2.918 3.198.278.679.418 1.388.421 2.126a5.655 5.655 0 01-.18 1.631.167.167 0 00.04.155 5.982 5.982 0 011.578 2.891c.385 1.901-.01 3.615-1.183 5.14l-.182.22a6.063 6.063 0 01-2.934 1.851.162.162 0 00-.108.102c-.255.736-.511 1.364-.987 1.992-1.199 1.582-2.962 2.462-4.948 2.451-1.583-.008-2.986-.587-4.21-1.736a.145.145 0 00-.14-.032c-.518.167-1.04.191-1.604.185a5.924 5.924 0 01-2.595-.622 6.058 6.058 0 01-2.146-1.781c-.203-.269-.404-.522-.551-.821a7.74 7.74 0 01-.495-1.283 6.11 6.11 0 01-.017-3.064.166.166 0 00.008-.074.115.115 0 00-.037-.064 5.958 5.958 0 01-1.38-2.202 5.196 5.196 0 01-.333-1.589 6.915 6.915 0 01.188-2.132c.45-1.484 1.309-2.648 2.577-3.493.282-.188.55-.334.802-.438.286-.12.573-.22.861-.304a.129.129 0 00.087-.087A6.016 6.016 0 015.635 2.31C6.315 1.464 7.132.846 8.086.457zm-.804 7.85a.848.848 0 00-1.473.842l1.694 2.965-1.688 2.848a.849.849 0 001.46.864l1.94-3.272a.849.849 0 00.007-.854l-1.94-3.393zm5.446 6.24a.849.849 0 000 1.695h4.848a.849.849 0 000-1.696h-4.848z"/>',
@@ -374,6 +829,20 @@
       if (live) LIVE.add(w);
       avApply(w, st);
       el.appendChild(w);
+      if (opts.hero) {
+        w.__ke = createHeroEasterEgg(el, w, {
+          doc: document,
+          size: opts.size || 156,
+          now: function () { return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now(); },
+          raf: typeof requestAnimationFrame === 'function' ? requestAnimationFrame : null,
+          caf: typeof cancelAnimationFrame === 'function' ? cancelAnimationFrame : null,
+          disabled: function () {
+            try { if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return true; } catch (_) {}
+            return !!document.hidden || avOverlayOn();
+          },
+          hidden: function () { return !!document.hidden || avOverlayOn(); },
+        });
+      }
       return w;
     },
     set: function (s) {
@@ -398,17 +867,23 @@
     running: new Map(), // convId ('' = most induló új beszélgetés) -> {activity}
     errs: {}, // convId -> {code, engine} az utolsó élő hibához
     cards: {}, // confirmId -> kártyaadat
-    menu: null, dd: false, mdd: false, models: null, modelsAt: 0, loading: null, cfgAt: 0, cfgBusy: false, typing: null, stick: true, sending: false, savedPh: '',
+    menu: null, view: 'compact', vdd: false, dd: false, mdd: false, models: null, modelsAt: 0, loading: null, cfgAt: 0, cfgBusy: false, typing: null, stick: true, sending: false, savedPh: '',
     gate: createGate(), stopNew: false,
   };
   var DECL_KEY = 'kapu:declined';
+  var VIEW_KEY = 'kapu.listView';
+  function savedListView() { try { return resolveListView(localStorage.getItem(VIEW_KEY)); } catch (e) { return 'compact'; } }
+  function saveListView(v) { var next = resolveListView(v); K.view = next; try { localStorage.setItem(VIEW_KEY, next); } catch (e) { /* csak ebben a munkamenetben */ } return next; }
+  K.view = savedListView();
   function declined() { try { return JSON.parse(localStorage.getItem(DECL_KEY) || '[]'); } catch (e) { return []; } }
   function decline(id) { try { var a = declined().filter(function (x) { return x !== id; }); a.push(id); localStorage.setItem(DECL_KEY, JSON.stringify(a.slice(-200))); } catch (e) { /* csak ebben a munkamenetben */ } }
 
   var fold = function (s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); };
   var plain = function (md) {
     var d = document.createElement('div');
-    d.innerHTML = window.KapuMd ? KapuMd.render(String(md || '')).replace(/<\/(p|li)>/g, '$&\n') : esc(md);
+    d.innerHTML = window.KapuMd ? KapuMd.render(String(md || ''))
+      .replace(/<\/t[hd]>/gi, '$& ')
+      .replace(/<\/(p|li|tr|h[1-6]|pre|blockquote)>/gi, '$&\n') : esc(md);
     return d.textContent.replace(/[ \t]+/g, ' ').trim();
   };
   var firstLine = function (md) { return plain(md).split('\n').map(function (l) { return l.trim(); }).filter(Boolean)[0] || ''; };
@@ -424,6 +899,13 @@
     var hm = d.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
     if (diff === 0) return hm;
     if (diff === 1) return 'tegnap ' + hm;
+    return d.toLocaleDateString('hu-HU', d.getFullYear() === now.getFullYear() ? { month: 'short', day: 'numeric' } : { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+  function whenShort(ms) {
+    var d = new Date(ms), now = new Date();
+    var day = function (x) { return new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); };
+    var diff = Math.round((day(now) - day(d)) / 864e5);
+    if (diff <= 1) return d.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
     return d.toLocaleDateString('hu-HU', d.getFullYear() === now.getFullYear() ? { month: 'short', day: 'numeric' } : { year: 'numeric', month: 'short', day: 'numeric' });
   }
   function dayLabel(ms) {
@@ -458,6 +940,12 @@
     ta.addEventListener('blur', function () { if (avState === 'listen') KapuAvatar.set('idle'); });
     $q('form', r).addEventListener('submit', function (e) { e.preventDefault(); submit(); });
     r.addEventListener('click', onRootClick);
+    r.addEventListener('keydown', function (e) {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.matches && e.target.matches('th[data-ktsort]')) {
+        e.preventDefault();
+        sortChatTable(e.target);
+      }
+    });
     return r;
   }
 
@@ -467,6 +955,7 @@
     if (!K.listEl) {
       var l = document.createElement('div');
       l.id = 'kapulist';
+      l.dataset.kview = resolveListView(K.view);
       l.innerHTML = '<button type="button" class="kl-new" data-knew>' + ic('k-plus') + 'Új beszélgetés</button>' +
         '<div class="kl-rows" role="list" aria-label="Beszélgetések Kapuval"></div>' +
         '<div class="kl-foot"></div>';
@@ -478,25 +967,58 @@
   }
 
   /* --- középső oszlop ----------------------------------------------------------------------------- */
+  function viewPickerHtml(view) {
+    var cur = LIST_VIEWS.filter(function (x) { return x.id === view; })[0] || LIST_VIEWS[0];
+    return '<div class="kl-vw">' +
+      '<button type="button" class="kl-vbtn" data-kvbtn aria-label="Lista nézete: ' + esc(cur.label) + '" aria-haspopup="menu" aria-expanded="' + (K.vdd ? 'true' : 'false') + '" title="Nézet: ' + esc(cur.label) + '">' +
+        ic(cur.icon) + ic('chev', 'cv') +
+      '</button>' +
+      (K.vdd ? '<div class="kl-vmenu" role="menu" aria-label="Beszélgetéslista nézete">' +
+        LIST_VIEWS.map(function (o) {
+          var on = o.id === view;
+          return '<button type="button" role="menuitemradio" aria-checked="' + (on ? 'true' : 'false') + '" data-kview="' + o.id + '">' +
+            ic(o.icon, 'vi') +
+            '<span><b>' + esc(o.label) + '</b><small>' + esc(o.hint) + '</small></span>' +
+            (on ? ic('check', 'ck') : '') +
+          '</button>';
+        }).join('') +
+      '</div>' : '') +
+    '</div>';
+  }
+
   function renderList() {
     var l = ensureList();
     if (!l) return;
+    var view = resolveListView(K.view);
+    l.dataset.kview = view;
     var rows = $q('.kl-rows', l), foot = $q('.kl-foot', l);
     if (K.listErr) { rows.innerHTML = '<div class="kl-empty">' + esc(K.listErr) + '</div>'; foot.innerHTML = ''; return; }
     var q = fold(K.q).trim();
     var items = K.items.filter(function (it) { return !q || fold(it.title + ' ' + (K.prev[it.id] || '') + ' ' + ENG[it.engine]).indexOf(q) >= 0; });
-    var h = '', last = '';
+    var h = '', last = '', firstDay = true;
     items.forEach(function (it) {
       var lab = dayLabel(it.updatedAt);
-      if (lab !== last) { h += '<div class="kl-day" role="presentation">' + lab + '</div>'; last = lab; }
-      var run = K.running.has(it.id);
-      h += '<div class="kl-row' + (it.id === K.convId ? ' on' : '') + '" role="listitem">' +
+      if (lab !== last) {
+        if (firstDay) {
+          firstDay = false;
+          h += '<div class="kl-day-bar"><div class="kl-day" role="presentation">' + lab + '</div>' + viewPickerHtml(view) + '</div>';
+        } else h += '<div class="kl-day" role="presentation">' + lab + '</div>';
+        last = lab;
+      }
+      var run = K.running.has(it.id), mopen = K.menu === it.id;
+      h += '<div class="kl-row' + (it.id === K.convId ? ' on' : '') + (mopen ? ' mopen' : '') + '" role="listitem">' +
         '<button type="button" class="kl-open" data-kopen="' + esc(it.id) + '"' + (it.id === K.convId ? ' aria-current="true"' : '') + '>' +
-        '<b>' + esc(it.title || 'Új beszélgetés') + '</b>' +
-        '<span class="kl-meta">' + (run ? '<span class="kl-run" title="Kapu dolgozik"></span>' : '') + '<span class="kl-eng">' + esc(ENG[it.engine] || it.engine) + '</span>·<span>' + esc(when(it.updatedAt)) + '</span></span>' +
-        (K.prev[it.id] ? '<span class="kl-prev">' + esc(K.prev[it.id]) + '</span>' : '') + '</button>' +
-        '<button type="button" class="kl-more" data-kmore="' + esc(it.id) + '" aria-label="Továbbiak" aria-haspopup="menu" aria-expanded="' + (K.menu === it.id) + '">' + ic('k-dots') + '</button>' +
-        (K.menu === it.id ? '<div class="kl-menu" role="menu"><button type="button" role="menuitem" data-kdel="' + esc(it.id) + '">' + ic('k-trash') + 'Beszélgetés törlése</button></div>' : '') +
+        '<span class="kl-head">' +
+          (run ? '<span class="kl-run kl-hrun" title="Kapu dolgozik"></span>' : '') +
+          '<b>' + esc(it.title || 'Új beszélgetés') + '</b>' +
+          '<span class="kl-when">' + esc(whenShort(it.updatedAt)) + '</span>' +
+        '</span>' +
+        '<span class="kl-extra"><span class="kl-extra-in">' +
+          '<span class="kl-meta">' + (run ? '<span class="kl-run" title="Kapu dolgozik"></span>' : '') + '<span class="kl-eng">' + esc(ENG[it.engine] || it.engine) + '</span>·<span>' + esc(when(it.updatedAt)) + '</span></span>' +
+          (K.prev[it.id] ? '<span class="kl-prev">' + esc(K.prev[it.id]) + '</span>' : '') +
+        '</span></span></button>' +
+        '<button type="button" class="kl-more" data-kmore="' + esc(it.id) + '" aria-label="Továbbiak" aria-haspopup="menu" aria-expanded="' + mopen + '">' + ic('k-dots') + '</button>' +
+        (mopen ? '<div class="kl-menu" role="menu"><button type="button" role="menuitem" data-kdel="' + esc(it.id) + '">' + ic('k-trash') + 'Beszélgetés törlése</button></div>' : '') +
         '</div>';
     });
     if (!items.length) h = '<div class="kl-empty">' + (K.items.length ? 'Nincs találat a beszélgetések között.' : 'Még nem beszélgettél Kapuval.<br>Kérdezz tőle valamit jobbra!') + '</div>';
@@ -528,9 +1050,10 @@
   }
 
   /* --- jobb oszlop: üzenetek ---------------------------------------------------------------------- */
-  function metaHtml(engine, model) {
+  function metaHtml(engine, model, copyIdx) {
     var p = metaParts(K.models, engine, model);
-    return '<div class="km-meta"><b>' + esc(p[0]) + '</b>' + p.slice(1).map(function (x) { return '·<span>' + esc(x) + '</span>'; }).join('') + '</div>';
+    var cp = copyIdx != null ? '<button type="button" class="km-copy" data-kcopy="' + copyIdx + '" title="Válasz másolása" aria-label="Válasz másolása">' + ic('k-copy') + '</button>' : '';
+    return '<div class="km-meta"><b>' + esc(p[0]) + '</b>' + p.slice(1).map(function (x) { return '·<span>' + esc(x) + '</span>'; }).join('') + cp + '</div>';
   }
   var curModel = function () { return pickModel(K.models, engOf(), K.conv && K.conv.model); };
 
@@ -562,7 +1085,7 @@
     var h = ms.map(function (m, i) {
       if (m.role === 'user') return '<div class="km me"><div class="km-card">' + esc(m.text) + '</div></div>';
       if (m.role === 'kapu')
-        return '<div class="km kapu" data-i="' + i + '"><span class="kav-slot" data-av="' + (i === lastKapu ? 'live' : 'still') + '"></span><div class="km-col">' + metaHtml(c.engine, m.model) +
+        return '<div class="km kapu" data-i="' + i + '"><span class="kav-slot" data-av="' + (i === lastKapu ? 'live' : 'still') + '"></span><div class="km-col">' + metaHtml(c.engine, m.model, i) +
           '<div class="km-card"><div class="km-body">' + (window.KapuMd ? KapuMd.render(m.text) : esc(m.text)) + '</div>' +
           (m.confirmId ? '<div class="kc" data-kc="' + esc(m.confirmId) + '" data-act="' + (i > lastUser ? 1 : 0) + '"><span class="mut">Az átállítás betöltése…</span></div>' : '') +
           '</div></div></div>';
@@ -577,6 +1100,7 @@
     });
     if (isRunning()) KapuAvatar.set('think'); else if (!K.speaking && avState !== 'listen') KapuAvatar.set('idle');
     fixChips(box);
+    enhanceTables(box);
     box.querySelectorAll('[data-kc]').forEach(fillCard);
     if (opts.typeLast && lastKapu === ms.length - 1) {
       var body = box.querySelector('.km.kapu[data-i="' + lastKapu + '"] .km-body');
@@ -603,6 +1127,128 @@
         else if (ob) { delete c.dataset.goto; c.dataset.area = 'upo'; }
       } else if (/^\d+$/.test(g)) c.dataset.goto = 'm' + g;
     });
+  }
+
+  /* Táblázatok interaktív fejléce (sorok száma, Excel/TSV másolás, CSV letöltés, kattintható oszloprendezés). */
+  function enhanceTables(el) {
+    el.querySelectorAll('.ktbl-w').forEach(function (w) {
+      if ($q('.ktbl-bar', w)) return;
+      var tbl = $q('table.ktbl', w);
+      if (!tbl) return;
+      var bodyRows = tbl.querySelectorAll('tbody tr');
+      var n = bodyRows.length;
+      bodyRows.forEach(function (tr, idx) { tr.dataset.orig = String(idx); });
+      if (n >= 2) {
+        tbl.querySelectorAll('thead th').forEach(function (th, c) {
+          th.dataset.ktsort = String(c);
+          th.setAttribute('tabindex', '0');
+          th.setAttribute('aria-sort', 'none');
+          th.setAttribute('title', 'Rendezés ezen az oszlopon');
+        });
+      }
+      var bar = document.createElement('div');
+      bar.className = 'ktbl-bar';
+      bar.setAttribute('data-notype', '1');
+      bar.innerHTML = '<span class="ktbl-cnt">' + (n ? n + ' sor' : 'Táblázat') + '</span>' +
+        '<button type="button" class="ktbl-btn" data-ktcopy title="Táblázat másolása vágólapra (Excelbe illeszthető)">' + ic('k-copy') + '<span>Másolás</span></button>' +
+        '<button type="button" class="ktbl-btn" data-ktcsv title="Táblázat letöltése CSV-fájlként (Excel)">' + ic('k-dl') + '<span>CSV</span></button>';
+      w.insertBefore(bar, w.firstChild);
+    });
+  }
+
+  function extractTableRows(tbl) {
+    var out = [];
+    tbl.querySelectorAll('thead tr, tbody tr').forEach(function (tr) {
+      var r = [];
+      tr.querySelectorAll('th, td').forEach(function (cell) { r.push((cell.textContent || '').replace(/\s+/g, ' ').trim()); });
+      if (r.length) out.push(r);
+    });
+    return out;
+  }
+
+  function sortChatTable(th) {
+    if (K.typing) K.typing.stop();
+    var tbl = th.closest('table.ktbl');
+    var tbody = tbl && $q('tbody', tbl);
+    if (!tbody) return;
+    var col = +th.dataset.ktsort || 0;
+    var cur = th.getAttribute('aria-sort') || 'none';
+    var next = cur === 'ascending' ? 'descending' : cur === 'descending' ? 'none' : 'ascending';
+    tbl.querySelectorAll('thead th[data-ktsort]').forEach(function (h) { h.setAttribute('aria-sort', h === th ? next : 'none'); });
+    var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+    rows.sort(function (ra, rb) {
+      if (next === 'none') return (+ra.dataset.orig || 0) - (+rb.dataset.orig || 0);
+      var ca = ra.children[col], cb = rb.children[col];
+      var cmp = compareTableCells(ca ? ca.textContent : '', cb ? cb.textContent : '', next === 'descending' ? 'desc' : 'asc');
+      return cmp !== 0 ? cmp : (+ra.dataset.orig || 0) - (+rb.dataset.orig || 0);
+    });
+    rows.forEach(function (tr) { tbody.appendChild(tr); });
+  }
+
+  async function copyText(str) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try { await navigator.clipboard.writeText(str); return true; } catch (_) { /* tartalék lent */ }
+    }
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = str;
+      ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return !!ok;
+    } catch (_) { return false; }
+  }
+
+  function flashBtn(btn) {
+    if (!btn) return;
+    btn.classList.add('copied');
+    var use = btn.querySelector('svg use');
+    var orig = use && use.getAttribute('href');
+    if (use && orig) use.setAttribute('href', '#check');
+    clearTimeout(btn.__cpT);
+    btn.__cpT = setTimeout(function () {
+      btn.classList.remove('copied');
+      if (use && orig) use.setAttribute('href', orig);
+    }, 1500);
+  }
+
+  function copyableBodyText(bodyEl, fallbackMd) {
+    if (!bodyEl) return plain(fallbackMd);
+    var parts = [];
+    Array.prototype.slice.call(bodyEl.children).forEach(function (ch) {
+      if (ch.classList && ch.classList.contains('ktbl-w')) {
+        var tbl = $q('table.ktbl', ch);
+        if (tbl) parts.push(tableToTsv(extractTableRows(tbl)));
+      } else if (ch.tagName === 'UL' || ch.tagName === 'OL') {
+        var ordered = ch.tagName === 'OL';
+        var lines = Array.prototype.slice.call(ch.querySelectorAll('li')).map(function (li, idx) {
+          return (ordered ? (idx + 1) + '. ' : '• ') + (li.textContent || '').replace(/\s+/g, ' ').trim();
+        });
+        if (lines.length) parts.push(lines.join('\n'));
+      } else if (ch.tagName === 'PRE') {
+        parts.push((ch.textContent || '').replace(/\n+$/, ''));
+      } else if (ch.tagName !== 'HR') {
+        var t = (ch.textContent || '').replace(/[ \t]+/g, ' ').trim();
+        if (t) parts.push(t);
+      }
+    });
+    return parts.join('\n\n').trim() || plain(fallbackMd);
+  }
+
+  function downloadCsv(rows) {
+    var csv = tableToCsv(rows);
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var d = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = 'kapu-tablazat-' + d + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
   function thinkHtml() {
@@ -990,6 +1636,11 @@
   }
 
   async function onRootClick(e) {
+    var th = e.target.closest('th[data-ktsort]');
+    if (th) {
+      sortChatTable(th);
+      return;
+    }
     var t = e.target.closest('button');
     if (!t) {
       if ((K.dd || K.mdd) && !e.target.closest('.kdd')) { K.dd = false; K.mdd = false; renderBar(); }
@@ -997,6 +1648,38 @@
       return;
     }
     var d = t.dataset;
+    if ('ktcopy' in d) {
+      if (K.typing) K.typing.stop();
+      var wCopy = t.closest('.ktbl-w'), tblCopy = wCopy && $q('table.ktbl', wCopy);
+      if (tblCopy && (await copyText(tableToTsv(extractTableRows(tblCopy))))) {
+        flashBtn(t);
+        toast('Táblázat vágólapra másolva (Excelbe illeszthető).');
+      }
+      return;
+    }
+    if ('ktcsv' in d) {
+      if (K.typing) K.typing.stop();
+      var wCsv = t.closest('.ktbl-w'), tblCsv = wCsv && $q('table.ktbl', wCsv);
+      if (tblCsv) {
+        downloadCsv(extractTableRows(tblCsv));
+        flashBtn(t);
+        toast('Táblázat letöltve CSV-fájlként.');
+      }
+      return;
+    }
+    if ('kcopy' in d) {
+      if (K.typing) K.typing.stop();
+      var idx = +d.kcopy;
+      var msg = K.conv && K.conv.messages && K.conv.messages[idx];
+      var rowEl = t.closest('.km.kapu');
+      var bodyEl = rowEl && $q('.km-body', rowEl);
+      var txt = copyableBodyText(bodyEl, msg ? msg.text : '');
+      if (txt && (await copyText(txt))) {
+        flashBtn(t);
+        toast('Válasz a vágólapra másolva.');
+      }
+      return;
+    }
     if (!('kdd' in d) && !('keng' in d) && K.dd && !t.closest('.kdd')) { K.dd = false; renderBar(); }
     if (!('kmdd' in d) && !d.kmodel && K.mdd) { K.mdd = false; renderBar(); }
     if ('kmdd' in d) { K.mdd = !K.mdd; K.dd = false; renderBar(); if (K.mdd) loadModels().then(function () { if (K.mdd) renderBar(); }); return; }
@@ -1078,13 +1761,18 @@
   }
 
   async function onListClick(e) {
+    e.__inKapuList = true;
     var t = e.target.closest('button');
     var d = t ? t.dataset : {};
-    if (K.menu && !d.kmore && !d.kdel) { K.menu = null; renderList(); if (!t) return; }
-    if (!t) return;
+    var needRender = false;
+    if (K.vdd && !('kvbtn' in d) && !d.kview) { K.vdd = false; needRender = true; }
+    if (K.menu && !d.kmore && !d.kdel) { K.menu = null; needRender = true; }
+    if (!t) { if (needRender) renderList(); return; }
+    if ('kvbtn' in d) { K.vdd = !K.vdd; K.menu = null; renderList(); return; }
+    if (d.kview) { saveListView(d.kview); K.vdd = false; renderList(); return; }
     if ('knew' in d) { document.getElementById('app').classList.remove('klist'); newConv(); return; }
-    if (d.kopen) { document.getElementById('app').classList.remove('klist'); if (d.kopen !== K.convId) openConv(d.kopen); return; }
-    if (d.kmore) { K.menu = K.menu === d.kmore ? null : d.kmore; renderList(); var m = K.listEl.querySelector('.kl-menu button'); if (m) m.focus(); return; }
+    if (d.kopen) { document.getElementById('app').classList.remove('klist'); if (d.kopen !== K.convId) openConv(d.kopen); else if (needRender) renderList(); return; }
+    if (d.kmore) { K.vdd = false; K.menu = K.menu === d.kmore ? null : d.kmore; renderList(); var m = K.listEl.querySelector('.kl-menu button'); if (m) m.focus(); return; }
     if (d.kdel) {
       var id = d.kdel;
       K.menu = null;
@@ -1161,10 +1849,18 @@
     stopSpeech();
   }, true);
 
+  // Külső kattintás zárja a lista menüit; capture fázisban fut, mielőtt a renderList() lecserélné az innerHTML-t (különben a levált e.target.closest('#kapulist') null lenne).
+  document.addEventListener('click', function (e) {
+    if (e.__inKapuList || S.area !== 'kapu' || (!K.vdd && !K.menu)) return;
+    if (K.listEl && e.composedPath && e.composedPath().indexOf(K.listEl) >= 0) return;
+    if (e.target && e.target.closest && e.target.closest('#kapulist')) return;
+    K.vdd = false; K.menu = null; renderList();
+  }, true);
+
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape' || S.area !== 'kapu') return;
     if (K.dd || K.mdd) { K.dd = false; K.mdd = false; renderBar(); }
-    if (K.menu) { K.menu = null; renderList(); }
+    if (K.menu || K.vdd) { K.menu = null; K.vdd = false; renderList(); }
     stopSpeech();
   });
 
@@ -1216,7 +1912,7 @@
     K.entered = false;
     var q = document.getElementById('q');
     if (q) { q.placeholder = K.savedPh || q.placeholder; q.value = S.q || ''; }
-    K.dd = false; K.mdd = false; K.menu = null;
+    K.dd = false; K.mdd = false; K.menu = null; K.vdd = false;
     document.getElementById('app').classList.remove('klist');
     stopSpeech();
     if (K.typing) K.typing.stop();

@@ -99,5 +99,9 @@ Route::middleware('auth')->group(function () {
         Route::get('kapu/confirm/{id}', [\App\Http\Controllers\KapuController::class, 'confirmation']);
         Route::post('kapu/confirm/{id}', [\App\Http\Controllers\KapuController::class, 'approve'])->middleware('throttle:30,1');
         Route::post('mcp/pairing', [\App\Http\Controllers\McpController::class, 'pairing'])->middleware('throttle:10,1');
+        // Adózói táblázatok és kimutatások (Milestone 1)
+        Route::get('taxpayer-tables/data', [\App\Http\Controllers\TaxpayerTableController::class, 'data']);
+        Route::get('taxpayer-tables/export', [\App\Http\Controllers\TaxpayerTableController::class, 'export']);
+        Route::post('nav/ingest-taxpayer-tables', [\App\Http\Controllers\TaxpayerTableController::class, 'ingest'])->middleware(\App\Http\Middleware\RequireActiveTrial::class);
     });
 });

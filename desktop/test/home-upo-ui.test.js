@@ -30,6 +30,8 @@ function makeHarness({
   clients = [{ id: 'c16', name: 'Teszt Zrt.', tax: '12345678-2-42', active: true, sync: { ok: true, at: '11-15 01:18' } }],
   obligations = [],
   messages = [],
+  approvals = [],
+  canDecide = () => false,
 } = {}) {
   const S = { homeUpoAll: false };
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -40,7 +42,6 @@ function makeHarness({
   const C = id => clients.find(c => c.id === id);
   const isSent = m => m.folder === 'ELKULDOTT';
   const goBtn = m => `<button data-goto="${m.id}">${esc(m.sub)}</button>`;
-  const canDecide = () => false;
 
   const fn = new Function(
     'S', 'TODAY', 'ME', 'MEU', 'OFFICE', 'PEOPLE', 'CLIENTS', 'M', 'APPR', 'OBLIGATIONS',
@@ -48,8 +49,8 @@ function makeHarness({
     `${html.slice(sPay, ePay)}\n${html.slice(sPer, ePer)}\n${html.slice(sUpo, eUpo)}\n${html.slice(sHome, eHome)}\nreturn { vHome, homeUpoSection };`
   );
   const api = fn(
-    S, today, 'LG', { name: 'Laczkovszki Gábor' }, { name: 'Teszt Zrt.' }, { LG: 'Laczkovszki Gábor' },
-    clients, messages, [], obligations, MONTHS, DOW, INT, INT_ORDER,
+    S, today, 'LG', { name: 'Laczkovszki Gábor' }, { name: 'Teszt Zrt.' }, { LG: 'Laczkovszki Gábor', MJ: 'Minta János' },
+    clients, messages, approvals, obligations, MONTHS, DOW, INT, INT_ORDER,
     esc, addDays, daysTo, ic, st, C, isSent, goBtn, canDecide
   );
   return { S, ...api };
@@ -135,4 +136,21 @@ test('üres és minden-beadva állapotok megjelenítése', () => {
     ],
   });
   assert.match(doneH.homeUpoSection(), /Minden közelgő adónaptár-kötelezettség beadva/);
+});
+
+test('a Jóváhagyások kártya üres állapotban nem jelenik meg, függő kérésnél pedig a bal oszlopban (Ezzel kezdd alatt, Iratok feldolgozottsága előtt) áll', () => {
+  const emptyOut = makeHarness({ approvals: [] }).vHome();
+  assert.doesNotMatch(emptyOut, /Jóváhagyások/, 'üres APPR mellett a Jóváhagyások kártya nem jelenik meg');
+
+  const withApprOut = makeHarness({
+    messages: [{ id: 'm1', c: 'c16', s: 'NAV', sub: 'Határozat', off: 'wait', int: 'uj', arch: false, sys: false }],
+    approvals: [{ id: 7, mid: 'm1', by: 'MJ', mine: false }],
+    canDecide: () => true,
+  }).vHome();
+  const iTodo = withApprOut.indexOf('Ezzel kezdd');
+  const iAppr = withApprOut.indexOf('Jóváhagyások');
+  const iProc = withApprOut.indexOf('Iratok feldolgozottsága');
+  assert.ok(iTodo > 0 && iAppr > iTodo && iProc > iAppr, 'a Jóváhagyások kártya a bal oldali stackben, az Iratok feldolgozottsága előtt jelenik meg');
+  assert.match(withApprOut, /1 átvételi kérés vár jóváhagyásra\./);
+  assert.match(withApprOut, /data-decide="7:1">Jóváhagyom<\/button>/);
 });

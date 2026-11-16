@@ -25,7 +25,7 @@ return [
         : is_file(dirname(__DIR__).'/bootstrap/official-build.json'),
     'trial_days' => max(1, (int) env('IRATKAPU_TRIAL_DAYS', 14)),
     'subscribe_url' => env('IRATKAPU_SUBSCRIBE_URL', 'https://kapumail.hu/#elofizetes'),
-    'github_url' => env('IRATKAPU_GITHUB_URL', 'https://kapumail.hu/open-source'),
+    'github_url' => env('IRATKAPU_GITHUB_URL', 'https://github.com/interdesigncorp-lab/kapumail'),
     // A billing-szerver (próba és szakmai MCP-token): POST /api/billing/mcp/trial és /api/billing/mcp/token.
     'billing_url' => env('IRATKAPU_BILLING_URL', 'https://kapumail.hu'),
     // ECDSA P-256 nyilvános kulcs az előfizetési licenckulcsok (KM1.<payload>.<sig>) helyi, offline ellenőrzéséhez.

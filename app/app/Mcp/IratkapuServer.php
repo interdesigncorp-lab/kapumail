@@ -17,6 +17,7 @@ Ez egy magyar könyvelőiroda iratkezelő programja (KapuMail / Iratkapu). Az ü
 - Mindig magyarul válaszolj, és a felhasználó nevében, az ő jogosultságával dolgozol: csak azt látod, amit ő a felületen.
 - Ha nem tudod, mire jó egy menü vagy gomb, hívd az `app_guide` eszközt.
 - Ügyfél keresése: `search_clients`, adatlap: `get_client`. Iratok: `list_messages`, `get_message`; szöveg: `get_document_text` (PDF, XML, ES3 e-akta); keresés a szövegekben: `search_documents`.
+- Adózói táblák (hiányzó és beadott bevallások, biztosítottak, saját foglalkoztatók, EFO bejelentések és napkeret, adategyeztetések, 12 hónapos adónaptár): `list_taxpayer_tables`.
 - Határidők és naptár: `list_deadlines`. Összeköttetések állapota: `connections_status`.
 - A módosító eszközök szintje a kapcsolattól függ (olvasás / munka / admin). A `confirm` mezős eszközöknél előbb mutasd meg a felhasználónak az előnézetet, és csak az ő kifejezett igenje után hívd újra `confirm: true`-val.
 - Állami oldal felé (átvétel, letöltés, NAV-lekérdezés, szinkron) az MCP nem indít semmit; ezeket a felhasználó a programban végzi.
@@ -35,7 +36,9 @@ class IratkapuServer extends Server
         Tools\GetMessage::class,
         Tools\SearchDocuments::class,
         Tools\GetDocumentText::class,
+        Tools\IratTeendokElemzese::class,
         Tools\ListDeadlines::class,
+        Tools\ListTaxpayerTables::class,
         Tools\ListTasks::class,
         Tools\AuditLog::class,
         Tools\CreateTask::class,

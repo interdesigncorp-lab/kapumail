@@ -92,10 +92,13 @@ test('runClients: egy ügyfél hibája nem állítja meg a többit, és elsziget
   assert.ok(seen.includes('jelszo1') && seen.includes('jelszo2'));
 });
 
-test('az eredmény semmilyen titkot nem tartalmaz', async () => {
+test('az eredmény és a részlépések (onStep) semmilyen titkot nem tartalmaznak, és jelzik a postafiókokat', async () => {
   const plan = { ceg1: { mailboxes: [{ azonosito: 'A1', name: 'Saját', rows: ['E1'] }] } };
-  const sum = await A.runClients(['ceg1'], { getCreds, fetchImpl: fakeKauFor(plan), sleep: async () => {} });
-  const blob = JSON.stringify(sum);
+  const steps = [];
+  const sum = await A.runClients(['ceg1'], { getCreds, fetchImpl: fakeKauFor(plan), onStep: s => steps.push(s), sleep: async () => {} });
+  assert.ok(steps.some(s => s.phase === 'login' && s.index === 1 && s.total === 1));
+  assert.ok(steps.some(s => s.phase === 'mailbox' && s.mailbox === 'Saját' && s.folder === 'Beérkezett' && s.mbIndex === 1 && s.mbTotal === 1));
+  const blob = JSON.stringify({ sum, steps });
   for (const secret of ['jelszo1', RFC_SEED, VAULT.ceg1.password]) assert.equal(blob.includes(secret), false, `kiszivárgott: ${secret}`);
 });
 

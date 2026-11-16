@@ -14,7 +14,7 @@ class AuditLog extends IratkapuTool
 {
     protected string $name = 'audit_log';
 
-    protected string $description = 'Az iroda csak bővíthető eseménynaplója (ki, mikor, mit csinált), a legfrissebb elöl; ugyanaz, mint a felület Naplók oldalán. Vezető és admin mindent lát, könyvelő a saját ügyfeleiét és a saját lépéseit.';
+    protected string $description = 'Az iroda csak bővíthető eseménynaplója (ki, mikor, mit csinált), a legfrissebb elöl; ugyanaz, mint a felületen a Beállítások → Auditnapló lapon. Vezető és admin mindent lát, könyvelő a saját ügyfeleiét és a saját lépéseit.';
 
     protected bool $audit = false;
 

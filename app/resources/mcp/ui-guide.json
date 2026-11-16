@@ -1,12 +1,12 @@
 {
-  "intro": "A KapuMail (belső nevén Iratkapu) könyvelőirodáknak készült asztali és webes program: összegyűjti az ügyfelek hivatalos tárhelyeire (Ügyfélkapu, Cégkapu, Hivatali kapu) érkező iratokat, a NAV ügyfélportál adónaptárát és bevallásait, és belső munkafolyamatot (felelős, teendő, határidő, kész) ad hozzájuk. A program elválasztja a hivatalos állapotot (átvétel, kézbesítési vélelem), amely csak a tárhely igazolása alapján változik, a belső irodai feldolgozástól. A súgó témákra bomlik: a bal oldali sáv menüi (home, inbox, tasks, cal, upo, clients, sync), az irat részletei (message), a Kapu AI-segéd (kapu), a Beállítások fülei (settings.*), valamint a fogalmak (concepts.*) és a billentyűparancsok (shortcuts). Minden témánál szerepel, hol érhető el, mire való, és mit csinálnak a gombjai.",
+  "intro": "A KapuMail (belső nevén Iratkapu) könyvelőirodáknak készült asztali és webes program: összegyűjti az ügyfelek hivatalos tárhelyeire (Ügyfélkapu, Cégkapu, Hivatali kapu) érkező iratokat, a NAV ügyfélportál adónaptárát, bevallásait és adózói tábláit (biztosítottak, saját foglalkoztatók, EFO, adategyeztetések), és belső munkafolyamatot (felelős, teendő, határidő, kész) ad hozzájuk. A program elválasztja a hivatalos állapotot (átvétel, kézbesítési vélelem), amely csak a tárhely igazolása alapján változik, a belső irodai feldolgozástól. A súgó témákra bomlik: a bal oldali sáv menüi (home, inbox, tasks, cal, upo, clients, tables), az irat részletei (message), a Kapu AI-segéd (kapu), a Beállítások fülei (settings.*, sync, audit), valamint a fogalmak (concepts.*) és a billentyűparancsok (shortcuts). Minden témánál szerepel, hol érhető el, mire való, és mit csinálnak a gombjai.",
   "topics": [
     {
       "key": "home",
       "title": "Áttekintés",
       "summary": "Napi kezdőlap: mi vár átvételre, mi sürgős, mi esedékes ma, mivel kezdd a napot, és melyek a közelgő adónaptár-események.",
       "where": "Bal oldali sáv, legfelső ikon (ház, „Áttekintés”).",
-      "details": "Felül csempék mutatják a darabszámokat: átvételre vár, sürgős és nyitott, ma esedékes, nálad van, valamint hány tárhely nem naprakész. Az „Ezzel kezdd” kártya sorba szedi a teendőket: sürgős, még át nem vett iratok; ma lejáró határidők; ismeretlen típusú, besorolásra váró iratok; becsült, még meg nem erősített határidők. Jobbra az „Iratok feldolgozottsága” sáv a belső állapotok (Új, Osztályozandó, Kiosztott, Folyamatban, Ellenőrzésre vár, Kész) arányát mutatja. A „Jóváhagyások” kártyán a függő átvételi kérések látszanak; vezető vagy admin itt dönthet róluk. Ha egy ügyfél szinkronja hibás, külön kártya jelzi az okot és az utolsó sikeres szinkron idejét. Alul a „Közelgő adónaptár-események” blokk soronkénti kártyákban mutatja a még nyitott NAV bevallási és fizetési határidőket (dátumkockával, nyomtatványkóddal, ügyfélnévvel, hátralévő napokkal, állapottal és lenyitható utalási adatokkal). A sáv ikonján pötty jelzi, ha van olyan jóváhagyás, amelyről te dönthetsz.",
+      "details": "Felül csempék mutatják a darabszámokat: átvételre vár, sürgős és nyitott, ma esedékes, nálad van, valamint hány tárhely nem naprakész. Bal oldalon az „Ezzel kezdd” kártya sorba szedi a teendőket: sürgős, még át nem vett iratok; ma lejáró határidők; ismeretlen típusú, besorolásra váró iratok; becsült, még meg nem erősített határidők. Ha van függő átvételi kérés, közvetlenül alatta, szintén a bal oldali oszlopban jelenik meg a „Jóváhagyások” kártya (vezető vagy admin itt dönthet róluk; ha nincs függő kérés, a kártya nem jelenik meg). Jobbra az „Iratok feldolgozottsága” sáv a belső állapotok (Új, Osztályozandó, Kiosztott, Folyamatban, Ellenőrzésre vár, Kész) arányát mutatja. Ha egy ügyfél szinkronja hibás, külön kártya jelzi az okot és az utolsó sikeres szinkron idejét. Alul a „Közelgő adónaptár-események” blokk soronkénti kártyákban mutatja a még nyitott NAV bevallási és fizetési határidőket (dátumkockával, nyomtatványkóddal, ügyfélnévvel, hátralévő napokkal, állapottal és lenyitható utalási adatokkal). A sáv ikonján pötty jelzi, ha van olyan jóváhagyás, amelyről te dönthetsz.",
       "buttons": [
         {
           "label": "átvételre vár / sürgős, nyitott / ma esedékes / nálad van (csempék)",
@@ -14,7 +14,7 @@
         },
         {
           "label": "tárhely nem naprakész (csempe)",
-          "does": "A Naplók (Szinkronnapló) nézetre visz."
+          "does": "A Beállítások → Szinkronnapló fülre visz."
         },
         {
           "label": "Átvétel kérése / Megnyitás / Besorolás / Megerősítés",
@@ -30,7 +30,7 @@
         },
         {
           "label": "Határidőnaptár / Teljes adónaptár",
-          "does": "Az áttekintés alján lévő adónaptár-blokk fejlécéből a Határidők naptárra vagy az Adónaptár és bevallások nézetre ugrik; a sorok naptárlapjára kattintva az adott nap heténél nyílik meg a naptár."
+          "does": "Az áttekintés alján lévő adónaptár-blokk fejlécéből a Határidők és bevallások oldal „Határidőnaptár” vagy „NAV bevallások és mátrix” fülére ugrik; a sorok naptárlapjára kattintva az adott nap heténél nyílik meg a naptár."
         }
       ],
       "related": [
@@ -354,11 +354,15 @@
     },
     {
       "key": "cal",
-      "title": "Határidők (naptár)",
+      "title": "Határidők és bevallások: Határidőnaptár",
       "summary": "Az iratok határidői és a NAV adónaptár tételei heti, havi vagy lista nézetben.",
-      "where": "Bal oldali sáv, negyedik ikon („Határidők”).",
-      "details": "A naptár az iratok rögzített határidőit és a NAV adónaptár esedékességeit együtt mutatja, színekkel feladó szerint (NAV, Adónaptár (NAV), Önkormányzat, Bíróság/cégbíróság/végrehajtó, Egyéb hatóság). A tömör kártya megerősített határidő, a szaggatott, ≈ jelű becsült (az átvétel napjából számolt, még senki nem ellenőrizte). Az adónaptár-kártyák alján az állapotfelirat (Beadható, Beadva, Feltételes, Hiányzó!, Hibás!) nem beküldő gomb, hanem a nyomtatvány állapotát jelzi (buboréksúgóval); a kártyára kattintva a párosított nyugta vagy az Adónaptár nézet nyílik meg. A bal oldali kis naptárban a pöttyök jelzik a határidős napokat. Szűrhető feladó szerint, bizonyosság (Mind, Megerősített, ≈ Becsült), felelős és ügyfél szerint. A Lista nézet külön mutatja a lejárt, még nyitott tételeket; az adónaptár-tételeknél az „Utalási adatok” lenyíló a számlaszámot és a közleményt adja másolható formában (az összeget a bevallásból kell beírni, a program nem utal). Az átvételre váró iratoknak még nincs határideje.",
+      "where": "Bal oldali sáv, negyedik ikon („Határidők és bevallások”), „Határidőnaptár” fül (alapértelmezett). Pötty jelzi a sáv ikonján, ha van hiányzó vagy hibás bevallás. Ezen az oldalon a rózsaszín Iratok mappasáv alapból összecsukódik.",
+      "details": "A naptár az iratok rögzített határidőit és a NAV adónaptár esedékességeit együtt mutatja, színekkel feladó szerint (NAV, Adónaptár (NAV), Önkormányzat, Bíróság/cégbíróság/végrehajtó, Egyéb hatóság). A tömör kártya megerősített határidő, a szaggatott, ≈ jelű becsült (az átvétel napjából számolt, még senki nem ellenőrizte). Az adónaptár-kártyák alján az állapotfelirat (Beadható, Beadva, Feltételes, Hiányzó!, Hibás!) nem beküldő gomb, hanem a nyomtatvány állapotát jelzi (buboréksúgóval); a kártyára kattintva a párosított nyugta vagy a „NAV bevallások és mátrix” fül nyílik meg. A bal oldali kis naptárban a pöttyök jelzik a határidős napokat. Szűrhető feladó szerint, bizonyosság (Mind, Megerősített, ≈ Becsült), felelős és ügyfél szerint. A Lista nézet külön mutatja a lejárt, még nyitott tételeket; az adónaptár-tételeknél az „Utalási adatok” lenyíló a számlaszámot és a közleményt adja másolható formában (az összeget a bevallásból kell beírni, a program nem utal). Az átvételre váró iratoknak még nincs határideje.",
       "buttons": [
+        {
+          "label": "Határidőnaptár / NAV bevallások és mátrix",
+          "does": "Fő fülváltás a határidőnaptár és a NAV bevallások nézete között; a második fülön jelvény mutatja a hiányzó vagy elutasított tételek számát."
+        },
         {
           "label": "Hét / Hónap / Lista",
           "does": "Nézetváltás."
@@ -380,8 +384,12 @@
           "does": "A szűrőknek megfelelő nyitott határidők letöltése .ics fájlban (Google, Outlook, Apple naptár beolvassa). Pillanatkép, magától nem frissül."
         },
         {
+          "label": "Szűrők (fekete szűrő ikonos gomb a Naptárfájl mellett)",
+          "does": "Kompakt lenyílóban nyitja meg a Bizonyosság (Mind, Megerősített, ≈ Becsült), a Felelős és az Ügyfél szűrőket; aktív szűrőnél jelvény mutatja a számukat, és az „Alaphelyzet” visszaállítja őket."
+        },
+        {
           "label": "Esemény (kártya)",
-          "does": "Az irat megnyitása; adónaptár-tételnél a párosított nyugta vagy az Adónaptár nézet."
+          "does": "Az irat megnyitása; adónaptár-tételnél a párosított nyugta vagy a „NAV bevallások és mátrix” fül."
         }
       ],
       "related": [
@@ -392,11 +400,15 @@
     },
     {
       "key": "upo",
-      "title": "Adónaptár és bevallások (NAV)",
+      "title": "Határidők és bevallások: NAV bevallások és mátrix",
       "summary": "A NAV ügyfélportál adónaptára, hiányzó és beadott bevallásai, összepárosítva a tárhelyre érkező nyugtákkal.",
-      "where": "Bal oldali sáv, ötödik ikon („Adónaptár és bevallások”). Pötty jelzi, ha van hiányzó vagy hibás bevallás.",
+      "where": "Bal oldali sáv, negyedik ikon („Határidők és bevallások”), „NAV bevallások és mátrix” fül. A fülön jelvény (a bal sáv ikonján pötty) jelzi, ha van hiányzó vagy hibás bevallás. Ezen az oldalon a rózsaszín Iratok mappasáv alapból összecsukódik.",
       "details": "Az adatok a NAV ügyfélportálról (ugyfelportal.nav.gov.hu) jönnek: adónaptár-bejegyzések, hiányzó bevallások, bevallási kötelezettségek és beküldött bevallások, automatikusan párosítva a tárhelyre érkező elfogadó és elutasító nyugtákkal. A csempék számolják: beadható (esedékes), beadva nyugtával, hiányzó (lejárt), hibás/elutasított, feltételes. Az „Adónaptár mátrix” ügyfelenként és nyomtatványonként mutatja az állapotot; a „Minden bevallás” táblázat időszakkal, esedékességgel, vonalkóddal; a „Hiányzó és hibás” csak a gondokat. A kereső ügyfélre, adószámra, nyomtatványra (például 2608) szűr. A NAV-portál olvasása az asztali alkalmazásban fut, a saját, kódos (TOTP) belépővel, amelyen a NAV ügyfélportál rendszer be van kapcsolva.",
       "buttons": [
+        {
+          "label": "Határidőnaptár / NAV bevallások és mátrix",
+          "does": "Fő fülváltás a határidőnaptár és a NAV bevallások nézete között."
+        },
         {
           "label": "NAV adónaptár frissítése",
           "does": "A NAV ügyfélportál olvasása (adónaptár, hiányzó bevallások) a megfelelő belépőkkel. Böngészőben csak az adatokat tölti újra."
@@ -428,7 +440,7 @@
       "key": "clients",
       "title": "Ügyfelek és tárhelyek",
       "summary": "Az Ügyfélkapu+/DÁP belépők, a képviselt ügyfelek, tárhelyeik, szinkronállapotuk és meghatalmazásuk.",
-      "where": "Bal oldali sáv, hatodik ikon („Ügyfelek és tárhelyek”).",
+      "where": "Bal oldali sáv, ötödik ikon („Ügyfelek és tárhelyek”).",
       "details": "A fejléc összesíti a belépők, ügyfelek és tárhelyek számát. Telítődő tárhelyeknél (80% fölött) figyelmeztetés jelenik meg, mert a betelt tárhely nem fogad új iratot. A belépők összefoglaló kártyája jelzi, ha egy belépő beavatkozást kér. A „Besorolásra vár” rész azokat az élő postafiókokat mutatja, amelyeket a szinkron nem tudott egyértelműen ügyfélhez kötni; az „ajánlott ügyfelek” kártya a saját tárhely leveleiből és a NAV képviseleti listájából ajánl ügyfelet. A „Képviselt ügyfelek és Cégkapuk” táblázat oszlopai: ügyfél (jelvényekkel: felderítve, saját tárhely, inaktív, tárhely-telítettség), adószám, tárhelyek, belépés, szinkron, meghatalmazás (30 napon belül lejárónál figyelmeztetés), nyitott iratok. A belépés nevére kattintva a lista az adott belépő ügyfeleire szűrődik.",
       "buttons": [
         {
@@ -460,7 +472,39 @@
         "client.page",
         "clients.discovered",
         "client.wizard",
+        "tables",
         "settings.portals"
+      ]
+    },
+    {
+      "key": "tables",
+      "title": "Adózói táblák",
+      "summary": "Többügyfeles, kereshető és CSV/XLSX formátumba exportálható NAV ügyfélportál adattáblák 6 főfülön (Bevallások, Biztosítottak, Saját foglalkoztatók, Egyszerűsített foglalkoztatottak, Adategyeztetések, Adónaptár).",
+      "where": "Bal oldali fekete sáv, a felső menücsoport alján lévő táblázat ikon („Adózói táblák”, közvetlenül az „Ügyfelek és tárhelyek” alatt).",
+      "details": "Az Adózói táblák nézetben a rózsaszín Iratok mappasáv automatikusan összecsukódik, hogy a széles táblázatok kényelmesen elférjenek. Hat főfül érhető el: 1. Bevallások (két alfüle: Hiányzó bevallások és Bevallások tárhelyi nyugta-vonalkóddal, befogadási és hibaüzenet-dátummal); 2. Biztosítottak (bejelentett T1041 jogviszonyok, TAJ, jogviszony kezdete, heti óra); 3. Saját foglalkoztatók (természetes személy / egyéni vállalkozó saját biztosítotti jogviszonyai); 4. Egyszerűsített foglalkoztatottak (két alfüle: T1042E Bejelentések és éves összevont Napkeret dolgozónként); 5. Adategyeztetések (NAV adategyeztető eljárások és állapotuk); 6. Adónaptár (12 hónapos Január–December mátrix adózónként, a ténylegesen beadott bevallások és a jövőbeli esedékességek nyomtatványkódjaival, státuszszűrőkkel). Bármelyik oszlopfejlécre kattintva rendezhető a táblázat, a keresőmező (/ gyorsbillentyűvel), az adózóválasztó és az évválasztó közvetlenül nyitva érhető el. Az Adónaptár havi celláira kattintva részletező ablak nyílik a hónap összes bevallásával.",
+      "buttons": [
+        {
+          "label": "NAV ügyfélportál frissítése / NAV adónaptár frissítése",
+          "does": "Azonnali élő NAV ügyfélportál-olvasást indít (az aznap már olvasott képviselt ügyfelekre is), és frissíti a megnyitott táblázatot."
+        },
+        {
+          "label": "Export (CSV letöltése / Excel letöltése)",
+          "does": "Az aktív fül és az aktuális szűrők szerinti sorok letöltése UTF-8 CSV (.csv) vagy Excel (.xlsx) munkafüzetben."
+        },
+        {
+          "label": "Szűrők törlése",
+          "does": "Aktív keresés, adózó- vagy státuszszűrő visszaállítása alaphelyzetbe."
+        },
+        {
+          "label": "Havi cella nyomtatványkód-jelvényei (Adónaptár)",
+          "does": "Megnyitja az adott ügyfél és hónap tételes bevalláslistáját, ahonnan egy kattintással át lehet ugrani a Bevallások fülre."
+        }
+      ],
+      "related": [
+        "upo",
+        "cal",
+        "clients",
+        "client.page"
       ]
     },
     {
@@ -579,9 +623,9 @@
     },
     {
       "key": "sync",
-      "title": "Naplók: Szinkronnapló",
+      "title": "Beállítások: Szinkronnapló",
       "summary": "Tárhelyenként a legutóbbi szinkron állapota és eredménye, a listázás és a teljes szinkron indítása.",
-      "where": "Bal oldali sáv, utolsó ikon („Naplók”), „Szinkronnapló” fül. Pötty jelzi, ha valamelyik ügyfél szinkronja hibás.",
+      "where": "Beállítások → „Szinkronnapló” fül. A Beállítások ikonján pötty jelzi, ha valamelyik ügyfél szinkronja hibás.",
       "details": "A listázás csak megnézi, mi érkezett: iratot nem nyit meg és nem vesz át. A szinkronizálás be is lép a kapcsolattal, és a NAV ügyfélportált is frissíti. A táblázat tárhelyenként mutatja az állapotot (Kész, Részben kész, Beavatkozás kell, Fut, Sorban), az utolsó sikert és az eredményt; a hibás sorok kerülnek előre. Hiba után a korábbi adatok megmaradnak „nem naprakész” jelzéssel; átvételt a rendszer újrapróbálkozásból sem indít. Az oldal alján a helyi adók (önkormányzati portál) kártyája látható.",
       "buttons": [
         {
@@ -599,10 +643,6 @@
         {
           "label": "Ügyfél neve",
           "does": "Az ügyfél adatlapjának megnyitása."
-        },
-        {
-          "label": "Szinkronnapló / Auditnapló",
-          "does": "Váltás a két napló között."
         }
       ],
       "related": [
@@ -616,7 +656,7 @@
       "key": "sync.asp",
       "title": "Helyi adók – önkormányzati portál",
       "summary": "Az E-Önkormányzat Portálról beolvasott adószámla-kivonatok, bevallások és folyamatban lévő ügyek önkormányzatonként.",
-      "where": "Naplók → Szinkronnapló, az oldal alján.",
+      "where": "Beállítások → Szinkronnapló, az oldal alján.",
       "details": "Saját néven (magánszemélyként) a kódos Ügyfélkapu+ belépővel a kapuszinkron naponta egyszer a háttérben automatikusan is frissíti a helyi adókat. Ügyfelekhez (cégekhez, egyéni vállalkozókhoz) azért van szükség az osztott képernyős ablakra, mert az önkormányzati portálon a szerepkörváltást CAPTCHA védi a robotbejárás ellen: bal oldalon az ügyfelek pipálható listája áll (egy kattintásos adószám-másolással), jobb oldalon az E-Önkormányzat Portál automatikus Ügyfélkapu+ belépéssel. A szerepkörváltás után a program automatikusan kiolvassa az idei adószámla-kivonatot, a benyújtott bevallások listáját és a folyamatban lévő ügyek számát, azonnal elmenti, és zöld pipát tesz az ügyfél mellé. A saját nevedben beolvasott adatot csak te látod.",
       "buttons": [
         {
@@ -635,9 +675,9 @@
     },
     {
       "key": "audit",
-      "title": "Naplók: Auditnapló",
+      "title": "Beállítások: Auditnapló",
       "summary": "Csak bővíthető, módosíthatatlan napló minden fontos eseményről.",
-      "where": "Naplók → „Auditnapló” fül.",
+      "where": "Beállítások → „Auditnapló” fül.",
       "details": "Bejegyzés nem módosítható és nem törölhető; ezt az adatbázis kényszeríti ki. Oszlopai: időpont, ki, mi történt, ügyfél, bizonyíték, szabályzat. Az átvétellel és elutasítással kapcsolatos sorok kiemelve látszanak. Ide kerülnek például a letöltési szabályok módosításai, a felülíró szabályok és az AI-kapcsolat (MCP) hívásai. Könyvelő a saját ügyfelei és a saját műveletei eseményeit látja.",
       "buttons": [
         {
@@ -702,7 +742,7 @@
     {
       "key": "settings",
       "title": "Beállítások",
-      "summary": "Az iroda és a gép beállításai öt fülön: Belépők és rendszerek, E-mail értesítő, Munkatársak és szerepkörök, Szabályok és letöltés, Ez a gép (és az AI-kapcsolat).",
+      "summary": "Az iroda és a gép beállításai, valamint a naplók fülekbe rendezve: Belépők és rendszerek, E-mail értesítő, Munkatársak és szerepkörök, Szabályok és letöltés, Ez a gép, Szinkronnapló, Auditnapló (valamint az AI-kapcsolat és a Kapu).",
       "where": "Bal oldali sáv alsó része, fogaskerék ikon („Beállítások”).",
       "details": "A Beállítások fejléce az iroda nevét mutatja, alatta a fülek. A legtöbb irodai beállítást csak vezető vagy admin módosíthatja; munkatársat és az AI-kapcsolatot csak admin kezelheti. A gépre vonatkozó beállítások (értesítések, alkalmazászár, titoktár) csak az adott gépre és felhasználóra hatnak, és egy részük csak az asztali alkalmazásban érhető el.",
       "buttons": [
@@ -725,6 +765,14 @@
         {
           "label": "Ez a gép",
           "does": "Rendszerértesítések, háttérfutás, alkalmazászár, titoktár, élő csatlakozó, megjelenés."
+        },
+        {
+          "label": "Szinkronnapló",
+          "does": "Tárhelyenként a legutóbbi szinkron állapota, listázás és teljes szinkron, valamint az önkormányzati portál (helyi adók)."
+        },
+        {
+          "label": "Auditnapló",
+          "does": "Csak bővíthető, módosíthatatlan eseménynapló szereplő szerinti szűréssel."
         }
       ],
       "related": [
@@ -734,6 +782,8 @@
         "settings.team",
         "settings.rules",
         "settings.device",
+        "sync",
+        "audit",
         "settings.mcp"
       ]
     },

@@ -86,6 +86,18 @@ A tulajdonos kérésére egy újabb megfigyelés (a képviselt társaságra vál
 
 **Élőben, 2026-11-13:** a társaságra 5 jövőbeli tétel jött (2665, 2608, 26A60 feltételesként), és megjelentek a Határidők naptárban.
 
+## Kiegészítés (2026-11-16): C kör – Adózói táblák élő olvasása (Biztosítottak, Saját foglalkoztatók, EFO, Adategyeztetések)
+
+A NAV Ügyfélportál nyilvános felületkódjából azonosított REST-végpontok bekerültek a `desktop/nav-taxpayer-tables.js` modulba (`IRATKAPU_NAV_QUERIES` mögött, saját profilra és bekapcsolt `IRATKAPU_NAV_SWITCH` mellett képviselt ügyfelekre is):
+
+- **Jogosultsági előellenőrzés (403-védelem):** a POST lekérdezések előtt a program lekéri a `GET /api/foglalkoztatas-lekerdezesek/adozoi-profilok/<id>/biztositasi-tipusok` végpontot `kategoria=FOGLALKOZTATO`, illetve (nem szervezeti profilnál) `kategoria=FOGLALKOZTATAS` paraméterrel. Ha az adott típus (`BIZTOSITAS`, `EGYSZERUSITETT`) nem szerepel az engedélyezett listában, a program nem indít POST lekérdezést (elkerülve a korábban megfigyelt HTTP 403 választ), hanem üres listát ad vissza.
+- **Biztosítottak (`nav_insured_persons`):** `POST /api/foglalkoztato-lekerdezesek/biztositotti-fajlba` → `GET /api/foglalkoztato-lekerdezesek/adozoi-profilok/<id>/eredmenyek/utolso` (JSON sorok kiolvasása; ha az eredmény csak fájlként érhető el, visszaesés `GET /api/foglalkoztato-lekerdezesek/biztositotti-fajlba/export` XLSX olvasásra a szerveren).
+- **Saját foglalkoztatók (`nav_employers`):** szervezeti profiloknál (`SZERVEZET`) kihagyva; magánszemély / egyéni vállalkozó profilnál `POST /api/foglalkoztatas-lekerdezesek/biztositotti-fajlba` → `GET /api/foglalkoztatas-lekerdezesek/adozoi-profilok/<id>/eredmenyek/utolso` (szükség esetén `.../export` XLSX visszaeséssel).
+- **Egyszerűsített foglalkoztatottak (`nav_efo_declarations`, `nav_efo_quotas`):** gyors GET előellenőrzés a hivatalos szűrő erőforrás-végpontján (`GET /api/foglalkoztatas-lekerdezesek/adozoi-profilok/<id>/munkavallalok?biztositottiTipus=EGYSZERUSITETT`) — ha `munkavallalok` üres, POST lekérdezés nélkül azonnal `[]` adódik vissza; ha van EFO-s munkavállaló, `POST /api/v1/registry/foglalkoztato-lekerdezesek/egyszerusitett/` (`adozoiProfilId` + `lang: 'hu'` kötelező mezőkkel) + `GET .../last` lekérdezés a bejelentésekhez, valamint `egyszerusitett-korabban-bejelentett/` + `.../last` és `egyszerusitett-adozo-adatai/` + `.../last` az összevont éves napkerethez.
+- **Adategyeztetések (`nav_reconciliations`):** `GET /api/v1/dialog/survey-from-joker/list` (`runningSurveys` + `closedSurveys`).
+- **Tárolás és izoláció:** szekciónként izolált hibakezelés (egy végpont hibája nem állítja meg a többit; csak a HTTP 401 / 3xx munkamenet-lejárat szakítja meg a ciklust). Sikeres üres válasz (`[]`) törli a korábbi `nav_upo` / `demo` sorokat az adott ügyfélnél, míg részleges hiba (`null`) érintetlenül hagyja a korábbi pillanatképet.
+- **Élőben igazolva (2026-11-16):** a *Biztosítottak*, a *Saját foglalkoztatók* és az *Adategyeztetések* élő NAV ÜPO szinkronja saját profilra és képviselt társaságra is sikeresen lefutott; az EFO-végpontok a hiányzó `adozoiProfilId` + `lang` mező és a `munkavallalok` GET előellenőrzés pótlásával javítva.
+
 ## Korlátok
 
 Egyetlen megfigyelés, egy fiók, DÁP-os belépés. A lapozás nagy listán, a hibaválaszok, a munkamenet lejárata és a terhelési korlátok nem ismertek. A mezők jelentését a nevükből következtetjük; értéket a jegyzőkönyv nem tartalmaz, ezért az egységek és a kódkészletek az építéskor, élő válaszon ellenőrizendők.

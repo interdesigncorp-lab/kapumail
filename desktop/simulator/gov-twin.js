@@ -176,11 +176,95 @@ function createGovTwin(scenario) {
       }
       if (/\/eredmenyek\/utolso$/.test(u.pathname)) {
         const i = s.exports.insured; if (!i || !u.pathname.includes(`/adozoi-profilok/${sel}/`)) return response(200, { lekerdezesId: null }, { json: true }); i.polls += 1;
-        return response(200, { lekerdezesId: i.id, lekerdezesEredmenyId: i.polls > 1 ? 7001 : null, errorMessage: null }, { json: true });
+        return response(200, {
+          lekerdezesId: i.id,
+          lekerdezesEredmenyId: i.polls > 1 ? 7001 : null,
+          biztositottiJogviszonyok: i.polls > 1 ? (scenario.navInsured || [{ munkavallaloNeve: 'SZIMULÁTOR Munkavállaló', munkavallaloAdoazonositoJele: '8400000001', tajSzam: '111222333', jogviszonyKezdete: '2025-01-15', jogviszonyVege: null, jogviszonyKodMegnevezes: '1101 - munkaviszony', hetiOra: [{ hetiMunkaora: 40, hetiMunkaoraKezdeteDat: '2025-01-15' }] }]) : null,
+          errorMessage: null,
+        }, { json: true });
       }
       if (u.pathname === '/api/foglalkoztato-lekerdezesek/biztositotti-fajlba/export') {
         if (q('eredmenyId') !== '7001' || q('riportTipus') !== 'XLSX') return response(400, { error: 'hibás paraméter' }, { json: true });
         return file('PK\u0003\u0004 szimulátor biztosítottak ' + sel, 'application/octet-stream');
+      }
+    }
+    // Adózói táblák (C kör): foglalkoztatási típusok, saját foglalkoztatók, EFO bejelentések és napkeret, adategyeztetések.
+    if (u.host === 'ugyfelportal.nav.gov.hu' && /^\/api\/(v1\/dialog\/survey-from-joker\/list|foglalkoztatas-lekerdezesek\/(adozoi-profilok\/\d+\/(biztositasi-tipusok|munkavallalok)|biztositotti-fajlba(\/export|\/adozoi-profilok\/\d+\/eredmenyek\/utolso)?)|v1\/registry\/foglalkoztato-lekerdezesek\/(egyszerusitett\/|egyszerusitett\/last|egyszerusitett-korabban-bejelentett\/|egyszerusitett-korabban-bejelentett\/last|egyszerusitett-korabban-bejelentett\/export|egyszerusitett-adozo-adatai\/|egyszerusitett-adozo-adatai\/last))$/.test(u.pathname)) {
+      const s = navSessions.get(cookieOf(init, 'NAVSESSION'));
+      if (s) { s.calls += 1; if (scenario.navSessionCalls != null && s.calls > scenario.navSessionCalls) navSessions.delete(s.id); }
+      if (!s || !navSessions.has(s.id)) return response(401, { error: 'unauthorized' }, { json: true });
+      const sel = s.selected ?? 10000001; const q = k => u.searchParams.get(k); let body = {}; try { body = JSON.parse(init.body || '{}'); } catch { /* üres */ }
+      s.exports = s.exports || {};
+      if (u.pathname === '/api/v1/dialog/survey-from-joker/list' && method === 'GET') {
+        return response(200, scenario.navSurveys || {
+          runningSurveys: [{ kampanyAzonosito: 901, nev: 'SZIMULÁTOR – ÁFA adategyeztetés', kikuldesDatum: '2026-10-05', bekuldesIdopontja: null }],
+          closedSurveys: [{ kampanyAzonosito: 850, nev: 'SZIMULÁTOR – Kontroll adategyeztetés', kikuldesDatum: '2026-05-10', bekuldesIdopontja: '2026-05-18T14:20:00' }],
+        }, { json: true });
+      }
+      if (/\/biztositasi-tipusok$/.test(u.pathname) && method === 'GET') {
+        if (!u.pathname.includes(`/adozoi-profilok/${sel}/`)) return response(403, { error: 'nem a kiválasztott profil' }, { json: true });
+        const kat = q('kategoria');
+        if (kat === 'FOGLALKOZTATO') return response(200, { elerhetoBiztositottiTipusok: scenario.navEmployerTypes || (sel === 10000001 ? [] : ['BIZTOSITAS', 'EGYSZERUSITETT']) }, { json: true });
+        if (kat === 'FOGLALKOZTATAS') return response(200, { elerhetoBiztositottiTipusok: scenario.navOwnEmployerTypes || (sel === 10000001 ? ['BIZTOSITAS'] : []) }, { json: true });
+        return response(400, { error: 'hibás kategória' }, { json: true });
+      }
+      if (/\/munkavallalok$/.test(u.pathname) && method === 'GET') {
+        if (!u.pathname.includes(`/adozoi-profilok/${sel}/`)) return response(403, { error: 'nem a kiválasztott profil' }, { json: true });
+        const list = scenario.navEfoMunkavallalok !== undefined ? scenario.navEfoMunkavallalok : [{ adoazonositoJel: '8400000002', megnevezes: 'SZIMULÁTOR Alkalmi Dolgozó', bejelentesDatuma: [{ napDtoNapKezdete: '2026-09-30' }] }];
+        return response(200, { munkavallalok: list }, { json: true });
+      }
+      if (u.pathname === '/api/foglalkoztatas-lekerdezesek/biztositotti-fajlba' && method === 'POST') {
+        if (body.adozoiProfilId !== sel || body.jogviszonyTipus !== 'NYITOTT') return response(400, { error: 'hibás kérés' }, { json: true });
+        s.exports.ownEmployers = { id: 800, polls: 0 };
+        return response(200, { id: 800 }, { json: true });
+      }
+      if (/^\/api\/foglalkoztatas-lekerdezesek\/biztositotti-fajlba\/adozoi-profilok\/\d+\/eredmenyek\/utolso$/.test(u.pathname) && method === 'GET') {
+        const oe = s.exports.ownEmployers; if (!oe || !u.pathname.includes(`/adozoi-profilok/${sel}/`)) return response(200, { lekerdezesId: null }, { json: true }); oe.polls += 1;
+        return response(200, {
+          lekerdezesId: oe.id,
+          lekerdezesEredmenyId: oe.polls > 1 ? 8001 : null,
+          biztositottiJogviszonyok: oe.polls > 1 ? (scenario.navOwnEmployers || [{ foglalkoztatoNeve: 'SZIMULÁTOR Foglalkoztató Kft.', foglalkoztatoAdoalanyAzonositoja: '12345676-2-41', jogviszonyKezdete: { naptolDtoNapKezdete: '2024-03-01T00:00:00.000000' }, jogviszonyVege: null, jogviszonyKodMegnevezes: '1101 - munkaviszony', hetiOra: [{ hetiMunkaora: 40, hetiMunkaoraKezdeteDat: { napDtoNapKezdete: '2024-03-01T00:00:00.000000' } }] }]) : null,
+          errorMessage: null,
+        }, { json: true });
+      }
+      if (u.pathname === '/api/v1/registry/foglalkoztato-lekerdezesek/egyszerusitett/' && method === 'POST') {
+        if (body.adozoiProfilId !== sel || body.lang !== 'hu') return response(400, { error: 'hiányzó adozoiProfilId vagy lang' }, { json: true });
+        return response(200, {
+          result: {
+            egyszerusitettResponse: {
+              egyszerusitettFoglalkoztatasok: scenario.navEfo || [{
+                munkavallaloNeve: 'SZIMULÁTOR Alkalmi Dolgozó',
+                munkavallaloAdoazonositoJele: '8400000002',
+                munkavallaloTajSzama: '222333444',
+                foglalkoztatasJellege: 'ALKALMI_MUNKA',
+                foglalkoztatasKezdete: '2026-10-01',
+                foglalkoztatasVege: '2026-10-03',
+                munkaviszonyNapjainakSzama: 3,
+                adatbejelentesJellege: 'UJ',
+                adatlapbeerkezesDatuma: '2026-09-30T18:10:00',
+                foglalkoztatasiLapokAdatai: { adatlapTipusa: '26T1042E', adatlapIktatoszam: '8199000001', adatlapStatusz: 'ELFOGADOTT', potlapSorszama: 1 },
+              }],
+            },
+          },
+        }, { json: true });
+      }
+      if (u.pathname === '/api/v1/registry/foglalkoztato-lekerdezesek/egyszerusitett-korabban-bejelentett/' && method === 'POST') {
+        if (body.adozoiProfilId !== sel || body.lang !== 'hu') return response(400, { error: 'hiányzó adozoiProfilId vagy lang' }, { json: true });
+        return response(200, { result: { korabbanBejelentettResponse: scenario.navEfoPrev || null } }, { json: true });
+      }
+      if (u.pathname === '/api/v1/registry/foglalkoztato-lekerdezesek/egyszerusitett-adozo-adatai/' && method === 'POST') {
+        if (body.adozoiProfilId !== sel || body.lang !== 'hu') return response(400, { error: 'hiányzó adozoiProfilId vagy lang' }, { json: true });
+        return response(200, {
+          result: {
+            adozoAdataiResponse: {
+              munkavallaloNeve: body.nev,
+              munkavallaloAdoazonosito: body.adoazonosito,
+              munkavallaloTajszam: body.munkavallaloTajSzama,
+              felhasznaltNapok: 12,
+              felhasznalhatoNapok: 108,
+            },
+          },
+        }, { json: true });
       }
     }
     // NAV-dokumentumok (C kör): a megfigyelt kérés- és válaszalak, kitalált értékekkel; csak a kiválasztott adózóra, és csak a

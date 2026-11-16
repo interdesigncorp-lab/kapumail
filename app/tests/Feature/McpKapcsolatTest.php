@@ -241,4 +241,60 @@ class McpKapcsolatTest extends TestCase
                 ->assertSee('9876543210');
         }
     }
+
+    public function test_adozoi_tablak_elerhetok_mcp_n_es_kapun_at_szigoru_ugyfelhatokorrel(): void
+    {
+        $lg = $this->u('LG');
+        $allowedCid = Scope::clientIds($lg)[0];
+        $foreign = DB::table('clients')->where('office_id', $lg->office_id)->whereNotIn('id', Scope::clientIds($lg))->firstOrFail();
+
+        \App\Iratkapu\TaxpayerDataTables::syncClientSnapshot((int) $lg->office_id, (int) $allowedCid, [
+            'insured_persons' => [['name' => 'Engedélyezett Dolgozó', 'tax_id' => '8411111119', 'taj' => '111-222-333', 'relationship_start' => '2025-02-01', 'relationship_type' => '1101 - munkaviszony', 'weekly_hours' => 40]],
+            'reconciliations' => [['reconciler_name' => 'ÁFA adategyeztetés 2026', 'status' => 'Folyamatban', 'case_number' => 'EGY-101', 'created_date' => '2026-10-10']],
+        ]);
+        \App\Iratkapu\TaxpayerDataTables::syncClientSnapshot((int) $lg->office_id, (int) $foreign->id, [
+            'insured_persons' => [['name' => 'Tiltott Idegen Dolgozó', 'tax_id' => '8499999991', 'taj' => '999-888-777', 'relationship_start' => '2025-01-01', 'relationship_type' => '1101 - munkaviszony', 'weekly_hours' => 40]],
+        ]);
+
+        foreach (['olvasas', 'kapu'] as $lvl) {
+            $this->as('LG', $lvl);
+
+            // 1. Gyors overview egy hívásban
+            IratkapuServer::tool(Tools\ListTaxpayerTables::class, ['view' => 'overview'])
+                ->assertHasNoErrors()
+                ->assertSee('active_insured_persons')
+                ->assertDontSee($foreign->name);
+
+            // 2. Biztosítottak és Adategyeztetések szigorú ügyfélhatókörrel
+            IratkapuServer::tool(Tools\ListTaxpayerTables::class, ['view' => 'insured'])
+                ->assertHasNoErrors()
+                ->assertSee('Engedélyezett Dolgozó')
+                ->assertSee('2025-02-01')
+                ->assertDontSee('Tiltott Idegen Dolgozó');
+
+            IratkapuServer::tool(Tools\ListTaxpayerTables::class, ['view' => 'reconciliations', 'client_id' => $allowedCid])
+                ->assertHasNoErrors()
+                ->assertSee('ÁFA adategyeztetés 2026')
+                ->assertSee('EGY-101');
+
+            // 3. Idegen ügyfélre kérdezve elutasít
+            IratkapuServer::tool(Tools\ListTaxpayerTables::class, ['view' => 'insured', 'client_id' => $foreign->id])
+                ->assertHasErrors();
+
+            // 4. GetClient adatlap és ConnectionsStatus és AppGuide is tartalmazza az új táblákat
+            IratkapuServer::tool(Tools\GetClient::class, ['client_id' => $allowedCid])
+                ->assertHasNoErrors()
+                ->assertSee('Engedélyezett Dolgozó')
+                ->assertSee('ÁFA adategyeztetés 2026')
+                ->assertSee('insured_persons_total');
+
+            IratkapuServer::tool(Tools\ConnectionsStatus::class, [])
+                ->assertHasNoErrors()
+                ->assertSee('latest_taxpayer_tables_at');
+
+            IratkapuServer::tool(Tools\AppGuide::class, ['topic' => 'tables'])
+                ->assertHasNoErrors()
+                ->assertSee('Adózói táblák');
+        }
+    }
 }

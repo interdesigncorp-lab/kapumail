@@ -95,18 +95,20 @@ function acknowledge(state, key, { full = false, at = Date.now() } = {}) {
  * `mailboxFilter`: a belépőn kikapcsolt rendszerek postafiókjait kihagyó szűrő (mailbox-filter.js).
  * `window`: teljes vagy növekményes listázás (listingWindow).
  */
-async function runClient(key, { getCreds, fetchImpl, log = null, onSession = null, mailboxFilter = null, sleep = realSleep, random = Math.random, window = { full: true, since: null }, sent = false } = {}) {
+async function runClient(key, { getCreds, fetchImpl, log = null, onSession = null, onStep = null, mailboxFilter = null, sleep = realSleep, random = Math.random, window = { full: true, since: null }, sent = false } = {}) {
   const started = Date.now();
   const base = { key, ok: false, letterCount: 0, mailboxes: [], letters: [] };
+  const emit = p => { if (onStep) try { onStep(p); } catch { /* nem állítja meg */ } };
   try {
     const creds = await getCreds(key);
     const usable = credsUsable(creds);
     if (!usable.ok) return { ...base, error: usable.error };
+    emit({ phase: 'login' });
     const ctx = await H.loginWithCredentials(
       { username: creds.username, password: creds.password, seed: creds.totpSeed },
       { fetchImpl },
     );
-    const letters = await H.listAll(ctx, { log, mailboxFilter, sleep, random, full: window.full, since: window.since, sent: Boolean(sent) });
+    const letters = await H.listAll(ctx, { log, mailboxFilter, sleep, random, full: window.full, since: window.since, sent: Boolean(sent), onStep: p => emit({ phase: 'mailbox', ...p }) });
     if (onSession) { try { onSession(key, ctx); } catch { /* a visszahívás hibája nem állíthatja meg a futást */ } }
     return {
       key, ok: true, full: window.full,
@@ -213,16 +215,18 @@ async function downloadNow(sessions, key, s, permit, { sleep = realSleep, random
  * `state[key]`: hibaszámláló és tiltás (a hívó menti); a tiltott belépőhöz a futó hozzá sem nyúl.
  * `filters[key]`: postafiók-szűrő belépőnként. `onProgress(result)` minden belépő után meghívódik. Soha nem dob.
  */
-async function runClients(keys, { getCreds, fetchImpl = fetch, log = null, onProgress = null, onSession = null, state = null, filters = null, forceFull = null, sleep = realSleep, random = Math.random, now = Date.now, sent = false } = {}) {
+async function runClients(keys, { getCreds, fetchImpl = fetch, log = null, onProgress = null, onStep = null, onSession = null, state = null, filters = null, forceFull = null, sleep = realSleep, random = Math.random, now = Date.now, sent = false } = {}) {
+  const list = Array.isArray(keys) ? keys : [];
   const results = []; let attempted = 0;
-  for (const key of Array.isArray(keys) ? keys : []) {
+  for (let i = 0; i < list.length; i++) {
+    const key = list[i];
     let r;
     if (state && state[key] && state[key].blocked) {
       r = { key, ok: false, skipped: true, letterCount: 0, mailboxes: [], letters: [], error: `A belépő tiltva, a szinkron szünetel: ${state[key].blocked}` };
     } else {
       if (attempted++ > 0) await sleep(Math.round(3000 + random() * 3000));
       const filter = (filters && filters[key]) || null; const sig = JSON.stringify(filter);
-      r = await runClient(key, { getCreds, fetchImpl, log, onSession, mailboxFilter: filter, sleep, random, sent, window: listingWindow(state && state[key], now(), { forceFull: !!(forceFull && forceFull[key]), filterSig: sig }) });
+      r = await runClient(key, { getCreds, fetchImpl, log, onSession, onStep: onStep ? p => { try { onStep({ key, index: i + 1, total: list.length, ...p }); } catch {} } : null, mailboxFilter: filter, sleep, random, sent, window: listingWindow(state && state[key], now(), { forceFull: !!(forceFull && forceFull[key]), filterSig: sig }) });
       record(state, key, r);
       if (state && r.ok) state[key].pendingSig = sig; // teljes listánál a visszaigazoláskor válik érvényessé
     }

@@ -24,6 +24,7 @@ const CLAUDE_PREMIUM_PREFIX = `mcp__${PREMIUM_SERVER}__`;
 const OWN_SERVERS = new Set([SERVER, PREMIUM_SERVER]);
 /** A Claude-eszköznévből a saját szerverek eszközneve; idegen eszköznél ''. */
 function claudeTool(name) {
+  if (name === 'WebSearch') return 'WebSearch';
   if (name.startsWith(CLAUDE_TOOL_PREFIX)) return name.slice(CLAUDE_TOOL_PREFIX.length);
   if (name.startsWith(CLAUDE_PREMIUM_PREFIX)) return name.slice(CLAUDE_PREMIUM_PREFIX.length);
   return '';
@@ -51,6 +52,11 @@ const ACTIVITY = {
   app_guide: 'Utánanézek a súgóban…',
   connections_status: 'Megnézem a kapcsolatokat…',
   audit_log: 'Átnézem a naplót…',
+  irat_teendok_elemzese: 'Elemzem az irat teendőit…',
+  // webes keresés
+  WebSearch: 'Keresek a hivatalos oldalakon…',
+  web_search: 'Keresek a hivatalos oldalakon…',
+  search_web: 'Keresek a hivatalos oldalakon…',
   // szakmai MCP
   jog_kereses: 'Keresem a jogszabályt…',
   jog_szakasz: 'Megnézem a jogszabályhelyet…',
@@ -115,8 +121,8 @@ function buildArgs(engine, { sessionId, mcpFile, persona: p, personaFile, cwd, e
       '--strict-mcp-config', '--mcp-config', mcpFile,
       '--setting-sources', '',
       // Vesszővel (nem szóközzel) elválasztva: Windowson a cmd.exe-s indítás így sem bont szét egy kapcsolót.
-      '--allowedTools', premium ? `${CLAUDE_TOOL_PREFIX}*,${CLAUDE_PREMIUM_PREFIX}*` : `${CLAUDE_TOOL_PREFIX}*`,
-      '--tools', '', // a beépített eszközök (fájl, parancssor, web) egyike sem
+      '--allowedTools', premium ? `${CLAUDE_TOOL_PREFIX}*,${CLAUDE_PREMIUM_PREFIX}*,WebSearch` : `${CLAUDE_TOOL_PREFIX}*,WebSearch`,
+      '--tools', 'WebSearch',
       '--permission-prompts', 'none', // ami engedélyt kérne, azt elutasítja
       '--disable-slash-commands',
       ...(model ? ['--model', model] : []),
@@ -133,7 +139,7 @@ function buildArgs(engine, { sessionId, mcpFile, persona: p, personaFile, cwd, e
       '--ignore-rules',
       '-c', 'sandbox_mode=read-only',
       '-c', 'approval_policy=never',
-      '-c', 'web_search=disabled',
+      '-c', 'web_search=live',
       '-c', 'shell_environment_policy.inherit=core',
       '-c', 'project_doc_max_bytes=0',
       '-c', 'skills.include_instructions=false',
@@ -289,6 +295,10 @@ function createParser(engine) {
       }
       return out;
     }
+    if (item && (item.type === 'web_search' || item.type === 'web_search_call' || (item.type === 'tool_call' && item.name === 'web_search'))) {
+      out.push(...activity('web_search', item.id));
+      return out;
+    }
     if (item && o.type === 'item.completed' && item.type === 'agent_message' && typeof item.text === 'string') st.final = item.text;
     if (o.type === 'turn.failed') st.failure = resultText(o.error) || 'turn.failed';
     // A felső szintű `error` sor nem mindig végzetes (újrapróbálás): csak megjegyezzük.
@@ -307,7 +317,10 @@ function createParser(engine) {
     const step = isObj(o.step_update) ? o.step_update : null;
     if (o.event === 'step_update' && step) {
       if (step.step_type === 'agent_response' && typeof step.text_delta === 'string') st.agyText += step.text_delta;
-      // Csak az MCP-hívás érdekes: az agy saját eszközeit (fájl, parancs) a beállítás tiltja.
+      if (step.step_type === 'tool' && step.tool_name === 'search_web') {
+        out.push(...activity('search_web', `step:${step.step_index}`));
+      }
+      // Csak az MCP-hívás és a webes keresés érdekes: az agy egyéb saját eszközeit (fájl, parancs) a beállítás tiltja.
       if (step.step_type === 'tool' && step.tool_name === 'call_mcp_tool') {
         const info = isObj(step.tool_info) ? step.tool_info : {};
         const params = isObj(info.parameters) ? info.parameters : {};

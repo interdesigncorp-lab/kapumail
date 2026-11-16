@@ -71,7 +71,7 @@ class TrialLicense
             'validUntil' => $verified['exp'] ?? null,
             'expiredLicense' => $expiredLicense,
             'subscribeUrl' => (string) config('iratkapu.subscribe_url', 'https://kapumail.hu/#elofizetes'),
-            'githubUrl' => (string) config('iratkapu.github_url', 'https://kapumail.hu/open-source'),
+            'githubUrl' => (string) config('iratkapu.github_url', 'https://github.com/interdesigncorp-lab/kapumail'),
         ];
     }
 

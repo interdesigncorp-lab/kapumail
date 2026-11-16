@@ -107,6 +107,8 @@ class TrialLicenseTest extends TestCase
         $state->assertJsonPath('office.license.state', 'expired');
         $state->assertJsonPath('office.license.canSync', false);
         $state->assertJsonPath('office.license.daysLeft', 0);
+        $state->assertJsonPath('office.license.subscribeUrl', 'https://kapumail.hu/#elofizetes');
+        $state->assertJsonPath('office.license.githubUrl', 'https://github.com/interdesigncorp-lab/kapumail');
 
         // Az új külső szinkronok és letöltések 402-vel leállnak
         $mb = DB::table('mailboxes')->where('office_id', $u->office_id)->where('sync_state', 'ok')->first();

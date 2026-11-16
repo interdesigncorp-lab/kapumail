@@ -194,10 +194,13 @@ class RendszervalasztoTest extends TestCase
         $pid = $this->portal();
         $first = $this->ingest($pid, [self::UJ => ['HL-1', 'HL-2']], [], 'Elfogadó nyugta – 2608 bevallás');
         $this->assertCount(2, $first['autoDownload']);
+        $this->assertSame('Elfogadó nyugta – 2608 bevallás', $first['autoDownload'][0]['subject']);
+        $this->assertNotEmpty($first['autoDownload'][0]['sender']);
 
         // növekményes futás: csak egy új, nem automatikus levél van a listán
         $next = $this->ingest($pid, [self::UJ => ['HL-3']]);
         $this->assertSame(['HL-1', 'HL-2'], array_column($next['autoDownload'], 'eid'));
+        $this->assertSame('Elfogadó nyugta – 2608 bevallás', $next['autoDownload'][0]['subject']);
         $this->assertSame(array_column($first['autoDownload'], 'id'), array_column($next['autoDownload'], 'id'));
 
         // másik belépő futása nem hozza elő

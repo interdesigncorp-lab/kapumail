@@ -189,4 +189,108 @@ test('szinkron-összesítő sorok: tagolt, magyaros kulcs–érték sorok minden
   assert.match(r.rows[4].v, /<b>33 irat<\/b> az elmúlt fél évből/);
 });
 
+test('kézi frissítés (daily:false): force=1 paraméterrel kéri a célokat, és továbbítja az adózói táblákat (taxpayerTables)', async () => {
+  const twin = createGovTwin(accountantScenario());
+  const c = twin.credentials.konyvelo;
+  const readOwn = async (key, ids, queries) => {
+    const ctx = await N.loginNav({ username: c.username, password: c.password, seed: c.totpSeed }, { fetchImpl: twin.fetchImpl });
+    let data = await N.readOwn(ctx, quietDay);
+    if ((ids || []).length) data.clients = await N.readClients(ctx, data.user.profileId, data.profiles.filter(p => ids.includes(p.stem)), { ...quietDay, queries });
+    if (queries) {
+      data = {
+        ...data,
+        ...(await N.withReturns(ctx, data.subject.taxId, {}, quietDay)),
+        ...(await N.withDocuments(ctx, data.subject.taxId, {}, quietDay)),
+        ...(await N.withTaxpayerTables(ctx, data.user.subjectProfileId, {}, { kind: data.user.subjectKind, ...quietDay })),
+      };
+    }
+    return { ok: true, ...data };
+  };
+  const server = (url, body) => url.startsWith('nav/targets')
+    ? { enabled: true, ids: ['12345676'] }
+    : url === 'nav/ingest-clients'
+      ? { ok: true, saved: 1, skipped: 0, returns: 2, documents: 2, restored: true, taxpayerTables: { insured_persons: 1, employers: 0, efo_declarations: 1, efo_quotas: 1, reconciliations: 2 } }
+      : { ...ownAnswer, returns: 2, documents: 2, taxpayerTables: { insured_persons: 0, employers: 1, efo_declarations: 0, efo_quotas: 0, reconciliations: 2 } };
+
+  const { step, calls } = makeStep({ readOwn, server, office: { nav_switch: true, nav_queries: true } });
+  const r = await step(portal({ nav: { at: '2026-11-13 08:00' } }), { daily: false });
+
+  assert.equal(r.ok, true);
+  assert.equal(calls[0].url, 'nav/targets?portalId=7&force=1');
+  assert.ok(calls[1].body.taxpayerTables, 'saját taxpayerTables továbbítva a nav/ingest kérésben');
+  assert.equal(calls[1].body.taxpayerTables.employers.length, 1);
+  assert.ok(calls[2].body.clients[0].taxpayerTables, 'ügyfél taxpayerTables továbbítva a nav/ingest-clients kérésben');
+  assert.equal(calls[2].body.clients[0].taxpayerTables.insured_persons.length, 1);
+  const ttRow = r.rows.find(x => x.k === 'Adózói táblák');
+  assert.ok(ttRow, 'Adózói táblák összesítő sor megjelenik');
+  assert.match(ttRow.v, /<b>1<\/b> biztosított/);
+  assert.match(ttRow.v, /<b>1<\/b> foglalkoztató/);
+  assert.match(ttRow.v, /<b>2<\/b> EFO-tétel/);
+  assert.match(ttRow.v, /<b>4<\/b> adategyeztetés/);
+});
+
+test('élő előrehaladás (onStep + nav.onProgress): részlépésenkénti egysoros feliratok, százalék és Mentés lépésváltás', async () => {
+  const twin = createGovTwin(accountantScenario());
+  const c = twin.credentials.konyvelo;
+  let listener = null;
+  let detached = false;
+  const onProgress = cb => {
+    if (cb === null) detached = true;
+    listener = cb;
+  };
+  const readOwn = async (key, ids, queries) => {
+    const emit = (pct, text) => listener && listener({ key, pct, text });
+    emit(8, 'Új 6 jegyű hitelesítő kódra várunk (3 mp)…');
+    emit(14, 'Belépés a NAV ügyfélportálra (KAÜ)…');
+    const ctx = await N.loginNav({ username: c.username, password: c.password, seed: c.totpSeed }, { fetchImpl: twin.fetchImpl });
+    let data = await N.readOwn(ctx, { ...quietDay, onStep: s => emit(16 + s.step * 4, s.text) });
+    if ((ids || []).length) {
+      data.clients = await N.readClients(ctx, data.user.profileId, data.profiles.filter(p => ids.includes(p.stem)), {
+        ...quietDay, queries, onStep: s => emit(50, s.text),
+      });
+    }
+    if (queries) {
+      data = {
+        ...data,
+        ...(await N.withReturns(ctx, data.subject.taxId, {}, { ...quietDay, onStep: s => emit(76, `Saját ${s.text}`) })),
+        ...(await N.withDocuments(ctx, data.subject.taxId, {}, { ...quietDay, onStep: s => emit(80, `Saját ${s.text}`) })),
+        ...(await N.withTaxpayerTables(ctx, data.user.subjectProfileId, {}, { kind: data.user.subjectKind, ...quietDay, onStep: lbl => emit(86, `Adózói táblák: ${lbl}…`) })),
+      };
+    }
+    return { ok: true, ...data };
+  };
+  const server = url => url.startsWith('nav/targets')
+    ? { enabled: true, ids: ['12345676'] }
+    : url === 'nav/ingest-clients'
+      ? { ok: true, saved: 1, skipped: 0, returns: 1, documents: 1, restored: true }
+      : { ...ownAnswer, returns: 1, documents: 1 };
+
+  const calls = [];
+  const api = async (method, url, body) => { calls.push({ method, url, body }); return server(url, body); };
+  const window = { iratkapuDesktop: { nav: { readOwn, onProgress } } };
+  const sysOn = (p, k) => !(p.off || []).includes(k);
+  const esc = s => String(s).replace(/[&<>"]/g, '');
+  const step = new Function('window', 'api', 'sysOn', 'esc', 'TODAY', 'OFFICE', `${src}\nreturn navPortalStep;`)(window, api, sysOn, esc, '2026-11-13', { nav_switch: true, nav_queries: true });
+
+  const seen = [];
+  const r = await step(portal(), { daily: false, onStep: s => seen.push(s) });
+  assert.equal(r.ok, true);
+  assert.equal(detached, true, 'a futás végén leiratkozik a nav.onProgress csatornáról');
+
+  const texts = seen.map(s => s.text);
+  assert.ok(texts.some(t => /célpontjainak lekérése/.test(t)), 'célpontok lekérése jelzés');
+  assert.ok(texts.some(t => /hitelesítő kódra várunk/.test(t)), 'TOTP visszaszámlálás jelzés');
+  assert.ok(texts.some(t => /Belépés a NAV ügyfélportálra/.test(t)), 'KAÜ belépés jelzés');
+  assert.ok(texts.some(t => /Képviselt adózók listájának olvasása/.test(t)), 'képviselt adózók jelzés');
+  assert.ok(texts.some(t => /90 napos adónaptár/.test(t)), '90 napos adónaptár jelzés');
+  assert.ok(texts.some(t => /Ügyfél \(1 \/ 1\).*képviselet átváltása/.test(t)), 'ügyfél váltás jelzés névvel');
+  assert.ok(texts.some(t => /Visszaváltás a saját adózói profilra/.test(t)), 'visszaváltás jelzés');
+  assert.ok(texts.some(t => /Adózói táblák: adategyeztetések olvasása/.test(t)), 'adózói tábla részlépés jelzés');
+  assert.ok(seen.some(s => s.step === 1 && s.pct >= 92 && /NAV-adatok mentése/.test(s.text)), '2. lépésre (Mentés) váltás 92%+ százalékkal');
+  assert.ok(seen.some(s => s.step === 1 && s.pct >= 96 && /Ügyfelek adószámlájának/.test(s.text)), 'ügyfélmentés részlépés');
+  assert.equal(JSON.stringify(seen).includes(c.password), false, 'jelszó soha nem jelenik meg az előrehaladásban');
+  assert.equal(JSON.stringify(seen).includes(c.totpSeed), false, 'TOTP kulcs soha nem jelenik meg az előrehaladásban');
+});
+
+
 

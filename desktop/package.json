@@ -1,7 +1,7 @@
 {
   "name": "kapumail",
   "productName": "KapuMail",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "KapuMail asztali keret (Windows, macOS)",
   "main": "main.js",
   "private": true,
@@ -39,6 +39,7 @@
       "tarhely-auto.js",
       "nav-http.js",
       "nav-exports.js",
+      "nav-taxpayer-tables.js",
       "asp-http.js",
       "asp-live.js",
       "asp-panel-preload.js",

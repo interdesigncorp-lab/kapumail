@@ -24,12 +24,38 @@
 .kl-new svg{width:16px;height:16px}
 .kl-rows{flex:1;min-height:0;overflow:auto;padding:4px 12px 12px;display:flex;flex-direction:column;gap:8px}
 .kl-day{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);margin:10px 6px 0}
+.kl-day-bar{position:relative;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 2px -2px 6px}
+.kl-day-bar .kl-day{margin:0}
+.kl-vw{position:relative;flex:none}
+.kl-vbtn{display:inline-flex;align-items:center;gap:3px;height:26px;padding:0 7px;border-radius:8px;color:var(--ink-3);transition:background .12s,color .12s}
+.kl-vbtn:hover,.kl-vbtn[aria-expanded="true"]{background:rgba(124,92,255,.11);color:var(--k-violet-ink)}
+.kl-vbtn:focus-visible{outline:2px solid var(--k-violet);outline-offset:1px}
+.kl-vbtn svg{width:15px;height:15px}
+.kl-vbtn .cv{width:11px;height:11px;transform:rotate(90deg);opacity:.7;transition:transform .15s}
+.kl-vbtn[aria-expanded="true"] .cv{transform:rotate(-90deg);opacity:1}
+.kl-vmenu{position:absolute;right:0;top:30px;z-index:8;width:234px;padding:5px;border-radius:15px;
+  background:rgba(255,255,255,.98);border:1px solid var(--line);box-shadow:0 18px 42px -16px rgba(40,25,100,.38);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);display:grid;gap:2px}
+.kl-vmenu button{display:flex;align-items:center;gap:9px;width:100%;padding:7px 9px;border-radius:10px;text-align:left;color:var(--ink);transition:background .1s}
+.kl-vmenu button:hover{background:rgba(124,92,255,.08)}
+.kl-vmenu button[aria-checked="true"]{background:rgba(124,92,255,.09)}
+.kl-vmenu .vi{width:17px;height:17px;flex:none;color:var(--ink-2)}
+.kl-vmenu button[aria-checked="true"] .vi{color:var(--k-violet-ink)}
+.kl-vmenu span{flex:1;min-width:0;display:block}
+.kl-vmenu b{display:block;font-size:12.8px;font-weight:600;line-height:1.25;color:var(--ink)}
+.kl-vmenu button[aria-checked="true"] b{color:var(--k-violet-ink)}
+.kl-vmenu small{display:block;font-size:11px;line-height:1.25;color:var(--ink-3);font-weight:450;margin-top:1px}
+.kl-vmenu .ck{width:14px;height:14px;flex:none;color:var(--k-violet)}
 .kl-row{position:relative;flex:none}
+.kl-row.mopen{z-index:5}
 .kl-open{display:block;width:100%;text-align:left;padding:12px 40px 12px 14px;border-radius:18px;
   background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.75);box-shadow:0 6px 18px -14px rgba(60,35,120,.3);
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:background .12s,box-shadow .12s}
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:background .12s,box-shadow .12s,padding .18s cubic-bezier(.2,.8,.2,1),border-radius .18s}
 .kl-open:hover{background:rgba(255,255,255,.8)}
-.kl-row.on .kl-open{background:#fff;border-color:rgba(124,92,255,.35);box-shadow:0 10px 26px -14px rgba(90,60,200,.45),inset 3px 0 0 var(--k-violet)}
+.kl-row.on .kl-open{background:#fff;border-color:rgba(255,255,255,.95);box-shadow:0 10px 26px -14px rgba(60,35,120,.5)}
+.kl-head{display:block;min-width:0}
+.kl-hrun,.kl-when{display:none}
+.kl-extra,.kl-extra-in{display:block;min-width:0}
 .kl-open b{display:block;font-size:13.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kl-meta{display:flex;align-items:center;gap:6px;margin-top:2px;font-size:11.5px;color:var(--ink-3)}
 .kl-eng{color:var(--k-violet-ink);font-weight:600}
@@ -39,7 +65,38 @@
 .kl-more svg{width:16px;height:16px}
 .kl-row:hover .kl-more,.kl-row.on .kl-more,.kl-more:focus-visible,.kl-more[aria-expanded="true"]{opacity:1}
 .kl-more:hover{background:rgba(124,92,255,.1);color:var(--k-violet-ink)}
-@media (hover:none){.kl-more{opacity:1}}
+/* Kétsoros (letisztult) nézet: 1. sor cím + időpont (rámutatásra •••), 2. sor előnézet */
+#kapulist[data-kview="two"] .kl-open{padding:11px 14px;border-radius:16px}
+#kapulist[data-kview="two"] .kl-head{display:flex;align-items:baseline;gap:8px}
+#kapulist[data-kview="two"] .kl-hrun{display:inline-block;flex:none;align-self:center}
+#kapulist[data-kview="two"] .kl-open b{flex:1;min-width:0}
+#kapulist[data-kview="two"] .kl-when{display:inline;flex:none;font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums;transition:opacity .12s}
+#kapulist[data-kview="two"] .kl-meta{display:none}
+#kapulist[data-kview="two"] .kl-prev{margin-top:3px}
+#kapulist[data-kview="two"] .kl-more{top:7px;right:8px}
+#kapulist[data-kview="two"] .kl-row.on:not(:hover):not(.mopen) .kl-more:not(:focus-visible){opacity:0}
+#kapulist[data-kview="two"] .kl-row:hover .kl-when,#kapulist[data-kview="two"] .kl-row.mopen .kl-when,#kapulist[data-kview="two"] .kl-row:has(.kl-more:focus-visible) .kl-when{opacity:0}
+/* Kompakt (1 soros) nézet: csak a cím látszik, rámutatásra kinyílik */
+#kapulist[data-kview="compact"] .kl-rows{gap:5px}
+#kapulist[data-kview="compact"] .kl-open{padding:9px 14px;border-radius:14px}
+#kapulist[data-kview="compact"] .kl-head{display:flex;align-items:center;gap:7px}
+#kapulist[data-kview="compact"] .kl-hrun{display:inline-block;flex:none}
+#kapulist[data-kview="compact"] .kl-open b{flex:1;min-width:0}
+#kapulist[data-kview="compact"] .kl-meta .kl-run{display:none}
+#kapulist[data-kview="compact"] .kl-extra{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .2s cubic-bezier(.2,.8,.2,1),opacity .15s}
+#kapulist[data-kview="compact"] .kl-extra-in{overflow:hidden;min-height:0}
+#kapulist[data-kview="compact"] .kl-more{top:8px;right:8px;opacity:0;pointer-events:none}
+#kapulist[data-kview="compact"] .kl-row:hover .kl-open,#kapulist[data-kview="compact"] .kl-row.mopen .kl-open,#kapulist[data-kview="compact"] .kl-row:has(.kl-more:focus-visible) .kl-open{padding:11px 40px 11px 14px;border-radius:17px;transition-delay:0s,0s,.05s,.05s}
+#kapulist[data-kview="compact"] .kl-row:hover .kl-extra,#kapulist[data-kview="compact"] .kl-row.mopen .kl-extra,#kapulist[data-kview="compact"] .kl-row:has(.kl-more:focus-visible) .kl-extra{grid-template-rows:1fr;opacity:1;transition-delay:.05s}
+#kapulist[data-kview="compact"] .kl-row:hover .kl-more,#kapulist[data-kview="compact"] .kl-row.mopen .kl-more,#kapulist[data-kview="compact"] .kl-more:focus-visible{opacity:1;pointer-events:auto}
+@media (hover:none){
+  .kl-more{opacity:1}
+  #kapulist[data-kview="two"] .kl-head{padding-right:26px}
+  #kapulist[data-kview="two"] .kl-row.on .kl-more{opacity:1}
+  #kapulist[data-kview="compact"] .kl-row.on .kl-open{padding:11px 40px 11px 14px;border-radius:17px}
+  #kapulist[data-kview="compact"] .kl-row.on .kl-extra{grid-template-rows:1fr;opacity:1}
+  #kapulist[data-kview="compact"] .kl-row.on .kl-more{opacity:1;pointer-events:auto}
+}
 .kl-menu{position:absolute;right:6px;top:38px;z-index:5;min-width:170px;padding:5px;border-radius:14px;background:rgba(255,255,255,.97);
   border:1px solid var(--line);box-shadow:0 18px 40px -16px rgba(40,25,100,.35)}
 .kl-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border-radius:10px;font-size:13px;font-weight:500;color:var(--red)}
@@ -69,13 +126,51 @@
 .km-col{flex:1;min-width:0}
 .km-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0 7px 6px;font-size:12.5px;color:var(--ink-3)}
 .km-meta b{color:var(--k-violet-ink);font-weight:700}
+.km-copy{margin-left:auto;width:26px;height:26px;border-radius:8px;display:inline-grid;place-items:center;color:var(--ink-3);opacity:0;transition:opacity .14s,background .12s,color .12s}
+.km-copy svg{width:14.5px;height:14.5px}
+.km.kapu:hover .km-copy,.km-copy:focus-visible,.km-copy.copied{opacity:1}
+.km-copy:hover{background:rgba(124,92,255,.11);color:var(--k-violet-ink)}
+.km-copy.copied{color:var(--green);background:var(--green-bg)}
+@media (hover:none){.km-copy{opacity:.85}}
 .km-card{background:var(--k-card);border:1px solid var(--k-card-line);border-radius:28px;padding:18px 24px;box-shadow:var(--k-shadow);
   backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);font-size:15px;line-height:1.62;color:var(--ink);overflow-wrap:anywhere}
-.km-card p{margin:0 0 .7em}.km-card p:last-child,.km-card ul:last-child,.km-card ol:last-child{margin-bottom:0}
+.km-card p{margin:0 0 .7em}.km-card p:last-child,.km-card ul:last-child,.km-card ol:last-child,.km-card .ktbl-w:last-child,.km-card .kpre:last-child,.km-card .kquote:last-child{margin-bottom:0}
 .km-card ul,.km-card ol{margin:0 0 .7em;padding-left:1.35em}.km-card li{margin:.18em 0}.km-card li::marker{color:var(--k-violet)}
 .km-card code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;padding:1px 6px;border-radius:7px;background:rgba(124,92,255,.08)}
 .km-card a{color:var(--k-violet-ink);text-decoration:underline;text-underline-offset:2px}
 .km-card strong{font-weight:700}
+.km-card del{color:var(--ink-3)}
+.km-card .kh3,.km-card .kh4{margin:.9em 0 .4em;font-weight:700;letter-spacing:-.01em;line-height:1.35;color:var(--ink)}
+.km-card .kh3{font-size:16px}
+.km-card .kh4{font-size:14.5px;color:var(--ink-2)}
+.km-card .kh3:first-child,.km-card .kh4:first-child,.km-card .ktbl-w:first-child,.km-card .kpre:first-child,.km-card .kquote:first-child{margin-top:0}
+.km-card .kquote{margin:.65em 0;padding:9px 14px;border-left:3px solid rgba(124,92,255,.45);border-radius:4px 14px 14px 4px;background:rgba(124,92,255,.045);color:var(--ink-2);font-size:14.2px}
+.km-card .kpre{margin:.65em 0;padding:12px 15px;border-radius:15px;background:rgba(29,26,51,.045);border:1px solid rgba(124,92,255,.14);overflow-x:auto;font-size:13px;line-height:1.52;overflow-wrap:normal}
+.km-card .kpre code{padding:0;background:none;border-radius:0;font-size:inherit}
+.km-card .khr{border:0;height:1px;margin:.85em 0;background:linear-gradient(90deg,rgba(124,92,255,.22),rgba(244,166,198,.26),transparent)}
+
+/* táblázat (KapuMd + enhanceTables) */
+.ktbl-w{margin:.75em 0;border-radius:18px;background:rgba(255,255,255,.84);border:1px solid rgba(124,92,255,.16);box-shadow:0 8px 24px -18px rgba(60,35,120,.26);overflow:hidden}
+.ktbl-bar{display:flex;align-items:center;gap:6px;padding:6px 10px 6px 14px;background:rgba(124,92,255,.045);border-bottom:1px solid rgba(124,92,255,.10)}
+.ktbl-cnt{margin-right:auto;font-size:11.5px;font-weight:600;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.ktbl-btn{display:inline-flex;align-items:center;gap:5px;height:25px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:600;color:var(--k-violet-ink);background:rgba(255,255,255,.82);border:1px solid rgba(124,92,255,.18);transition:background .12s,transform .12s,color .12s,border-color .12s}
+.ktbl-btn svg{width:13px;height:13px}
+.ktbl-btn:hover{background:#fff;border-color:rgba(124,92,255,.35);transform:translateY(-1px)}
+.ktbl-btn.copied{color:var(--green);background:var(--green-bg);border-color:rgba(21,128,61,.25)}
+.ktbl-sc{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ktbl{width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.48;overflow-wrap:normal}
+.ktbl th{text-align:left;font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-2);background:rgba(247,245,251,.75);padding:9px 13px;border-bottom:1px solid rgba(124,92,255,.14);white-space:nowrap;user-select:none}
+.ktbl th[data-ktsort]{cursor:pointer;transition:color .12s,background .12s}
+.ktbl th[data-ktsort]:hover,.ktbl th[aria-sort="ascending"],.ktbl th[aria-sort="descending"]{color:var(--k-violet-ink);background:rgba(124,92,255,.07)}
+.ktbl th[aria-sort="ascending"]::after{content:' ↑';font-size:11px}
+.ktbl th[aria-sort="descending"]::after{content:' ↓';font-size:11px}
+.ktbl td{padding:8.5px 13px;border-bottom:1px solid rgba(124,92,255,.08);vertical-align:top;color:var(--ink)}
+.ktbl tbody tr:last-child td{border-bottom:0}
+.ktbl tbody tr:hover td{background:rgba(124,92,255,.035)}
+.ktbl .num,.ktbl .al-r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ktbl .al-c{text-align:center}
+.ktbl .al-l{text-align:left}
+.ktbl .kchip{font-size:.92em;line-height:1.45;padding:0 8px 0 7px}
 .km.me{justify-content:flex-end}
 .km.me .km-card{max-width:min(72%,560px);background:rgba(239,234,255,.9);border-color:rgba(124,92,255,.16);border-radius:24px 24px 8px 24px;padding:12px 18px;font-size:14.5px;box-shadow:0 10px 24px -18px rgba(90,60,200,.35);white-space:pre-wrap}
 .km.sys .km-card{background:rgba(255,255,255,.64);border-radius:22px;padding:14px 18px;font-size:14px;color:var(--ink-2)}
@@ -232,14 +327,32 @@ button.kchip:hover{background:rgba(124,92,255,.18);transform:translateY(-1px)}
 .kav-v video.cut{transition:transform .16s ease-out}
 /* a klipben Kapu a kép ~73%-a (helyet hagy az integetésnek), ezért 1.18-as nagyítás a talpa körül */
 .kav-v.talk video{transform:translateY(calc(var(--lv) * -3%)) scale(calc(1.18 + var(--lv) * .05))}
-.kav-hero{--kav:156px}
-.kav-hero::before{content:'';position:absolute;inset:-28% -34%;z-index:-2;border-radius:50%;background:radial-gradient(closest-side,rgba(196,170,255,.45),rgba(244,166,198,.2) 60%,transparent);filter:blur(8px)}
+.kav-hero-slot{position:relative}
+.kav-hero{--kav:156px;cursor:pointer;transform-origin:50% 88%}
+.kav-hero::before{content:'';position:absolute;inset:-28% -34%;z-index:-2;border-radius:50%;background:radial-gradient(closest-side,rgba(196,170,255,.45),rgba(244,166,198,.2) 60%,transparent);filter:blur(8px);transition:transform .45s ease,background .45s ease}
+.kav-hero.k-hover::before{transform:scale(1.13);background:radial-gradient(closest-side,rgba(236,143,191,.46),rgba(182,155,255,.28) 62%,transparent)}
+.kav-hero.k-happy{animation:khappy .66s cubic-bezier(.3,.7,.3,1) 1}
+.kav-fx{position:absolute;inset:0;overflow:visible;pointer-events:none;z-index:3}
+.kav-p{position:absolute;left:0;top:0;line-height:1;user-select:none;pointer-events:none;will-change:transform,opacity;filter:drop-shadow(0 2px 5px rgba(124,92,255,.15))}
+.kav-q{position:absolute;left:calc(100% + 12px);bottom:52%;width:clamp(205px,24vw,258px);padding:11px 15px 10px;border-radius:20px 20px 20px 6px;
+  background:rgba(255,255,255,.80);border:1px solid rgba(255,255,255,.95);box-shadow:0 14px 32px -16px rgba(50,30,110,.22),0 1px 3px rgba(50,30,110,.04);
+  backdrop-filter:blur(20px) saturate(1.2);-webkit-backdrop-filter:blur(20px) saturate(1.2);text-align:left;z-index:4;pointer-events:none;
+  animation:kqpop .32s cubic-bezier(.22,1,.36,1) both;transition:opacity .34s ease,filter .34s ease}
+.kav-q.out{opacity:0;filter:blur(3px)}
+.kav-qt{display:block;font-size:12.8px;line-height:1.45;font-weight:450;letter-spacing:-.005em;color:var(--ink)}
+.kav-qa{display:block;margin-top:5px;font-size:11.2px;font-weight:550;color:var(--ink-3)}
+@keyframes kqpop{0%{opacity:0;transform:translate(-6px,5px) scale(.97);filter:blur(4px)}100%{opacity:1;transform:none;filter:blur(0)}}
+@keyframes kqpopTop{0%{opacity:0;transform:translateX(-50%) translateY(5px) scale(.97);filter:blur(4px)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);filter:blur(0)}}
+@media (max-width:980px) and (min-width:861px),(max-width:640px){
+  .kav-q{left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);width:min(264px,78vw);border-radius:20px;text-align:center;animation-name:kqpopTop}
+}
 @keyframes kbreath{0%,100%{transform:scale(1,1)}50%{transform:scale(1.015,1.04) translateY(-1%)}}
 @keyframes kwobble{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg) translateY(-2%)}}
 @keyframes ksway{0%,100%{transform:rotate(-2.5deg) translateY(0)}50%{transform:rotate(2.5deg) translateY(-3%)}}
 @keyframes khello{0%{transform:scale(.6) translateY(16%);opacity:0}45%{transform:scale(1.06) translateY(-6%) rotate(-5deg);opacity:1}65%{transform:rotate(5deg)}82%{transform:rotate(-3deg)}100%{transform:none}}
+@keyframes khappy{0%{transform:scale(1,1) rotate(0)}28%{transform:scale(1.055,.95) translateY(2%) rotate(-3.2deg)}58%{transform:scale(.98,1.045) translateY(-3.5%) rotate(3.2deg)}82%{transform:scale(1.015,.99) rotate(-1.2deg)}100%{transform:none}}
 .kapu-caret{width:2px;background:linear-gradient(180deg,#b48cff,#4a36e0)}
-@media (prefers-reduced-motion:reduce){.kav img,.kav-v video{animation:none!important;transition:none}.km{animation:none}.km-think span,.kdots i,.kl-run{animation:none}}
+@media (prefers-reduced-motion:reduce){.kav img,.kav-v video,.kav-hero.k-happy,.kav-q{animation:none!important;transition:none}.kav-hero::before{transition:none}.kav-fx{display:none}.km{animation:none}.km-think span,.kdots i,.kl-run{animation:none}.kl-open,#kapulist[data-kview="compact"] .kl-extra{transition:none!important}}
 
 /* --- Beállítások → Kapu --------------------------------------------------------------------------- */
 .ks-hero{display:flex;align-items:center;gap:16px}

@@ -74,7 +74,7 @@ const leftovers = (userData) => {
 
 // --- buildArgs ----------------------------------------------------------------------------------
 
-test('buildArgs claude: csak mcp__kapumail__* engedélyezett, --strict-mcp-config', () => {
+test('buildArgs claude: mcp__kapumail__* és WebSearch engedélyezett, --strict-mcp-config', () => {
   const a = R.buildArgs('claude', { mcpFile: '/x/mcp.json', personaFile: '/x/p.md', extra: ['--settings', '/x/s.json'] });
   assert.strictEqual(a[0], '-p');
   assert.ok(a[1].startsWith('--')); // a kérdés nem a parancssorban van
@@ -84,14 +84,15 @@ test('buildArgs claude: csak mcp__kapumail__* engedélyezett, --strict-mcp-confi
   assert.strictEqual(at('--setting-sources'), '');
   assert.strictEqual(at('--output-format'), 'stream-json');
   assert.ok(a.includes('--verbose'));
-  // az --allowedTools egyetlen értéke a kapumail, utána rögtön kapcsoló jön
-  assert.strictEqual(at('--allowedTools'), 'mcp__kapumail__*');
+  // az --allowedTools értéke a kapumail és a WebSearch, utána rögtön kapcsoló jön
+  assert.strictEqual(at('--allowedTools'), 'mcp__kapumail__*,WebSearch');
   assert.ok(a[a.indexOf('--allowedTools') + 2].startsWith('--'));
-  assert.strictEqual(at('--tools'), '');
+  assert.strictEqual(at('--tools'), 'WebSearch');
   assert.strictEqual(at('--append-system-prompt-file'), '/x/p.md');
   assert.ok(!a.includes('--append-system-prompt'));
   assert.strictEqual(at('--settings'), '/x/s.json');
-  for (const bad of ['Bash', 'Read', 'WebFetch', 'WebSearch', '--dangerously-skip-permissions']) assert.ok(!a.includes(bad), bad);
+  for (const bad of ['Bash', 'Read', 'WebFetch', '--dangerously-skip-permissions']) assert.ok(!a.includes(bad), bad);
+  assert.ok(a.includes('WebSearch'));
   assert.ok(!a.includes('--resume'));
   // egyetlen argumentumban sincs sortörés vagy idézőjel (Windows, cmd.exe)
   assert.ok(a.every((x) => !/["\n\r]/.test(x)));
@@ -112,9 +113,10 @@ test('buildArgs codex: read-only sandbox, üres cwd, mcp kapcsolók', async () =
   assert.strictEqual(a[a.length - 1], '-'); // a kérdés a bemeneten
   assert.ok(a.includes('--json') && a.includes('--skip-git-repo-check') && a.includes('--ignore-user-config'));
   const cs = a.flatMap((x, i) => (x === '-c' ? [a[i + 1]] : []));
-  for (const c of ['sandbox_mode=read-only', 'approval_policy=never', 'web_search=disabled',
+  for (const c of ['sandbox_mode=read-only', 'approval_policy=never', 'web_search=live',
     'mcp_servers.kapumail.url=https://iroda.kapumail.hu/mcp', 'mcp_servers.kapumail.bearer_token_env_var=KAPUMAIL_MCP_TOKEN',
     'mcp_servers.kapumail.default_tools_approval_mode=approve']) assert.ok(cs.includes(c), c);
+  assert.ok(!cs.includes('web_search=disabled'));
   const off = a.flatMap((x, i) => (x === '--disable' ? [a[i + 1]] : []));
   for (const f of ['shell_tool', 'unified_exec', 'view_image', 'browser_use', 'computer_use', 'memories', 'plugins']) assert.ok(off.includes(f), f);
   // a token értéke sosem kerül a parancssorba, csak a környezetbe
@@ -279,7 +281,7 @@ test('prepare agy: a globális HOME-ba nem ír', async () => {
   assert.ok(p.home.startsWith(path.join(userData, 'kapu', 'agy-home-')));
   assert.strictEqual(p.env.HOME, p.home);
   const settings = JSON.parse(fs.readFileSync(path.join(p.home, '.gemini', 'antigravity-cli', 'settings.json'), 'utf8'));
-  assert.deepStrictEqual(settings.permissions.allow, ['mcp(kapumail/*)']);
+  assert.deepStrictEqual(settings.permissions.allow, ['mcp(kapumail/*)', 'search_web(*)']);
   for (const d of ['read_file(*)', 'write_file(*)', 'command(*)', 'read_url(*)', 'execute_url(*)']) assert.ok(settings.permissions.deny.includes(d), d);
   const mcp = JSON.parse(fs.readFileSync(path.join(p.home, '.gemini', 'config', 'mcp_config.json'), 'utf8'));
   assert.deepStrictEqual(mcp, { mcpServers: { kapumail: { serverUrl: HTTP.url, headers: { Authorization: `Bearer ${TOKEN}` } } } });
@@ -567,6 +569,58 @@ test('parser: jóváhagyás csak érvényes confirm_id-val, egyszer', () => {
   assert.deepStrictEqual(p.line(item('i4', JSON.stringify({ needs_approval: false, confirm_id: CONFIRM.replace('9', '8') }))).filter((e) => e.type === 'confirm'), []);
   // más eszköz → általános állapotszöveg
   assert.deepStrictEqual(p.line({ type: 'item.started', item: { id: 'i5', type: 'mcp_tool_call', server: 'mas', tool: 'x' } }), [{ type: 'activity', text: 'Dolgozom rajta…' }]);
+});
+
+test('parser: webes keresés és irat_teendok_elemzese aktivitások mindhárom motornál', () => {
+  // Claude WebSearch
+  const pClaude = R.createParser('claude');
+  const ev1 = pClaude.line({
+    type: 'assistant',
+    message: { content: [{ type: 'tool_use', id: 'tu_ws', name: 'WebSearch' }] },
+  });
+  assert.deepStrictEqual(ev1, [{ type: 'activity', text: 'Keresek a hivatalos oldalakon…' }]);
+
+  // Claude irat_teendok_elemzese
+  const ev2 = pClaude.line({
+    type: 'assistant',
+    message: { content: [{ type: 'tool_use', id: 'tu_ite', name: 'mcp__kapumail__irat_teendok_elemzese' }] },
+  });
+  assert.deepStrictEqual(ev2, [{ type: 'activity', text: 'Elemzem az irat teendőit…' }]);
+
+  // Codex web_search
+  const pCodex = R.createParser('codex');
+  const ev3 = pCodex.line({
+    type: 'item.started',
+    item: { id: 'ws_1', type: 'web_search' },
+  });
+  assert.deepStrictEqual(ev3, [{ type: 'activity', text: 'Keresek a hivatalos oldalakon…' }]);
+
+  // Codex irat_teendok_elemzese
+  const ev4 = pCodex.line({
+    type: 'item.started',
+    item: { id: 'ite_1', type: 'mcp_tool_call', server: 'kapumail', tool: 'irat_teendok_elemzese' },
+  });
+  assert.deepStrictEqual(ev4, [{ type: 'activity', text: 'Elemzem az irat teendőit…' }]);
+
+  // Antigravity search_web
+  const pAgy = R.createParser('agy');
+  const ev5 = pAgy.line({
+    event: 'step_update',
+    step_update: { step_type: 'tool', tool_name: 'search_web', step_index: 0 },
+  });
+  assert.deepStrictEqual(ev5, [{ type: 'activity', text: 'Keresek a hivatalos oldalakon…' }]);
+
+  // Antigravity irat_teendok_elemzese
+  const ev6 = pAgy.line({
+    event: 'step_update',
+    step_update: {
+      step_type: 'tool',
+      tool_name: 'call_mcp_tool',
+      step_index: 1,
+      tool_info: { parameters: { ServerName: 'kapumail', ToolName: 'irat_teendok_elemzese' } },
+    },
+  });
+  assert.deepStrictEqual(ev6, [{ type: 'activity', text: 'Elemzem az irat teendőit…' }]);
 });
 
 test('prepare claude: a megszakítás leállítja a belépés frissítését', async () => {

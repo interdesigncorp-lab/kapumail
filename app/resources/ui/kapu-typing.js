@@ -90,6 +90,7 @@
         } else if (c.nodeType === 1) {
           var tg = String(c.tagName || c.tag || '').toUpperCase(), blk = BLOCK.test(tg);
           elements.push({ el: c, start: text.length });
+          if ((c.getAttribute && c.getAttribute('data-notype') !== null) || (c.dataset && c.dataset.notype)) return;
           if (blk) mark();
           walk(c);
           if (blk || tg === 'BR') mark();
@@ -109,7 +110,7 @@
         if (t.node.nodeValue !== v) t.node.nodeValue = v;
         if (vis > 0) last = t.node;
       });
-      elements.forEach(function (e) { e.el.classList.toggle(HIDDEN, e.start >= count); });
+      elements.forEach(function (e) { e.el.classList.toggle(HIDDEN, count < self.length && e.start >= count); });
       if (count >= self.length) caret.remove();
       else if (last) last.after(caret);
       else el.prepend(caret);

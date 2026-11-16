@@ -371,19 +371,27 @@ async function mailboxQuota(ctx, addressId, { log = null } = {}) {
 async function listAll(ctx, opts = {}) {
   const wait = opts.sleep || sleep; const rnd = opts.random || Math.random;
   const pause = () => wait(Math.round(1000 + rnd() * 1000));
-  const out = []; let calls = 0;
+  const emit = p => { if (opts.onStep) try { opts.onStep(p); } catch { /* nem állítja meg */ } };
+  const mbTotal = ctx.mailboxes.filter(m => mailboxAllowed(m.name, opts.mailboxFilter || null)).length;
+  const out = []; let calls = 0, mbIndex = 0;
   for (const mb of ctx.mailboxes) {
     if (!mailboxAllowed(mb.name, opts.mailboxFilter || null)) { mb.skipped = true; continue; }
+    mbIndex++;
+    const mailbox = String(mb.displayName || mb.name || 'postafiók').slice(0, 70);
     if (calls++ > 0) await pause();
+    emit({ mbIndex, mbTotal, mailbox, folder: 'Beérkezett' });
     out.push(...await listMailbox(ctx, mb.addressId, { ...opts, folder: 'BEERKEZETT' }));
     if (opts.full && !opts.since) {
       await pause(); calls++;
+      emit({ mbIndex, mbTotal, mailbox, folder: 'Tartós tár' });
       out.push(...await listMailbox(ctx, mb.addressId, { ...opts, folder: 'TARTOS_TAR' }).catch(() => [])); // nem minden fióktípusnál érhető el
       await pause(); calls++;
+      emit({ mbIndex, mbTotal, mailbox, folder: 'telítettség' });
       mb.quotaPct = await mailboxQuota(ctx, mb.addressId, opts).catch(() => null);
     }
     if (opts.sent) {
       await pause(); calls++;
+      emit({ mbIndex, mbTotal, mailbox, folder: 'Elküldött' });
       out.push(...await listMailbox(ctx, mb.addressId, { ...opts, since: null, maxPages: opts.since ? 1 : opts.maxPages, folder: 'ELKULDOTT' }).catch(() => []));
     }
   }

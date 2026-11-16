@@ -525,9 +525,13 @@ class LiveSession {
     const includeDurable = opts.includeDurable !== false;
     try {
       const wc = this.win.webContents, letters = [], quotas = {};
-      for (const mb of this.sniff.mailboxes) {
-        // Rendszerválasztó: a belépőn kikapcsolt rendszer postafiókjára át sem váltunk, a leveleit nem kérjük le.
-        if (!mailboxAllowed(mb.name, opts.mailboxFilter || null)) continue;
+      const allowedMbs = this.sniff.mailboxes.filter(mb => mailboxAllowed(mb.name, opts.mailboxFilter || null));
+      const folderLabel = f => (f === 'TARTOS_TAR' ? 'Tartós tár' : f === 'ELKULDOTT' ? 'Elküldött' : 'Beérkezett');
+      const emit = p => { if (opts.onProgress) try { opts.onProgress(p); } catch { /* nem állítja meg */ } };
+      for (let mi = 0; mi < allowedMbs.length; mi++) {
+        const mb = allowedMbs[mi];
+        const mbLabel = String(mb.displayName || mb.name || 'postafiók').slice(0, 70);
+        emit({ index: mi + 1, total: allowedMbs.length, mailbox: mbLabel, folder: 'átváltás', page: 1 });
         await this._switchMailbox(wc, mb);
         const q = await wc.executeJavaScript(quotaScript(mb.addressId, this.sniff.xsrf), true).catch(() => null);
         if (q && typeof q.pct === 'number') { mb.quotaPct = q.pct; quotas[mb.name] = q.pct; }
@@ -536,6 +540,7 @@ class LiveSession {
         for (const folder of folders) {
           const rows = [];
           for (let page = 0; page < 50; page++) {
+            emit({ index: mi + 1, total: allowedMbs.length, mailbox: mbLabel, folder: folderLabel(folder), page: page + 1 });
             const r = await wc.executeJavaScript(listScript(mb.addressId, this.sniff.xsrf, page, folder), true);
             if (!this.win || r.status === 401 || r.status === 403) {
               if (folder !== 'BEERKEZETT') break;

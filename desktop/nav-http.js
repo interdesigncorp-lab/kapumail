@@ -14,6 +14,7 @@
 
 const H = require('./tarhely-http');
 const C = require('./nav-calendar');
+const T = require('./nav-taxpayer-tables');
 
 const HOST = 'ugyfelportal.nav.gov.hu';
 const BASE = `https://${HOST}`;
@@ -75,23 +76,29 @@ function toProfile(p) {
 function subjectOf(u) {
   const sel = toProfile(u.kivalasztottAdozoiProfil) || toProfile(u.sajatAdozoiProfil);
   const ownId = num((u.sajatAdozoiProfil || {}).id);
-  return sel ? { id: sel.id, name: sel.name, stem: sel.stem, taxId: sel.taxId, taxNumber: sel.taxNumber, own: sel.id !== null && sel.id === ownId } : null;
+  return sel ? { id: sel.id, name: sel.name, stem: sel.stem, taxId: sel.taxId, taxNumber: sel.taxNumber, kind: sel.kind, own: sel.id !== null && sel.id === ownId } : null;
 }
+
+const safeStep = (fn, info) => { if (fn) try { fn(info); } catch { /* a visszahívás hibája nem állíthatja meg a futást */ } };
 
 /**
  * A munkamenet KIVÁLASZTOTT adózójának adatai: adószámla-összesítő, jövőbeli esedékességek, hiányzó bevallások, adónaptár.
  * Csak GET. A hívó felel azért, hogy a kiválasztott adózó az legyen, akire számít (lásd `subjectOf`).
  */
-async function readSubjectData(ctx, { sleep = realSleep, random = Math.random, today = new Date() } = {}) {
+async function readSubjectData(ctx, { sleep = realSleep, random = Math.random, today = new Date(), onStep = null, prefix = '' } = {}) {
   const pause = () => sleep(Math.round(1000 + random() * 1000));
+  safeStep(onStep, { phase: 'account', text: `${prefix}adószámla-egyenleg olvasása…` });
   await pause();
   const a = await get(ctx, PATHS.account);
   const account = { total: num(a.ugyfelOsszesen), debt: num(a.adozoiTartozas), surplus: num(a.adozoiTobblet), deposit: num(a.letetszamlaOsszesen), unbooked: num(a.konyveletlenOsszesen) };
+  safeStep(onStep, { phase: 'future', text: `${prefix}jövőbeli esedékességek olvasása…` });
   await pause();
   const futureCount = count((await get(ctx, PATHS.future)).dates);
+  safeStep(onStep, { phase: 'missing', text: `${prefix}hiányzó bevallások ellenőrzése…` });
   await pause();
   const m = await get(ctx, PATHS.missing);
   const missingCount = num(m.missingReturnsCount) ?? count(m.missingReturns);
+  safeStep(onStep, { phase: 'calendarPreview', text: `${prefix}30 napos adónaptár-előnézet olvasása…` });
   await pause();
   const iso = d => d.toISOString().slice(0, 10);
   const preview = (await get(ctx, PATHS.calendar, { fromDate: iso(today), toDate: iso(new Date(today.getTime() + 30 * 86400000)), lang: 'hu' })).posts;
@@ -102,6 +109,7 @@ async function readSubjectData(ctx, { sleep = realSleep, random = Math.random, t
   // ha az adózónak még nem volt adónaptára (megfigyelve 2026-11-13, képviselt társaságra váltva: üresből 3 tétel lett).
   // Ez nem nyilatkozat és nem bejelentés, csak a naptár tételeit hozza létre; értesítést nem kapcsol be (docs/adr/ADR-010).
   // Ha a portál ezt a kérést nem fogadja el, nem próbálkozunk újra: az előbb lekért előnézet tételeivel megyünk tovább.
+  safeStep(onStep, { phase: 'calendarFull', text: `${prefix}90 napos adónaptár frissítése és kiolvasása…` });
   await pause();
   let posts = preview, source = 'preview';
   try {
@@ -125,25 +133,35 @@ async function readSubjectData(ctx, { sleep = realSleep, random = Math.random, t
  *   subject: ?{ name: ?string, stem: ?string, taxId: ?string, taxNumber: ?string, own: boolean }, obligations: object[],
  *   calendarInfo: { source: string, total: number, unknown: number, past: number, keys: string[], missingTotal: number, missingUnknown: number, missingKeys: string[] } }>}
  */
-async function readOwn(ctx, { sleep = realSleep, random = Math.random, today = new Date() } = {}) {
+async function readOwn(ctx, { sleep = realSleep, random = Math.random, today = new Date(), onStep = null } = {}) {
   const pause = () => sleep(Math.round(1000 + random() * 1000));
+  safeStep(onStep, { phase: 'user', step: 1, total: 7, text: 'Bejelentkezett adózói profil lekérése…' });
   const u = await get(ctx, PATHS.user);
   const user = { name: str(u.nev), taxId: /^8\d{9}$/.test(String(u.adoazonositoJel || '')) ? String(u.adoazonositoJel) : null, sessionMinutes: Number(u.sessionLifeSpan) > 0 ? Number(u.sessionLifeSpan) : null };
   // Kinek az adatait mutatja a munkamenet: a „kiválasztott” adózó. Belépés után ez rendszerint maga a belépő, de a portál
   // megjegyezheti a korábbi választást – ezért nem feltételezzük, hanem kiolvassuk, és a tételeket ehhez az adózóhoz kötjük.
   const full = subjectOf(u); const subject = full ? { name: full.name, stem: full.stem, taxId: full.taxId, taxNumber: full.taxNumber, own: full.own } : null;
   user.profileId = num((u.sajatAdozoiProfil || {}).id);
+  user.subjectProfileId = full ? full.id : user.profileId;
+  user.subjectKind = full ? full.kind : str((u.sajatAdozoiProfil || {}).adozoiTipus, 40);
 
   const profiles = [];
   for (let page = 0; page < MAX_PAGES; page++) {
+    if (page === 0) safeStep(onStep, { phase: 'profiles', step: 2, total: 7, text: 'Képviselt adózók listájának olvasása…' });
     await pause();
     const r = await get(ctx, PATHS.profiles, { megnevezes: '', page, size: PAGE });
     const batch = Array.isArray(r.content) ? r.content : [];
     profiles.push(...batch.map(toProfile).filter(Boolean));
-    if (!batch.length || (page + 1) * PAGE >= (num(r.total) ?? 0)) break;
+    const tot = num(r.total) ?? 0;
+    if (!batch.length || (page + 1) * PAGE >= tot) break;
+    safeStep(onStep, { phase: 'profiles', step: 2, total: 7, text: `Képviselt adózók listájának olvasása (${profiles.length} / ${tot} adózó)…` });
   }
 
-  const { account, missingCount, futureCount, calendarCount, obligations, calendarInfo } = await readSubjectData(ctx, { sleep, random, today });
+  const phaseIdx = { account: 3, future: 4, missing: 5, calendarPreview: 6, calendarFull: 7 };
+  const { account, missingCount, futureCount, calendarCount, obligations, calendarInfo } = await readSubjectData(ctx, {
+    sleep, random, today,
+    onStep: info => safeStep(onStep, { ...info, step: phaseIdx[info.phase] || 5, total: 7, text: info.text.charAt(0).toUpperCase() + info.text.slice(1) }),
+  });
   return { user, profiles, account, missingCount, futureCount, calendarCount, subject, obligations, calendarInfo };
 }
 
@@ -238,14 +256,16 @@ async function readDocuments(ctx, id, { direction = 'MINDEN_IRANY', today = new 
 }
 
 /** A NAV-dokumentumok a többi adat mellé; a hiba nem dobja el a már kiolvasott adatot. */
-async function withDocuments(ctx, id, data, { sleep = realSleep, random = Math.random, today = new Date() } = {}) {
+async function withDocuments(ctx, id, data, { sleep = realSleep, random = Math.random, today = new Date(), onStep = null, prefix = '' } = {}) {
+  safeStep(onStep, { phase: 'documents', text: `${prefix}NAV-dokumentumok lekérdezése (elmúlt fél év)…` });
   await sleep(Math.round(1000 + random() * 1000));
   try { const r = await readDocuments(ctx, id, { today }); return { ...data, documents: r.items, documentsInfo: { total: r.total, unknown: r.unknown } }; }
   catch (e) { if (/munkamenet/.test(String(e && e.message))) throw e; return { ...data, documents: null, documentsInfo: { error: String((e && e.message) || e).slice(0, 160) } }; }
 }
 
 /** A beadott bevallások a többi adat mellé: hiba esetén nem dobja el a már kiolvasott adatot, csak megjegyzi az okot. */
-async function withReturns(ctx, id, data, { sleep = realSleep, random = Math.random } = {}) {
+async function withReturns(ctx, id, data, { sleep = realSleep, random = Math.random, onStep = null, prefix = '' } = {}) {
+  safeStep(onStep, { phase: 'returns', text: `${prefix}beadott bevallások lekérdezése…` });
   await sleep(Math.round(1000 + random() * 1000));
   try { const r = await readReturns(ctx, id); return { ...data, returns: r.items, returnsInfo: { total: r.total, unknown: r.unknown } }; }
   catch (e) { if (/munkamenet/.test(String(e && e.message))) throw e; return { ...data, returns: null, returnsInfo: { error: String((e && e.message) || e).slice(0, 160) } }; }
@@ -282,23 +302,31 @@ async function switchTo(ctx, profileId) {
  * @param ownId a belépő saját adózói profiljának azonosítója (readOwn: user.profileId)
  * @param targets a readOwn `profiles` listájának elemei (id, stem, taxId, name)
  */
-async function readClients(ctx, ownId, targets, { sleep = realSleep, random = Math.random, today = new Date(), max = MAX_CLIENTS, queries = false } = {}) {
+async function readClients(ctx, ownId, targets, { sleep = realSleep, random = Math.random, today = new Date(), max = MAX_CLIENTS, queries = false, onStep = null } = {}) {
   if (!Number.isInteger(ownId) || ownId <= 0) throw new Error('A saját adózói profil nem ismert; képviseletet nem váltok.');
   const pause = () => sleep(Math.round(1000 + random() * 1000));
   const list = (Array.isArray(targets) ? targets : []).filter(t => t && Number.isInteger(t.id) && t.id > 0 && t.id !== ownId && (t.stem || t.taxId));
   const todo = list.slice(0, Math.max(0, max)); const clients = []; let fatal = null, switched = false;
   try {
-    for (const t of todo) {
+    for (let ci = 0; ci < todo.length; ci++) {
+      const t = todo[ci];
       const row = { profileId: t.id, name: t.name || null, stem: t.stem || null, taxId: t.taxId || null };
+      const who = (t.name || t.stem || t.taxId || 'adózó').slice(0, 60);
+      const pfx = `Ügyfél (${ci + 1} / ${todo.length}) · ${who}: `;
       try {
+        safeStep(onStep, { phase: 'switch', index: ci, count: todo.length, sub: 0, text: `${pfx}képviselet átváltása…` });
         await pause();
         switched = true; await switchTo(ctx, t.id);
         await pause();
         const now = subjectOf(await get(ctx, PATHS.user));
         // A váltás csak akkor számít, ha a NAV maga is ezt az adózót mutatja kiválasztottnak, és az azonosítója egyezik.
         if (!now || now.id !== t.id || (t.stem && now.stem !== t.stem) || (!t.stem && now.taxId !== t.taxId)) { clients.push({ ...row, ok: false, error: 'A NAV a váltás után nem ezt az adózót mutatta kiválasztottnak; az adatait nem olvastam ki.' }); continue; }
-        let data = await readSubjectData(ctx, { sleep, random, today });
-        if (queries) { data = await withReturns(ctx, t.stem || t.taxId, data, { sleep, random }); data = await withDocuments(ctx, t.stem || t.taxId, data, { sleep, random, today }); }
+        let data = await readSubjectData(ctx, { sleep, random, today, prefix: pfx, onStep: info => safeStep(onStep, { ...info, index: ci, count: todo.length, sub: 1 }) });
+        if (queries) {
+          data = await withReturns(ctx, t.stem || t.taxId, data, { sleep, random, prefix: pfx, onStep: info => safeStep(onStep, { ...info, index: ci, count: todo.length, sub: 2 }) });
+          data = await withDocuments(ctx, t.stem || t.taxId, data, { sleep, random, today, prefix: pfx, onStep: info => safeStep(onStep, { ...info, index: ci, count: todo.length, sub: 3 }) });
+          data = await T.withTaxpayerTables(ctx, t.id, data, { kind: now.kind || t.kind || null, today, sleep, random, onStep: lbl => safeStep(onStep, { phase: 'tables', index: ci, count: todo.length, sub: 4, text: `${pfx}adózói táblák – ${lbl}…` }) });
+        }
         clients.push({ ...row, ok: true, ...data });
       } catch (e) {
         if (/munkamenet/.test(String(e && e.message))) throw e;
@@ -309,6 +337,7 @@ async function readClients(ctx, ownId, targets, { sleep = realSleep, random = Ma
   // Visszaváltás a saját profilra – akkor is, ha közben hiba volt. Ha a munkamenet lejárt, nincs mit visszaállítani.
   let restored = !switched;
   if (switched) {
+    safeStep(onStep, { phase: 'restore', index: todo.length, count: todo.length, sub: 0, text: 'Visszaváltás a saját adózói profilra…' });
     try { await pause(); await switchTo(ctx, ownId); await pause(); const now = subjectOf(await get(ctx, PATHS.user)); restored = !!now && now.id === ownId; }
     catch { restored = false; }
   }
@@ -327,4 +356,4 @@ async function findProfile(ctx, id, { sleep = realSleep, random = Math.random } 
   return null;
 }
 
-module.exports = { get, findProfile, loginNav, readOwn, readSubjectData, readClients, readReturns, withReturns, toReturn, parsePeriod, readDocuments, withDocuments, toDocument, DOCUMENTS, DOC_DIRECTIONS, switchTo, subjectOf, RETURNS, toProfile, assertNavPath, HOST, HOSTS, PATHS, SWITCH, MAX_CLIENTS };
+module.exports = { get, findProfile, loginNav, readOwn, readSubjectData, readClients, readReturns, withReturns, toReturn, parsePeriod, readDocuments, withDocuments, toDocument, DOCUMENTS, DOC_DIRECTIONS, readTaxpayerTables: T.readTaxpayerTables, withTaxpayerTables: T.withTaxpayerTables, switchTo, subjectOf, RETURNS, toProfile, assertNavPath, HOST, HOSTS, PATHS, SWITCH, MAX_CLIENTS };

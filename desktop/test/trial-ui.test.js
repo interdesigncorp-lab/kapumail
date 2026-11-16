@@ -28,6 +28,8 @@ test('app.html: a 14 napos próbaidőszak aktiválási ablaka a pontos szöveget
   assert.ok(html.includes('Open source verzió'), 'Hiányzik az Open source verzió gomb');
   assert.ok(html.includes('Dokumentumaim exportálása'), 'Hiányzik a Dokumentumaim exportálása gomb');
   assert.ok(html.includes('/api/export/documents'), 'Hiányzik a teljes dokumentumexport végpont hivatkozása');
+  assert.ok(html.includes('https://github.com/interdesigncorp-lab/kapumail'), 'Hiányzik a nyilvános GitHub adattár közvetlen hivatkozása');
+  assert.ok(!html.includes('https://kapumail.hu/open-source'), 'Nem maradhat ideiglenes /open-source hivatkozás az app.html-ben');
 });
 
 test('build-release.js és LICENSE: GNU AGPLv3 forráslicenc és hivatalos kiadás jelzőfájl', () => {

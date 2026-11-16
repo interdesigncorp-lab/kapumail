@@ -186,11 +186,11 @@ test('prepare agy: mcp_config.json két szerverrel, és a szakmai eszközök is 
   const mcp = JSON.parse(fs.readFileSync(path.join(p.home, '.gemini', 'config', 'mcp_config.json'), 'utf8'));
   assert.deepStrictEqual(mcp.mcpServers.kapumail_szakmai, { serverUrl: PREMIUM.url, headers: { Authorization: `Bearer ${PTOK}` } });
   const settings = JSON.parse(fs.readFileSync(path.join(p.home, '.gemini', 'antigravity-cli', 'settings.json'), 'utf8'));
-  assert.deepStrictEqual(settings.permissions.allow, ['mcp(kapumail/*)', 'mcp(kapumail_szakmai/*)']);
+  assert.deepStrictEqual(settings.permissions.allow, ['mcp(kapumail/*)', 'search_web(*)', 'mcp(kapumail_szakmai/*)']);
   p.cleanup();
   const q = await iso.prepare({ engine: 'agy', userData: tmp(), mcp: HTTP, readKeychain: keychain, sourceHome: fakeHome() });
   const s2 = JSON.parse(fs.readFileSync(path.join(q.home, '.gemini', 'antigravity-cli', 'settings.json'), 'utf8'));
-  assert.deepStrictEqual(s2.permissions.allow, ['mcp(kapumail/*)']);
+  assert.deepStrictEqual(s2.permissions.allow, ['mcp(kapumail/*)', 'search_web(*)']);
   q.cleanup();
 });
 
@@ -198,9 +198,9 @@ test('prepare agy: mcp_config.json két szerverrel, és a szakmai eszközök is 
 
 test('buildArgs claude: premium mellett mindkét eszközelőtag engedélyezett', () => {
   const a = R.buildArgs('claude', { mcpFile: '/x.json', persona: 'p', premium: true });
-  assert.strictEqual(a[a.indexOf('--allowedTools') + 1], 'mcp__kapumail__*,mcp__kapumail_szakmai__*');
+  assert.strictEqual(a[a.indexOf('--allowedTools') + 1], 'mcp__kapumail__*,mcp__kapumail_szakmai__*,WebSearch');
   const b = R.buildArgs('claude', { mcpFile: '/x.json', persona: 'p' });
-  assert.strictEqual(b[b.indexOf('--allowedTools') + 1], 'mcp__kapumail__*');
+  assert.strictEqual(b[b.indexOf('--allowedTools') + 1], 'mcp__kapumail__*,WebSearch');
 });
 
 test('parser: a szakmai eszközök saját feliratot kapnak mindhárom motorban; ismeretlen → BUSY', () => {

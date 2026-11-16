@@ -22,9 +22,9 @@ const SERVER = 'kapumail';
 const HTTP_TOKEN_ENV = 'KAPUMAIL_MCP_TOKEN';
 const STDIO_TOKEN_ENV = 'IRATKAPU_MCP_TOKEN';
 const MCP_ARGS = ['mcp:start', 'iratkapu'];
-// Antigravity: a saját olvasó-, parancs- és webeszközök tiltva, csak a kapumail eszközei engedélyezettek.
+// Antigravity: a saját olvasó-, parancs- és url-eszközök tiltva; a kapumail és a beépített keresés engedélyezett.
 const AGY_DENY = ['read_file(*)', 'write_file(*)', 'command(*)', 'read_url(*)', 'execute_url(*)'];
-const AGY_ALLOW = [`mcp(${SERVER}/*)`];
+const AGY_ALLOW = [`mcp(${SERVER}/*)`, 'search_web(*)'];
 const MAX_AUTH = 256 * 1024;
 // Szakmai MCP (jogi és könyvelői eszközök, távoli átjáró): második szerver, ha a körhöz van érvényes token.
 const PREMIUM_SERVER = 'kapumail_szakmai';

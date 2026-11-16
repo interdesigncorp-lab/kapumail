@@ -4,6 +4,7 @@ namespace App\Mcp\Tools;
 
 use App\Iratkapu\DeadlineCalendar;
 use App\Iratkapu\Scope;
+use App\Iratkapu\TaxpayerDataTables;
 use App\Mcp\McpData;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -16,7 +17,7 @@ class GetClient extends IratkapuTool
 {
     protected string $name = 'get_client';
 
-    protected string $description = 'Egy ügyfél teljes adatlapja: tárhelyek és szinkronállapotuk, meghatalmazás, kapcsolattartók (értesítési címek), kezelő munkatársak, nyitott iratok, közelgő határidők és adónaptár, NAV-adószámla pillanatkép, beadott bevallások és NAV-dokumentumok (a legutóbbiak), helyi adó (ASP) kivonatok.';
+    protected string $description = 'Egy ügyfél teljes adatlapja: tárhelyek és szinkronállapotuk, meghatalmazás, kapcsolattartók (értesítési címek), kezelő munkatársak, nyitott iratok, közelgő határidők és adónaptár, NAV-adószámla pillanatkép, beadott bevallások (nyugta-vonalkóddal), bejelentett biztosítottak, saját foglalkoztatók, EFO-bejelentések és napkeret, NAV adategyeztetések, NAV-dokumentumok és helyi adó (ASP) kivonatok.';
 
     public function schema(JsonSchema $schema): array
     {
@@ -32,6 +33,10 @@ class GetClient extends IratkapuTool
         $names = [$c->id => $c->name];
         $nav = DB::table('nav_client_snapshots')->where('client_id', $c->id)->orderByDesc('fetched_at')->first();
 
+        $returnsRows = DB::table('nav_returns')->where('client_id', $c->id)->orderByDesc('submitted_at')->limit(30)->get();
+        TaxpayerDataTables::enrichReturnsWithReceipts((int) $user->office_id, $returnsRows);
+        $curYear = (int) date('Y');
+
         return McpData::client($c) + [
             'mailboxes' => DB::table('mailboxes')->where('client_id', $c->id)->get()->map(fn ($b) => ['type' => $b->type, 'live_name' => $b->live_ref,
                 'sync_state' => $b->sync_state, 'sync_note' => $b->sync_note, 'last_ok_at' => $b->last_ok_at, 'quota_pct' => $b->quota_pct])->values(),
@@ -45,9 +50,47 @@ class GetClient extends IratkapuTool
                 ->map(fn ($o) => McpData::obligation($o))->values(),
             'nav_tax_account' => $nav ? ['total' => $nav->total, 'debt' => $nav->debt, 'surplus' => $nav->surplus, 'deposit' => $nav->deposit,
                 'missing_returns' => $nav->missing_count, 'fetched_at' => $nav->fetched_at] : null,
-            'nav_returns' => DB::table('nav_returns')->where('client_id', $c->id)->orderByDesc('submitted_at')->limit(30)->get()
-                ->map(fn ($x) => ['reg_no' => $x->reg_no, 'form_code' => $x->form_code, 'title' => $x->title, 'period_from' => $x->period_from,
-                    'period_to' => $x->period_to, 'submitted_at' => $x->submitted_at, 'state' => $x->state])->values(),
+            'nav_returns' => $returnsRows->map(fn ($x) => ['reg_no' => $x->reg_no ?? null, 'barcode' => ($x->barcode ?? null) ?: ($x->reg_no ?? null),
+                'form_code' => $x->form_code ?? null, 'title' => $x->title ?? null, 'period_from' => $x->period_from ?? null,
+                'period_to' => $x->period_to ?? null, 'submitted_at' => $x->submitted_at ?? null,
+                'accepted_at' => ($x->accepted_at ?? null) ?: ($x->submitted_at ?? null), 'error_at' => $x->error_at ?? null,
+                'kind' => $x->kind ?? null, 'state' => $x->state ?? null])->values(),
+            'insured_persons_total' => DB::table('nav_insured_persons')->where('office_id', $user->office_id)->where('client_id', $c->id)->count(),
+            'insured_persons' => DB::table('nav_insured_persons')->where('office_id', $user->office_id)->where('client_id', $c->id)
+                ->orderBy('name')->limit(50)->get()
+                ->map(fn ($x) => ['name' => $x->name ?? null, 'tax_id' => $x->tax_id ?? null, 'taj' => $x->taj ?? null,
+                    'relationship_start' => $x->relationship_start ?? null, 'relationship_end' => $x->relationship_end ?? null,
+                    'relationship_type' => $x->relationship_type ?? null,
+                    'weekly_hours' => ($x->weekly_hours ?? null) !== null ? (float) $x->weekly_hours : null,
+                    'status' => $x->status ?? 'active'])->values(),
+            'own_employers' => DB::table('nav_employers')->where('office_id', $user->office_id)->where('client_id', $c->id)
+                ->orderBy('employer_name')->limit(20)->get()
+                ->map(fn ($x) => ['employer_name' => $x->employer_name ?? null, 'employer_tax_number' => $x->employer_tax_number ?? null,
+                    'employer_tax_id' => $x->employer_tax_id ?? null, 'relationship_start' => $x->relationship_start ?? null,
+                    'relationship_type' => $x->relationship_type ?? null,
+                    'weekly_hours' => ($x->weekly_hours ?? null) !== null ? (float) $x->weekly_hours : null,
+                    'status' => $x->status ?? 'active'])->values(),
+            'efo' => [
+                'declarations' => DB::table('nav_efo_declarations')->where('office_id', $user->office_id)->where('client_id', $c->id)
+                    ->orderByDesc('start_date')->limit(30)->get()
+                    ->map(fn ($x) => ['employee_name' => $x->employee_name ?? null, 'employee_tax_id' => $x->employee_tax_id ?? null,
+                        'employee_taj' => $x->employee_taj ?? null, 'declaration_code' => $x->declaration_code ?? null,
+                        'employment_type' => $x->employment_type ?? null, 'start_date' => $x->start_date ?? null,
+                        'end_date' => $x->end_date ?? null, 'days_count' => (int) ($x->days_count ?? 1),
+                        'reg_no' => $x->reg_no ?? null, 'status' => $x->status ?? null, 'filing_type' => $x->filing_type ?? null,
+                        'submitted_at' => $x->submitted_at ?? null])->values(),
+                'quotas_this_year' => DB::table('nav_efo_quotas')->where('office_id', $user->office_id)->where('client_id', $c->id)
+                    ->where('year', $curYear)->orderBy('employee_name')->limit(30)->get()
+                    ->map(fn ($x) => ['year' => (int) ($x->year ?? $curYear), 'employee_name' => ($x->employee_name ?? null) ?: 'Összesített',
+                        'employee_tax_id' => $x->employee_tax_id ?? null, 'employee_taj' => $x->employee_taj ?? null,
+                        'employment_type' => $x->employment_type ?? null, 'quota_limit' => (int) ($x->quota_limit ?? 0),
+                        'used_days' => (int) ($x->used_days ?? 0), 'remaining_days' => (int) ($x->remaining_days ?? 0)])->values(),
+            ],
+            'nav_reconciliations' => DB::table('nav_reconciliations')->where('office_id', $user->office_id)->where('client_id', $c->id)
+                ->orderByDesc('created_date')->limit(20)->get()
+                ->map(fn ($x) => ['reconciler_name' => $x->reconciler_name ?? null, 'status' => $x->status ?? null,
+                    'case_number' => $x->case_number ?? null, 'created_date' => $x->created_date ?? null,
+                    'submitted_date' => $x->submitted_date ?? null, 'notes' => $x->notes ?? null])->values(),
             'nav_documents' => DB::table('nav_documents')->where('client_id', $c->id)->orderByDesc('arrived_at')->limit(30)->get()
                 ->map(fn ($x) => ['subject' => $x->subject, 'doc_type' => $x->doc_type, 'form_code' => $x->form_code, 'case_no' => $x->case_no, 'arrived_at' => $x->arrived_at])->values(),
             'local_tax_statements' => DB::table('asp_statements')->where('client_id', $c->id)->orderByDesc('fetched_at')->limit(20)->get()

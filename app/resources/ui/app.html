@@ -104,7 +104,7 @@ body{
 .sy-bar.ind{position:relative}.sy-bar.ind span{position:absolute;inset:0 auto 0 0;width:40%;transition:none;animation:bootbar 1.15s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){.sy-bar.ind span{animation:none;width:100%;opacity:.4}}
 .sy-cnt{margin-top:8px!important;font-size:12.5px;color:var(--ink-2);font-variant-numeric:tabular-nums}
-.sy-last{margin-top:4px!important;font-size:12.5px;color:var(--ink-3);min-height:1.4em}
+.sy-last{margin-top:4px!important;font-size:12.5px;color:var(--ink-3);min-height:1.4em;max-width:min(440px,calc(100vw - 32px));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
 .sy-why{margin-top:16px!important;font-size:12.5px;line-height:1.45;color:var(--ink-2)}
 .sy-acts{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .syncov .btn{padding:7px 14px;background:rgba(255,255,255,.6)}
@@ -171,7 +171,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .rail .collapse:hover{background:#fff;color:var(--violet)}
 .collapse svg{width:14px;height:14px;transition:transform .2s}
 .app.nofold .rail .collapse:hover{background:#fff;color:var(--violet)}
-.collapse svg{transform:rotate(180deg)}
+.app.nofold .collapse svg{transform:rotate(180deg)}
 .folders{width:252px;padding:20px 12px 14px 22px;overflow:auto;display:flex;flex-direction:column;gap:2px}
 .app:not(.nofold) .folders{display:none}.app:not(.nofold) .side{border-right:0;background:rgba(255,255,255,.22)}
 .folders h1{font-size:22px;margin:14px 6px 14px;letter-spacing:-.02em}
@@ -271,7 +271,7 @@ select.chip{appearance:none;padding-right:22px;background:rgba(255,255,255,.6) u
 .st svg{width:12px;height:12px;stroke-width:2.2}
 .st.wait{background:var(--amber-bg);color:var(--amber)} .st.ok{background:var(--green-bg);color:var(--green)}
 .st.fic{background:var(--red-bg);color:var(--red)} .st.na{background:var(--grey-bg);color:var(--grey)}
-.st.appr{background:var(--blue-bg);color:var(--blue)} .st.int{background:rgba(255,255,255,.8);color:var(--ink-2);border:1px solid var(--line)}
+.st.appr{background:var(--blue-bg);color:var(--blue)} .st.cond{background:var(--amber-bg);color:var(--amber)} .st.int{background:rgba(255,255,255,.8);color:var(--ink-2);border:1px solid var(--line)}
 .st.dl{background:#fff;color:var(--ink);border:1px solid var(--line)}
 .st.dl.est{border-style:dashed;color:var(--ink-2)}
 .st.dl.hot{background:var(--red-bg);color:var(--red);border-color:transparent}
@@ -509,7 +509,6 @@ dialog::backdrop{background:rgba(255,255,255,.58);backdrop-filter:blur(10px) sat
 .app.wide:not(.nofold) .side{background:rgba(255,255,255,.5)}
 .app.wide .detail{position:static!important;transform:none!important;transition:none!important;visibility:visible!important;background:rgba(255,255,255,.5)}
 .page{padding:26px 32px 60px;max-width:1240px}.page.full{max-width:none}
-.logtabs{margin:10px 0 16px;max-width:360px}
 .dpan{min-width:0}.dpan>.card{border-top:0;border-top-left-radius:0;border-top-right-radius:0}.dpan>.card>h4{display:none}
 .dtabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;padding:0 8px;background:#fff;border:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:var(--r-lg) var(--r-lg) 0 0}
 .dtabs button{flex:none;display:flex;align-items:center;gap:6px;padding:10px 10px 9px;font-size:12.5px;font-weight:600;color:var(--ink-3);border-bottom:2px solid transparent;white-space:nowrap}
@@ -517,8 +516,13 @@ dialog::backdrop{background:rgba(255,255,255,.58);backdrop-filter:blur(10px) sat
 .dtabs .n{min-width:17px;padding:0 5px;border-radius:9px;background:var(--grey-bg);color:var(--ink-2);font-size:11px;line-height:17px;text-align:center}
 .rsel{display:none}
 @media (max-width:900px){.rlist,.rname{display:none}.rhead{flex-wrap:wrap;gap:8px}.rsel{display:block;flex:1 1 200px;min-width:0;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:#faf9ff;font:inherit;font-weight:700}}
-.settabs{margin:14px 0 16px;max-width:760px;flex-wrap:wrap}.settabs button{white-space:nowrap}
+.settabs{margin:14px 0 16px;width:fit-content;max-width:100%;flex-wrap:wrap;gap:2px}.settabs button{flex:0 1 auto;padding:7px 14px;white-space:nowrap}
+.calhead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px 16px;flex-wrap:wrap;margin-bottom:18px}
+.caltabs{margin:12px 0 0;width:fit-content;max-width:100%;flex-wrap:wrap;gap:2px}.caltabs button{flex:0 1 auto;padding:8px 15px;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}.caltabs button svg{width:15px;height:15px}
+.caltabs .cnt{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red-bg);color:var(--red);font-size:11px;font-weight:700;display:inline-grid;place-items:center;font-variant-numeric:tabular-nums}
+.caltabs button[aria-pressed="true"] .cnt{background:#ff7a59;color:#fff}
 .tkbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}.tkbar .seg{margin:0;flex:0 1 420px}.tkbar .btn{padding:8px 14px}
+.tkbar .seg.subseg{background:var(--grey-bg)}.tkbar .seg.subseg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 2px 8px -3px rgba(40,20,100,.35)}
 .tkbar .cnt{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--violet-soft);color:var(--violet);font-size:11px;font-weight:700;display:inline-grid;place-items:center}
 .tkf{display:flex;gap:12px 16px;align-items:flex-end;flex-wrap:wrap;margin:-2px 0 14px;padding:12px 14px;border-radius:var(--r-lg);background:rgba(255,255,255,.7);border:1px solid var(--line)}
 .tkf label{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--ink-2)}.tkf select{min-width:200px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:#fff;font-weight:400;color:var(--ink)}
@@ -534,9 +538,36 @@ dialog::backdrop{background:rgba(255,255,255,.58);backdrop-filter:blur(10px) sat
 .tblw{overflow-x:auto;border-radius:var(--r-lg);border:1px solid var(--line);background:#fff}
 .tbl{width:100%;border-collapse:collapse;font-size:13.5px}
 .tbl th{text-align:left;font-size:12.5px;font-weight:600;color:var(--ink-3);padding:11px 14px;white-space:nowrap;background:#faf9ff}
+.tbl th.sortable{cursor:pointer;user-select:none;transition:color .12s}.tbl th.sortable:hover,.tbl th.sortable[aria-sort="ascending"],.tbl th.sortable[aria-sort="descending"]{color:var(--ink)}
+.tbl th .sort-arr{display:inline-block;margin-left:4px;font-size:11px;color:var(--violet);font-weight:700}
 .tbl td{padding:11px 14px;border-top:1px solid var(--line);vertical-align:middle}
 .tbl input[type=checkbox]{accent-color:var(--violet);width:16px;height:16px}
 .card .tblw{border:0}.tbl.flat td{padding:9px 4px}
+.ttbar{display:flex;gap:10px 12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.ttbar .seg.subseg{margin:0;flex:0 1 auto;width:fit-content;max-width:100%;flex-wrap:wrap;gap:2px;background:var(--grey-bg)}
+.ttbar .seg.subseg button{flex:0 1 auto;padding:7px 14px;white-space:nowrap}
+.ttbar .seg.subseg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 2px 8px -3px rgba(40,20,100,.35)}
+.ttctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:1 1 420px;justify-content:flex-end}
+.ttbar.nosub .ttctrl{justify-content:flex-start}
+.ttbar.nosub .ttact{margin-left:auto}
+.ttact{display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ttsearch{margin:0;height:38px;flex:1 1 250px;min-width:220px;max-width:360px;background:#fff;border:1px solid var(--line);box-shadow:0 6px 18px -14px rgba(60,35,120,.38)}
+.ttsearch:focus-within{border-color:var(--violet);box-shadow:0 0 0 3px rgba(74,54,224,.18)}
+.ttsel{height:38px;padding:0 28px 0 13px;background-color:#fff;font-size:13px;font-weight:500;color:var(--ink);cursor:pointer;max-width:260px}
+.ttsel:has(option:checked:not([value=""])){background-color:var(--violet-soft);border-color:rgba(74,54,224,.35);color:var(--violet);font-weight:600}
+.ttbar .btn{padding:8px 14px}.ttbar .cnt{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--violet-soft);color:var(--violet);font-size:11px;font-weight:700;display:inline-grid;place-items:center}
+.exp-wrap{position:relative;display:inline-flex}
+.exp-pop{position:absolute;right:0;top:calc(100% + 6px);z-index:25;min-width:210px;padding:6px;border-radius:14px;background:rgba(255,255,255,.97);backdrop-filter:blur(18px);border:1px solid var(--line);box-shadow:0 20px 50px -16px rgba(40,20,100,.42);display:grid;gap:2px}
+.exp-pop[hidden]{display:none}
+.exp-pop button{display:flex;gap:9px;align-items:center;width:100%;padding:8px 11px;border-radius:9px;text-align:left;font-size:13px;font-weight:500;color:var(--ink)}
+.exp-pop button:hover,.exp-pop button:focus-visible{background:var(--violet-soft);color:var(--violet)}
+.exp-pop button svg{width:15px;height:15px;color:var(--ink-2)}.exp-pop button:hover svg{color:var(--violet)}
+.calcell-btn{display:inline-flex;flex-wrap:wrap;gap:3px;justify-content:center;align-items:center;max-width:136px;padding:3px 4px;border-radius:8px;cursor:pointer;transition:background .14s}
+.calcell-btn:hover,.calcell-btn:focus-visible{background:var(--violet-soft)}
+.calcell-btn .st{font-size:11px;padding:2px 6px;font-family:var(--mono)}
+.pagi{display:flex;align-items:center;justify-content:space-between;padding:12px 4px 0;font-size:12.5px;color:var(--ink-2);flex-wrap:wrap;gap:10px}
+.pagi-r{display:flex;align-items:center;gap:10px}.pagi-r label{display:inline-flex;align-items:center;gap:6px}
+.pagi-btns{display:inline-flex;gap:4px}.pagi-btns .btn{width:32px;height:32px;padding:0;display:inline-grid;place-items:center}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
 .tile{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;text-align:left;display:grid;gap:2px;color:var(--ink-2)}
 .tile:hover{border-color:var(--violet)}
@@ -606,7 +637,16 @@ body.dense .row{padding-top:7px;padding-bottom:7px}body.dense .row .meta{margin-
 *::-webkit-scrollbar-thumb:hover{background:rgba(74,54,224,.5)}
 *::-webkit-scrollbar-corner{background:transparent}
 /* naptár */
-.calpage{max-width:1500px;padding:20px 22px 50px}
+.calpage .calgrid,.calpage .calhead{max-width:1560px}
+.calfw{position:relative;display:inline-flex}
+.calfbtn{width:42px;height:42px;padding:0;display:inline-grid;place-items:center;position:relative;flex:none}
+.calfbtn[aria-expanded="true"]{background:#2b2742;box-shadow:0 0 0 3px rgba(74,54,224,.24)}
+.calfbtn .cnt{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--violet);color:#fff;font-size:11px;font-weight:700;display:inline-grid;place-items:center;box-shadow:0 0 0 2px #fff;font-variant-numeric:tabular-nums}
+.calfpop{position:absolute;right:0;top:calc(100% + 8px);z-index:25;width:304px;max-width:calc(100vw - 32px);padding:14px 15px;border-radius:16px;background:#fff;border:1px solid var(--line);box-shadow:0 20px 50px -16px rgba(40,20,100,.42);display:grid;gap:12px}
+.calfh{display:flex;justify-content:space-between;align-items:center;gap:8px}.calfh b{font-size:13.5px}
+.calfl{display:grid;gap:5px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.calfpop .seg{margin:0;background:var(--grey-bg)}.calfpop .seg button{font-size:12px;padding:6px 4px;white-space:nowrap}
+.calfpop select.chip{width:100%;padding:7px 26px 7px 11px;border-radius:10px;background-color:#faf9ff;font-size:13px;color:var(--ink)}
 .calgrid{display:grid;grid-template-columns:276px minmax(0,1fr);gap:16px;align-items:start}
 .calside{display:grid;gap:14px}
 .calside .card h4{margin:0 0 10px}
@@ -634,7 +674,7 @@ body.dense .row{padding-top:7px;padding-bottom:7px}body.dense .row .meta{margin-
    EGYBEN kerül új sorba (nem darabonként csúszik szét), és ott a nézetváltó kitölti a maradék helyet. */
 .calbar{display:flex;align-items:center;gap:10px 14px;margin-bottom:16px;flex-wrap:wrap}
 .calbar .calnavs{display:flex;align-items:center;gap:8px;min-width:0}
-.calbar .calacts{display:flex;align-items:center;gap:8px;margin-left:auto;flex:1 1 auto;justify-content:flex-end;min-width:min(100%,400px)}
+.calbar .calacts{display:flex;align-items:center;gap:8px;margin-left:auto;flex:1 1 auto;justify-content:flex-end;min-width:min(100%,280px)}
 .calbar .calacts .btn{white-space:nowrap;flex:none}
 .calbar h3{font-size:22px;margin:0 4px;letter-spacing:-.02em;white-space:nowrap}
 .calbar .nav{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#fff;border:1px solid var(--line)}
@@ -893,6 +933,7 @@ html[data-single] [data-assign],html[data-single] .when .av,html[data-single] [d
 <symbol id="cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
 <symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.5"/><path d="M2.5 19.5c.8-3.2 3.3-5 6.5-5s5.700 1.800 6.500 5M16 6a3.200 3.200 0 010 6.200M18 14.800c1.800.700 3 2.300 3.500 4.700"/></symbol>
 <symbol id="rule" viewBox="0 0 24 24"><path d="M5 6h8M17 6h2M5 12h2M11 12h8M5 18h10M19 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+<symbol id="filter" viewBox="0 0 24 24"><path d="M3.5 5.5h17l-6.5 7.4v5.6l-4-2v-3.6z"/></symbol>
 <symbol id="sync" viewBox="0 0 24 24"><path d="M20 12a8 8 0 01-14 5.300M4 12a8 8 0 0114-5.300"/><path d="M18 3v4h-4M6 21v-4h4"/></symbol>
 <symbol id="audit" viewBox="0 0 24 24"><path d="M6 3.500h9l4 4V20.500H6z"/><path d="M9.500 12h6M9.500 16h4"/></symbol>
 <symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/></symbol>
@@ -924,6 +965,7 @@ html[data-single] [data-assign],html[data-single] .when .av,html[data-single] [d
 <symbol id="key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4.5"/><path d="M11.2 11.8L20 3M16 7l3 3M18.5 4.5l2.5 2.5"/></symbol>
 <symbol id="chat" viewBox="0 0 24 24"><path d="M6 6.5h8a3 3 0 013 3v4.500a3 3 0 01-3 3H10.200L6.500 20v-3H6a3 3 0 01-3-3V9.500a3 3 0 013-3z"/><path d="M8 11.700h.01M10.500 11.700h.01M13 11.700h.01" stroke-width="2.4"/><path d="M19.500 1.800c.25 1.450 1.050 2.250 2.500 2.500-1.450.25-2.250 1.050-2.500 2.500-.25-1.450-1.050-2.250-2.500-2.500 1.450-.25 2.250-1.050 2.500-2.500z"/></symbol>
 <symbol id="qr" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"/><path d="M14 14h3v3h-3zM17 17h3.5v3.5H17zM14 19.5h1.5"/></symbol>
+<symbol id="table" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M9.5 4.5v15M15.5 10v9.5"/></symbol>
 </defs></svg>
 
 <script>
@@ -1055,9 +1097,9 @@ const FOLDERS=[
  ['arch','Archivált','arch',m=>m.arch],
  ['sys','Rendszerüzenetek','gear',m=>m.sys],
 ];
-const RAIL=[['home','Áttekintés','home'],['inbox','Bejövő iratok','inbox'],['tasks','Feladatok','tasks'],['cal','Határidők','cal'],['upo','Adónaptár és bevallások','file'],['clients','Ügyfelek és tárhelyek','users'],['sync','Naplók','sync']];
+const RAIL=[['home','Áttekintés','home'],['inbox','Bejövő iratok','inbox'],['tasks','Feladatok','tasks'],['cal','Határidők és bevallások','cal'],['clients','Ügyfelek és tárhelyek','users'],['tables','Adózói táblák','table']];
 
-const S={dryHits:null,wz:{type:'CK'},area:'inbox',folder:'all',client:null,clientSent:false,q:'',seg:'all',hideRcpt:true,hideDur:false,box:'',snd:'',sel:null,checked:new Set(),cq:''};
+const S={dryHits:null,wz:{type:'CK'},area:'inbox',folder:'all',client:null,clientSent:false,q:'',seg:'all',hideRcpt:true,hideDur:false,box:'',snd:'',sel:null,checked:new Set(),cq:'',tables:{tab:'returns',subtab:'missing',q:'',client:'',year:(new Date()).getFullYear(),status:'',sortCol:'',sortDir:'asc',page:1,pageSize:50,loading:false,data:null,expOpen:false}};
 const AUTO={busy:false,last:''}; // felügyelet nélküli, többügyfeles szinkron állapota (Ügyfelek nézet gombja)
 
 const fmtD=d=>{const [y,mo,da]=d.split(' ')[0].split('-');return ['jan.','febr.','márc.','ápr.','máj.','jún.','júl.','aug.','szept.','okt.','nov.','dec.'][mo-1]+' '+(+da)+'.'};
@@ -1113,8 +1155,8 @@ function renderRail(){
   // Asztali appban a felső logó maga Kapu: élő hangos (ChatGPT/Antigravity) kapcsolatnál telefonos hover + voicemod indul, egyébként chates hover + chat nézet.
   const kmode=window.iratkapuDesktop?.kapu?(window.KapuView?.logoMode?.()||'chat'):'',klab=kmode==='voice'?'Kapu – élő beszélgetés':'Kapu – beszélgetés';
   $('#rail').innerHTML=(kmode?`<button type="button" class="markb" data-klogo="${kmode}" aria-label="${klab}" title="${klab}"><img class="mark base" src="/iratkapu-logo.png" alt="" width="46" height="42" draggable="false"><img class="mark hov" src="/iratkapu-logo-${kmode==='voice'?'phone':'chat'}.png" alt="" width="46" height="42" draggable="false"></button>`:`<img class="mark" src="/iratkapu-logo.png" alt="KapuMail" width="46" height="42" draggable="false">`)+
-   RAIL.map(([k,l,i])=>`<button data-area="${k}" aria-label="${l}" title="${l}" aria-current="${S.area===k||(k==='sync'&&S.area==='audit')}">${ic(i)}${k==='inbox'&&wait?'<span class="dot"></span>':''}${k==='upo'&&upoBad?'<span class="dot"></span>':''}${k==='sync'&&CLIENTS.some(c=>!c.sync.ok)?'<span class="dot"></span>':''}${k==='home'&&APPR.some(a=>canDecide(a))?'<span class="dot"></span>':''}</button>`).join('')+
-   `<span class="sp"></span><button data-bell aria-current="${S.area==='notif'}" aria-label="Értesítések${NOTIF.some(n=>!n.read)?` – ${NOTIF.filter(n=>!n.read).length} új`:''}" title="Értesítések">${ic('bell')}${(u=>u?`<span class="cnt">${u>9?'9+':u}</span>`:'')(NOTIF.filter(n=>!n.read).length)}</button>${window.iratkapuDesktop?.kapu?`<button data-area="kapu" aria-label="Kapu" title="Kapu" aria-current="${S.area==='kapu'}">${ic('chat')}</button>`:''}<button data-area="es3" aria-label="ES3-akta megnyitása" title="ES3-akta megnyitása" aria-current="${S.area==='es3'}">${ic('pdf')}</button><button aria-label="Beállítások" title="Beállítások" data-area="settings" aria-current="${S.area==='settings'||S.area==='rules'}">${ic('gear')}</button><button data-user aria-label="Fiók: ${esc(MEU.name)}" title="${esc(MEU.name)}"><span class="av" style="margin:0">${ME}</span></button>
+   RAIL.map(([k,l,i])=>`<button data-area="${k}" aria-label="${l}" title="${l}" aria-current="${k==='cal'?(S.area==='cal'||S.area==='upo'):S.area===k}">${ic(i)}${k==='inbox'&&wait?'<span class="dot"></span>':''}${k==='cal'&&upoBad?'<span class="dot"></span>':''}${k==='home'&&APPR.some(a=>canDecide(a))?'<span class="dot"></span>':''}</button>`).join('')+
+   `<span class="sp"></span><button data-bell aria-current="${S.area==='notif'}" aria-label="Értesítések${NOTIF.some(n=>!n.read)?` – ${NOTIF.filter(n=>!n.read).length} új`:''}" title="Értesítések">${ic('bell')}${(u=>u?`<span class="cnt">${u>9?'9+':u}</span>`:'')(NOTIF.filter(n=>!n.read).length)}</button>${window.iratkapuDesktop?.kapu?`<button data-area="kapu" aria-label="Kapu" title="Kapu" aria-current="${S.area==='kapu'}">${ic('chat')}</button>`:''}<button data-area="es3" aria-label="ES3-akta megnyitása" title="ES3-akta megnyitása" aria-current="${S.area==='es3'}">${ic('pdf')}</button><button aria-label="Beállítások" title="Beállítások" data-area="settings" aria-current="${['settings','rules','sync','audit'].includes(S.area)}">${ic('gear')}${CLIENTS.some(c=>!c.sync.ok)?'<span class="dot"></span>':''}</button><button data-user aria-label="Fiók: ${esc(MEU.name)}" title="${esc(MEU.name)}"><span class="av" style="margin:0">${ME}</span></button>
     <button class="collapse" data-fold aria-label="Mappák mutatása vagy elrejtése" title="Mappák">${ic('chev')}</button>`;
 }
 function renderFolders(){
@@ -1359,17 +1401,20 @@ function vHome(){
   const wait=inc.filter(m=>m.off==='wait'&&!m.arch),td=inc.filter(m=>m.dl&&m.dl.d===TODAY&&m.int!=='kesz'),urg=inc.filter(m=>m.urgent&&m.int!=='kesz'&&!m.arch),unk=inc.filter(m=>m.unknown),bad=CLIENTS.filter(c=>!c.sync.ok),appr=inc.filter(m=>m.appr);
   const todo=[...wait.filter(m=>m.urgent).map(m=>[m,'Sürgős, még nincs átvéve','Átvétel kérése']),...td.map(m=>[m,'Ma jár le','Megnyitás']),...unk.map(m=>[m,'Ismeretlen típus – besorolásra vár','Besorolás']),...inc.filter(m=>m.dl&&!m.dl.sure&&m.int!=='kesz').map(m=>[m,'Becsült határidő – megerősítésre vár','Megerősítés'])];
   const wk={};inc.filter(m=>!m.sys).forEach(m=>wk[m.int]=(wk[m.int]||0)+1);const tot=Object.values(wk).reduce((a,b)=>a+b,0);
+  const apprRows=APPR.map(a=>{const m=M.find(x=>x.id===a.mid);return m?`<div class="todo"><div>${goBtn(m)}<small>Kérte: ${PEOPLE[a.by]}</small></div>${canDecide(a)?`<button class="btn" data-decide="${a.id}:1">Jóváhagyom</button><button class="btn ghost" data-decide="${a.id}:0">Elutasítom</button>`:`<span class="st appr">${ic('clock')}${a.mine?'a te kérésed':'vezetőre vár'}</span>`}</div>`:''}).filter(Boolean);
   return `<div class="page"><h3>Szia, ${esc(MEU.name.split(' ').pop())}</h3><p class="lead">${new Date(TODAY).toLocaleDateString('hu-HU',{weekday:'long',month:'long',day:'numeric'})}. ${esc(OFFICE.name)}.</p>
   <div class="tiles">
    ${[['wait',wait.length,'átvételre vár','env'],['urgent',urg.length,'sürgős, nyitott','flag'],['today',td.length,'ma esedékes','clock'],['mine',inc.filter(m=>m.as===ME&&m.int!=='kesz').length,'nálad van','user']].map(t=>`<button class="tile" data-gofolder="${t[0]}">${ic(t[3])}<b>${t[1]}</b><span>${t[2]}</span></button>`).join('')}
    <button class="tile ${bad.length?'warn':''}" data-area="sync">${ic('sync')}<b>${bad.length}</b><span>tárhely nem naprakész</span></button>
   </div>
   <div class="grid2" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)">
-   <div class="card"><h4>${ic('tasks')}Ezzel kezdd</h4>${todo.map(([m,why,cta])=>`<div class="todo"><span class="snd">${esc(m.s)}</span><div><b>${esc(m.sub)}</b><small>${esc(C(m.c).name)} · ${why}</small></div><button class="btn ghost" data-goto="${m.id}">${cta}</button></div>`).join('')||'<p>Nincs sürgős teendő.</p>'}</div>
+   <div class="stack">
+    <div class="card"><h4>${ic('tasks')}Ezzel kezdd</h4>${todo.map(([m,why,cta])=>`<div class="todo"><span class="snd">${esc(m.s)}</span><div><b>${esc(m.sub)}</b><small>${esc(C(m.c).name)} · ${why}</small></div><button class="btn ghost" data-goto="${m.id}">${cta}</button></div>`).join('')||'<p>Nincs sürgős teendő.</p>'}</div>
+    ${apprRows.length?`<div class="card"><h4>${ic('shield')}Jóváhagyások</h4><p style="margin:0 0 4px;color:var(--ink-2);font-size:13px">${apprRows.length} átvételi kérés vár jóváhagyásra.</p>${apprRows.join('')}</div>`:''}
+   </div>
    <div class="stack">
     <div class="card"><h4>${ic('inbox')}Iratok feldolgozottsága</h4><div class="bar">${INT_ORDER.filter(k=>wk[k]).map((k,i)=>`<i style="flex:${wk[k]};opacity:${.25+i*.15}" title="${INT[k]}: ${wk[k]}"></i>`).join('')}</div>
       <dl class="kv" style="margin-top:10px">${INT_ORDER.filter(k=>wk[k]).map(k=>`<dt>${INT[k]}</dt><dd>${wk[k]} irat · ${Math.round(wk[k]/tot*100)}%</dd>`).join('')}</dl></div>
-    <div class="card"><h4>${ic('shield')}Jóváhagyások</h4><p style="margin:0;color:var(--ink-2);font-size:13px">${APPR.length?APPR.length+' átvételi kérés vár jóváhagyásra.':'Nincs függő átvételi kérés.'}</p>${APPR.map(a=>{const m=M.find(x=>x.id===a.mid);return m?`<div class="todo"><div>${goBtn(m)}<small>Kérte: ${PEOPLE[a.by]}</small></div>${canDecide(a)?`<button class="btn" data-decide="${a.id}:1">Jóváhagyom</button><button class="btn ghost" data-decide="${a.id}:0">Elutasítom</button>`:`<span class="st appr">${ic('clock')}${a.mine?'a te kérésed':'vezetőre vár'}</span>`}</div>`:''}).join('')}</div>
     ${bad.map(c=>`<div class="card"><h4>${ic('alert')}${esc(c.name)}</h4><p style="margin:0 0 10px;color:var(--ink-2);font-size:13px">${esc(c.sync.why)}. Utolsó sikeres szinkron: ${esc(c.sync.at)}. Azóta érkezhetett irat, amit nem látunk.</p><button class="btn ghost" data-cl="${c.id}">Kapcsolat megnyitása</button></div>`).join('')}
    </div></div>
   ${homeUpoSection()}</div>`;
@@ -1398,7 +1443,7 @@ const MONTHS=['január','február','március','április','május','június','jú
 const DOW=['Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat','Vasárnap'];
 const monOf=d=>addDays(d,-((new Date(d+'T00:00:00Z').getUTCDay()+6)%7));
 const weekNo=d=>{const x=new Date(d+'T00:00:00Z');x.setUTCDate(x.getUTCDate()+3-((x.getUTCDay()+6)%7));const y=new Date(Date.UTC(x.getUTCFullYear(),0,4));return 1+Math.round(((x-y)/864e5-3+((y.getUTCDay()+6)%7))/7)};
-Object.assign(S,{cal:{view:'week',at:'',cats:{nav:true,upo:true,onk:true,jog:true,egyeb:true},sure:'all',who:'',client:''},upo:{tab:'matrix',q:''}});
+Object.assign(S,{cal:{view:'week',at:'',fopen:false,cats:{nav:true,upo:true,onk:true,jog:true,egyeb:true},sure:'all',who:'',client:''},upo:{tab:'matrix',q:''}});
 // Utalási adatok egy adónaptár-tételhez: a szerver adja (o.pay), beadott vagy ismeretlen nyomtatványnál üres.
 function payBlock(o){
   if(!o||!o.pay||!o.pay.length||o.status==='submitted')return '';
@@ -1453,6 +1498,15 @@ function calChip(m,compact){const k=CATS[catOf(m)],done=m.int==='kesz',cl=C(m.c)
   return `<button class="ev ${m.dl.sure?'':'est'} ${done?'done':''} ${compact?'sm':''}" ${actAttr} style="--c:${k[1]};--b:${k[2]}" title="${esc(m.sub)} – ${m._upo?'NAV adónaptár':(m.dl.sure?'megerősített':'becsült')+' határidő'}${done?', kész':''}">
     ${compact?`<span class="t">${m.dl.sure?'':'≈ '}${esc(cl.name.split(' ')[0])} · ${esc(m.s)}</span>`
     :`<span class="k">${m._upo?ic('file')+'NAV · ':m.dl.sure?ic('check')+'<span class="sr">megerősített határidő, </span>':'≈ becsült · '}${esc(m.s)}</span><span class="t">${esc(cl.name)}</span><span class="d">${esc(m.sub)}</span><span class="ef">${m._upo?`<span class="ev-st ${u[0]}" title="${esc(upoStatusTip(m.upo))}">${ic(u[1])}${u[3]}</span>`:`<span class="av ${m.as?'':'none'}" style="margin:0">${m.as||'?'}</span>${done?'Kész':INT[m.int]}`}</span>`}</button>`}
+// Közös fejléc és fő fülváltó a Határidőnaptár ('cal') és a NAV bevallások és mátrix ('upo') nézethez.
+function calHead(t,acts=''){
+  const bad=OBLIGATIONS.filter(o=>o.status==='missing'||o.status==='rejected').length;
+  return `<div class="calhead"><div><h3>Határidők és bevallások</h3>
+    <div class="seg tabs caltabs" role="tablist" aria-label="Határidők és bevallások nézetei">
+      <button role="tab" data-area="cal" aria-selected="${t==='cal'}" aria-pressed="${t==='cal'}">${ic('cal')}Határidőnaptár</button>
+      <button role="tab" data-area="upo" aria-selected="${t==='upo'}" aria-pressed="${t==='upo'}">${ic('file')}NAV bevallások és mátrix${bad?`<span class="cnt" title="${bad} hiányzó vagy elutasított bevallás">${bad}</span>`:''}</button>
+    </div></div>${acts?`<div class="acts">${acts}</div>`:''}</div>`;
+}
 function vCal(){
   const c=S.cal; if(!c.at)c.at=TODAY; const items=calItems(), by=d=>items.filter(m=>m.dl.d===d), all=calAllPool();
   const y=+c.at.slice(0,4), mo=+c.at.slice(5,7)-1, first=c.at.slice(0,8)+'01', gridStart=monOf(first), wk=monOf(c.at);
@@ -1467,24 +1521,26 @@ function vCal(){
     const grp={};rest.forEach(m=>(grp[m.dl.d]=grp[m.dl.d]||[]).push(m));
     const row=m=>{const k=CATS[catOf(m)],cl=C(m.c)||{name:'Ügyfél'};return `<div class="ag ${m.int==='kesz'?'done':''}" style="--c:${k[1]}"><div>${m._upo?`<button class="lnk" ${m.upo.receiptMid?`data-goto="${m.upo.receiptMid}"`:`data-area="upo"`}>${esc(m.sub)}</button>`:goBtn(m)}<small>${esc(cl.name)} · ${esc(m.s)} · ${m._upo?'NAV adónaptár':INT[m.int]}</small>${m._upo?payBlock(m.upo):''}</div>${dlChip(m)}<span class="av ${m.as?'':'none'}" style="margin:0" title="${m.as?PEOPLE[m.as]:'Nincs felelős'}">${m.as||(m._upo?'ÜP':'?')}</span></div>`};
     main=`<div class="agenda">${late.length?`<h4 class="late">${ic('alert')}Lejárt, még nyitott</h4>${late.map(row).join('')}`:''}${Object.keys(grp).map(d=>`<h4>${d===TODAY?'Ma · ':d===addDays(TODAY,1)?'Holnap · ':''}${MONTHS[+d.slice(5,7)-1]} ${+d.slice(8)}., ${DOW[(new Date(d+'T00:00:00Z').getUTCDay()+6)%7].toLowerCase()}</h4>${grp[d].map(row).join('')}`).join('')||(late.length?'':'<div class="card empty"><b>Nincs határidő ezzel a szűréssel</b>Kapcsolj vissza kategóriát a bal oldalon.</div>')}</div>`}
-  const waiting=M.filter(m=>m.off==='wait'&&!m.arch).length;
-  return `<div class="page calpage"><div class="calgrid">
+  const waiting=M.filter(m=>m.off==='wait'&&!m.arch).length, single=typeof OFFICE!=='undefined'&&!!OFFICE.single, nf=(c.sure!=='all'?1:0)+(!single&&c.who?1:0)+(c.client?1:0);
+  const fpop=c.fopen?`<div class="calfpop" id="calfpop" role="region" aria-label="Naptárszűrők"><div class="calfh"><b>Szűrők</b>${nf?`<button type="button" class="lnk" data-calfclear style="font-size:12px">Alaphelyzet</button>`:''}</div><div><span class="calfl">Bizonyosság</span><div class="seg">${[['all','Mind'],['sure','Megerősített'],['est','≈ Becsült']].map(([k,l])=>`<button type="button" data-calsure="${k}" aria-pressed="${c.sure===k}">${l}</button>`).join('')}</div></div><label class="calfl only-team">Felelős<select class="chip" data-calwho aria-label="Felelős"><option value="">Mindenki</option>${Object.entries(PEOPLE).map(([k,n])=>`<option value="${k}" ${c.who===k?'selected':''}>${n}</option>`).join('')}</select></label><label class="calfl">Ügyfél<select class="chip" data-calclient aria-label="Ügyfél"><option value="">Minden ügyfél</option>${CLIENTS.map(k=>`<option value="${k.id}" ${c.client===k.id?'selected':''}>${esc(k.name)}</option>`).join('')}</select></label></div>`:'';
+  return `<div class="page full calpage">${calHead('cal',`<button class="btn ghost ${SYNCBUSY?'spin':''}" data-syncfull ${SYNCBUSY?'disabled':''} title="Teljes szinkron: belépés, Tárhely és NAV ügyfélportál – friss iratok és adónaptár">${ic('sync')}Szinkronizálás</button><a class="btn ghost" href="${calIcsUrl()}" download="kapumail-hataridok.ics" title="A most beállított szűrőknek megfelelő nyitott határidők egy naptárfájlban (.ics). Megnyitva a Google, az Outlook és az Apple naptár is beolvassa.">${ic('down')}Naptárfájl</a><div class="calfw"><button type="button" class="btn calfbtn" data-calfopen aria-expanded="${!!c.fopen}" aria-controls="calfpop" aria-label="Szűrők" title="Szűrők${nf?` (${nf} aktív)`:''}">${ic('filter')}${nf?`<span class="cnt">${nf}</span>`:''}</button>${fpop}</div>`)}<div class="calgrid">
    <aside class="calside">
     <div class="card mini"><div class="mt"><b>${y}. ${MONTHS[mo]}</b><span><button data-calnav="-1" data-unit="month" aria-label="Előző hónap">${ic('back')}</button><button data-calnav="1" data-unit="month" aria-label="Következő hónap">${ic('chev')}</button></span></div>
       <div class="mg">${DOW.map(d=>`<i>${d.slice(0,1)}</i>`).join('')}${mini.map(d=>{const n=all.filter(m=>m.dl.d===d);return `<button data-calday="${d}" class="${d===TODAY?'now':''} ${d.slice(5,7)!==first.slice(5,7)?'out':''} ${c.view==='week'&&monOf(d)===wk?'inwk':''}" aria-label="${MONTHS[+d.slice(5,7)-1]} ${+d.slice(8)}.${n.length?', '+n.length+' határidő':''}">${+d.slice(8)}${n.length?`<span class="dots">${[...new Set(n.map(catOf))].slice(0,3).map(k=>`<s style="background:${CATS[k][1]}"></s>`).join('')}</span>`:''}</button>`}).join('')}</div></div>
     <div class="card"><h4>Feladó szerint</h4>${Object.entries(CATS).map(([k,v])=>`<label class="cf"><input type="checkbox" data-calcat="${k}" ${c.cats[k]?'checked':''} style="accent-color:${v[1]}"><s style="background:${v[1]}"></s><span>${v[0]}</span><em>${all.filter(m=>catOf(m)===k).length}</em></label>`).join('')}</div>
-    <div class="card"><h4>Bizonyosság</h4><div class="seg" style="margin:0">${[['all','Mind'],['sure','Megerősített'],['est','≈ Becsült']].map(([k,l])=>`<button data-calsure="${k}" aria-pressed="${c.sure===k}">${l}</button>`).join('')}</div>
-      <h4 class="only-team" style="margin-top:14px">Felelős</h4><select class="chip only-team" data-calwho aria-label="Felelős" style="width:100%"><option value="">Mindenki</option>${Object.entries(PEOPLE).map(([k,n])=>`<option value="${k}" ${c.who===k?'selected':''}>${n}</option>`).join('')}</select>
-      <h4 style="margin-top:14px">Ügyfél</h4><select class="chip" data-calclient aria-label="Ügyfél" style="width:100%"><option value="">Minden ügyfél</option>${CLIENTS.map(k=>`<option value="${k.id}" ${c.client===k.id?'selected':''}>${esc(k.name)}</option>`).join('')}</select></div>
    </aside>
    <section class="calmain">
-    <div class="calbar"><div class="calnavs"><button class="nav" data-calnav="-1" aria-label="Előző">${ic('back')}</button><button class="nav" data-calnav="1" aria-label="Következő">${ic('chev')}</button><h3>${title}</h3>${c.view==='week'?`<span class="wkno">${weekNo(wk)}. hét</span>`:''}</div><div class="calacts"><button class="btn ghost today" data-calnav="0">Ma</button><button class="btn ghost ${SYNCBUSY?'spin':''}" data-syncfull ${SYNCBUSY?'disabled':''} title="Teljes szinkron: belépés, Tárhely és NAV ügyfélportál – friss iratok és adónaptár">${ic('sync')}Szinkronizálás</button><a class="btn ghost" href="${calIcsUrl()}" download="kapumail-hataridok.ics" title="A most beállított szűrőknek megfelelő nyitott határidők egy naptárfájlban (.ics). Megnyitva a Google, az Outlook és az Apple naptár is beolvassa.">${ic('down')}Naptárfájl</a>
+    <div class="calbar"><div class="calnavs"><button class="nav" data-calnav="-1" aria-label="Előző">${ic('back')}</button><button class="nav" data-calnav="1" aria-label="Következő">${ic('chev')}</button><h3>${title}</h3>${c.view==='week'?`<span class="wkno">${weekNo(wk)}. hét</span>`:''}</div><div class="calacts"><button class="btn ghost today" data-calnav="0">Ma</button>
       <div class="seg tabs" role="tablist" aria-label="Nézet">${[['week','Hét'],['month','Hónap'],['list','Lista']].map(([k,l])=>`<button role="tab" data-calview="${k}" aria-selected="${c.view===k}" aria-pressed="${c.view===k}">${l}</button>`).join('')}</div></div></div>
     ${main}
     <p class="mut" style="margin:12px 2px 0">A tömör kártya megerősített határidő; a szaggatott, ≈ jelű becsült – az átvétel napjából számolt, még senki nem ellenőrizte. A Naptárfájl a szűrőknek megfelelő nyitott határidőket tartalmazza; pillanatkép, magától nem frissül. ${waiting?`${waiting} átvételre váró iratnak még nincs határideje.`:''}</p>
    </section></div></div>`;
 }
-document.addEventListener('click',e=>{const b=e.target.closest('[data-calview],[data-calnav],[data-calday],[data-calsure]');if(!b)return;const d=b.dataset,c=S.cal;
+document.addEventListener('click',e=>{
+  if(S.cal.fopen&&!e.target.closest('.calfw')){S.cal.fopen=false;$('#calfpop')?.remove();const fb=document.querySelector('[data-calfopen]');if(fb)fb.setAttribute('aria-expanded','false')}
+  const b=e.target.closest('[data-calview],[data-calnav],[data-calday],[data-calsure],[data-calfopen],[data-calfclear]');if(!b)return;const d=b.dataset,c=S.cal;
+  if('calfopen' in d)c.fopen=!c.fopen;
+  if('calfclear' in d){c.sure='all';c.who='';c.client=''}
   if(d.calview)c.view=d.calview;
   if(d.calsure)c.sure=d.calsure;
   if(d.calday){c.at=d.calday;if(c.view==='month'&&!b.closest('.mini'))c.view='week'}
@@ -1543,8 +1599,8 @@ function vUpo(){
     bodyHtml=rows.length?tblw(`<table class="tbl"><thead><tr><th>Ügyfél</th><th>Nyomtatvány</th><th>Időszak</th><th>Esedékesség</th><th>Állapot</th><th>Vonalkód / Tárhely-nyugta</th></tr></thead><tbody>${rows.map(o=>{const cl=C(o.c)||{name:'–',tax:''};return `<tr><td><button class="lnk" data-cl="${cl.id}"><b>${esc(cl.name)}</b></button></td><td><b>${esc(o.formCode)}</b><br><span class="mut">${esc(o.title)}</span></td><td class="mono">${o.periodStart&&o.periodEnd?`${o.periodStart.slice(5)} → ${o.periodEnd.slice(5)}`:'–'}</td><td><b>${fmtD(o.dueDate)}</b></td><td>${upoBadge(o)}</td><td>${o.barcode?`<span class="mono">${esc(o.barcode)}</span>`:'<span class="mut">–</span>'}${o.receiptMid?` · <button class="lnk" data-goto="${o.receiptMid}">Nyugta megnyitása</button>`:''}</td></tr>`}).join('')}</tbody></table>`):`<div class="card empty"><b>${S.upo.tab==='alerts'?'Nincs hiányzó vagy elutasított bevallás':'Nincs találat'}</b>Minden esedékes bevallás rendben van.</div>`;
   }
   return `<div class="page full">
-    <div class="ph"><div><h3>Adónaptár és bevallások (NAV)</h3><p class="lead">A NAV ügyfélportál (ugyfelportal.nav.gov.hu) adónaptárának bejegyzései, hiányzó bevallásai, bevallási kötelezettségei és beküldött bevallásai, automatikusan összepárosítva a tárhelyre érkező elfogadó és elutasító nyugtákkal.</p></div>
-      <div class="acts"><button class="btn ghost ${UPO_BUSY?'spin':''}" data-uposync ${UPO_BUSY?'disabled':''}>${ic('sync')}${UPO_BUSY?'NAV-portál olvasása…':'NAV adónaptár frissítése'}</button><button class="btn" data-portalnew ${canAdmin()?'':'disabled'}>${ic('key')}Ügyfélkapu összekapcsolása</button></div></div>
+    ${calHead('upo',`<button class="btn ghost ${UPO_BUSY?'spin':''}" data-uposync ${UPO_BUSY?'disabled':''}>${ic('sync')}${UPO_BUSY?'NAV-portál olvasása…':'NAV adónaptár frissítése'}</button><button class="btn" data-portalnew ${canAdmin()?'':'disabled'}>${ic('key')}Ügyfélkapu összekapcsolása</button>`)}
+    <p class="lead" style="margin:-2px 0 18px">A NAV ügyfélportál (ugyfelportal.nav.gov.hu) adónaptárának bejegyzései, hiányzó bevallásai, bevallási kötelezettségei és beküldött bevallásai, automatikusan összepárosítva a tárhelyre érkező elfogadó és elutasító nyugtákkal.</p>
     <div class="tiles">
       <button class="tile" data-upotab="matrix"><b>${cnt('submittable')}</b><span>beadható (esedékes)</span></button>
       <button class="tile" data-upotab="list"><b>${cnt('submitted')}</b><span>beadva · nyugtával</span></button>
@@ -1553,7 +1609,7 @@ function vUpo(){
       <button class="tile" data-upotab="matrix"><b>${cnt('conditional')}</b><span>feltételes</span></button>
     </div>
     <div class="tkbar">
-      <div class="seg">${[['matrix','Adónaptár mátrix'],['list','Minden bevallás'],['alerts','Hiányzó és hibás']].map(([k,l])=>`<button data-upotab="${k}" aria-pressed="${S.upo.tab===k}">${l}</button>`).join('')}</div>
+      <div class="seg subseg">${[['matrix','Adónaptár mátrix'],['list','Minden bevallás'],['alerts','Hiányzó és hibás']].map(([k,l])=>`<button data-upotab="${k}" aria-pressed="${S.upo.tab===k}">${l}</button>`).join('')}</div>
       <input class="csearch" style="max-width:280px;margin:0;background:#fff" type="search" id="upoq" placeholder="Ügyfél, adószám, nyomtatvány (pl. 2608)…" value="${esc(S.upo.q||'')}">
     </div>
     ${bodyHtml}
@@ -1765,6 +1821,7 @@ async function ingestLive(letters,extra){
   return sum;
 }
 const mbMeta=list=>(list||[]).filter(m=>m&&!m.skipped).map(m=>({name:m.name,rawName:m.rawName||'',displayName:m.displayName||'',type:m.type||null,isDefault:m.isDefault===true}));
+const autoDlLabel=a=>{if(!a)return'';const s=[a.sender,a.subject].filter(Boolean).join(' · ');return s?`${s.slice(0,84)} (${a.eid})`:String(a.eid||'')};
 // ---- Felügyelet nélküli szinkron minden TOTP-kulcsos belépővel. `source`: 'manual' (gomb) vagy 'scheduled' (ütemező).
 async function runAutoAll(source){
   const sched=source==='scheduled';
@@ -1783,7 +1840,11 @@ async function runAutoAll(source){
     // Az ablak betöltése (és így az alkalmazás indítása) utáni első futás is teljes: a főfolyamat csak azt tölti le, amit abban
     // a futásában maga listázott, a hátralévő letöltések pedig régebbi levelek, amelyeket a növekményes lista nem hoz.
     AUTO.fullDone=AUTO.fullDone||{};PORTALS.forEach(p=>{if(!AUTO.fullDone[p.vaultKey]||(OFFICE.live_sent&&!M.some(isSent)))forceFull[p.vaultKey]=true});
-    const sum=await A.run(runKeys,filters,forceFull,{sent:!!OFFICE.live_sent}); // csak a szerver által ismert belépők; ütemezve a kihagyottak nélkül
+    if(A.onProgress)A.onProgress(ev=>{if(!ev)return;const pn=esc((PORTALS.find(x=>x.vaultKey===ev.key)||{}).name||'Belépő'),cnt=ev.total>1?` (${ev.index} / ${ev.total})`:'';
+      AUTO.last=ev.phase==='mailbox'?`${pn}${cnt}: postafiók (${ev.mbIndex} / ${ev.mbTotal}) – ${esc(ev.mailbox||'')} · ${esc(ev.folder||'')}`:`${pn}${cnt}: belépés a tárhelyre (KAÜ)…`;renderSyncOv()});
+    let sum;
+    try{sum=await A.run(runKeys,filters,forceFull,{sent:!!OFFICE.live_sent})} // csak a szerver által ismert belépők; ütemezve a kihagyottak nélkül
+    finally{if(A.onProgress)A.onProgress(null)}
     if(!sum||!sum.ok){AUTO.last=esc((sum&&sum.error)||'Nem sikerült elindítani.');}
     else if(!sum.ran){AUTO.last='Egy belépőhöz sincs felügyelet nélküli belépéshez alkalmas (TOTP-kulcsos) hitelesítő elmentve.';}
     else if(sum.simulator&&(sched||!confirm('SZIMULÁTOR: ez nem valódi tárhely. A mintaadatok (SZIMULÁTOR nevű ügyfelek és leveleik) bekerülnek ebbe az adatbázisba, a(z) „'+((PORTALS[0]||{}).name||'első')+'” belépő neve alatt. Folytatod?'))){AUTO.last='A szimulátor adatai nem kerültek be.';}
@@ -1793,6 +1854,7 @@ async function runAutoAll(source){
       for(const r of sum.results.filter(x=>x.ok)){
         const p=PORTALS.find(x=>x.vaultKey===r.key)||(sum.simulator?PORTALS[0]:null);
         if(!p)continue; // belépő nélkül a szerver nem tudná alkalmazni a rendszerválasztót
+        AUTO.last=`${esc(p.name)}: levéllista feldolgozása (${(r.letters||[]).length} küldemény)…`;renderSyncOv();
         const quotas={};(r.mailboxes||[]).forEach(m=>{if(m.quotaPct!=null)quotas[m.name]=m.quotaPct});
         const one=await ingestLive(r.letters||[],{mailboxes:mbMeta(r.mailboxes),quotas,autoMap:true,portalId:p.id,source:sched?'scheduled':'manual'});
         ing.created+=one.created;ing.known+=one.known;ing.unmapped+=one.unmapped;ing.inactive+=one.inactive||0;ing.systemOff+=one.systemOff||0;ing.newClients+=(one.discovery||{}).created||0;ing.pending+=(one.discovery||{}).pending||0;ing.own=(ing.own||0)+((one.discovery||{}).own||0);
@@ -1804,7 +1866,7 @@ async function runAutoAll(source){
         const q=one.autoDownload||[];
         if(!A.downloadOne||!p.dlActive||!OFFICE.live_download){ing.auto+=q.length;continue}
         for(let i=0;i<q.length;i++){
-          const a=q[i];AUTO.last=`${esc(p.name)}: automatikus letöltés (${i+1} / ${q.length})…`;render();
+          const a=q[i];AUTO.last=`${esc(p.name)}: letöltés (${i+1} / ${q.length}) – ${esc(autoDlLabel(a))}…`;renderSyncOv();
           const dl=await A.downloadOne(r.key,{messageId:a.id,viaRuleId:a.ruleId||null});
           if(!dl.ok){(ing.why=ing.why||new Set()).add(String(dl.error||'ismeretlen ok').slice(0,160)); // az ok is kiírásra kerül, ne csak a darabszám
             if(dl.needSession||dl.capReached){ing.deferred+=q.length-i;break}ing.skipped=(ing.skipped||0)+1;continue}
@@ -1821,8 +1883,8 @@ async function runAutoAll(source){
       if(window.iratkapuDesktop&&window.iratkapuDesktop.nav&&!sum.simulator)for(const r of sum.results.filter(x=>x.ok)){
         const p=PORTALS.find(x=>x.vaultKey===r.key);
         if(!p||!p.mine||!sysOn(p,'upo')||(p.nav&&String(p.nav.at||'').slice(0,10)===TODAY))continue;
-        AUTO.last=`${esc(p.name)}: NAV ügyfélportál olvasása…`;render();
-        const ns=await navPortalStep(p);
+        AUTO.last=`${esc(p.name)}: NAV ügyfélportál olvasása…`;render();renderSyncOv();
+        const ns=await navPortalStep(p,{onStep:s=>{if(s&&s.text){AUTO.last=`${esc(p.name)} · NAV: ${esc(s.text)}`;renderSyncOv()}}});
         if(ns.ok)navNotes.push(`${esc(p.name)}: ${ns.text}`);
         else if(ns.error)navNotes.push(`${esc(p.name)}: a NAV-portál olvasása nem sikerült – ${esc(ns.error)}`);
       }
@@ -2088,6 +2150,495 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-ctedit],[d
   if(d.ctedit){S.ct={typeId:t.type_id,label:t.label,patterns:t.patterns.join(', '),policy:t.dlp==='csak_lista'?'csak_lista':'kezi'};render();const c=document.getElementById('ctcard');c&&c.scrollIntoView({block:'start'});return}
   if(!confirm(`Törlöd a(z) „${t.label}” saját típust? Az ilyen típusú iratok a többi típus szerint sorolódnak át, vagy ismeretlenné válnak.`))return;
   run(()=>api('DELETE',`types/${encodeURIComponent(t.type_id)}`),r=>`Saját típus törölve${r.retyped?` – ${r.retyped} irat átsorolva`:''}`).then(()=>{S.ct=null})});
+// ---- Adózói táblák (6 nézet, alfülek, keresés, szűrés, lapozás, export) ----
+const ttClientCell=r=>r.client_id?`<button type="button" class="lnk" data-cl="${esc(r.client_id)}"><b>${esc(r.client_name)}</b></button>`:`<b>${esc(r.client_name)}</b>`;
+const TAX_TABLE_VIEWS={
+  missing_returns:{
+    unit:'hiányzó bevallás',
+    title:'Hiányzó bevallások',
+    lead:'Az ÜPO szerint esedékes bevallások, amelyekhez még nem érkezett be bevallás.',
+    placeholder:'Keresés adózóra, bevallásra, időszakra…',
+    syncSupported:true,
+    emptyTitle:'Nincs hiányzó bevallás',
+    emptyBody:'Az ÜPO nyilvántartása szerint minden esedékes bevallás rendben van.',
+    cols:[
+      ['client_name','Adózó neve'],
+      ['client_tax','Adószám'],
+      ['form_code','Bevallás'],
+      ['title','Bevallás megnevezése'],
+      ['period','Időszak'],
+      ['due_date','Eredeti esedékesség']
+    ],
+    renderCell:(r,c)=>{
+      if(c==='client_name')return ttClientCell(r);
+      if(c==='client_tax')return `<span class="mono">${esc(r.client_tax)}</span>`;
+      if(c==='form_code')return `<b>${esc(r.form_code)}</b>`;
+      if(c==='due_date')return `<span class="st fic">${ic('alert')}${esc(r.due_date)}</span>`;
+      return esc(r[c]??'');
+    }
+  },
+  returns:{
+    unit:'bevallás',
+    title:'Bevallások',
+    lead:'Az adózóid bevallásai a tárhely-üzenetek és az ÜPO alapján.',
+    placeholder:'Keresés vonalkódra, bevallásra, adózóra…',
+    syncSupported:true,
+    emptyTitle:'Még nincs beolvasott bevallás',
+    emptyBody:'Frissítsd a NAV adónaptárat és a tárhelyet a bevallások lekéréséhez.',
+    cols:[
+      ['barcode','Vonalkód'],
+      ['client_name','Adózó neve'],
+      ['client_tax','Adószáma'],
+      ['form_code','Bevallás'],
+      ['period_from','Kezdete'],
+      ['period_to','Vége'],
+      ['accepted_at','Befogadás dátuma'],
+      ['error_at','Hibaüzenet dátuma'],
+      ['kind','Funkció'],
+      ['state','Státusz']
+    ],
+    renderCell:(r,c)=>{
+      if(c==='barcode')return `<span class="mono">${esc(r.barcode||r.reg_no||'–')}</span>`;
+      if(c==='client_name')return ttClientCell(r);
+      if(c==='client_tax')return `<span class="mono">${esc(r.client_tax)}</span>`;
+      if(c==='form_code')return `<b>${esc(r.form_code)}</b>`;
+      if(c==='state'){
+        const err=/hiba|elutas/i.test(r.state||'');
+        return `<span class="st ${err?'fic':'ok'}">${ic(err?'alert':'check')}${esc(r.state||'Befogadva')}</span>`;
+      }
+      return esc(r[c]??'')||'<span class="mut">–</span>';
+    }
+  },
+  insured:{
+    unit:'biztosított',
+    title:'Biztosítottak',
+    lead:'Az adózók bejelentett biztosítottjai és jogviszonyaik.',
+    placeholder:'Kezdj el gépelni…',
+    syncSupported:true,
+    emptyTitle:'Nincs bejelentett biztosított',
+    emptyBody:'A NAV nyilvántartása szerint nincs aktív biztosítotti jogviszony, vagy frissítsd a NAV ügyfélportált.',
+    cols:[
+      ['client_name','Adózó'],
+      ['name','Név'],
+      ['tax_id','Adóazonosító jel'],
+      ['taj','TAJ szám'],
+      ['relationship_start','Jogviszony kezdete'],
+      ['relationship_type','Jogviszony'],
+      ['weekly_hours','Heti óra']
+    ],
+    renderCell:(r,c)=>{
+      if(c==='client_name')return ttClientCell(r);
+      if(c==='name')return `<b>${esc(r.name)}</b>`;
+      if(c==='tax_id'||c==='taj')return `<span class="mono">${esc(r[c]??'')}</span>`;
+      if(c==='weekly_hours')return r.weekly_hours!=null?`${r.weekly_hours} óra`:'<span class="mut">–</span>';
+      return esc(r[c]??'');
+    }
+  },
+  employers:{
+    unit:'foglalkoztató',
+    title:'Saját foglalkoztatók',
+    lead:'Azok a foglalkoztatók, akiknél az adózó biztosítottként szerepel.',
+    placeholder:'Kezdj el gépelni…',
+    syncSupported:true,
+    emptyTitle:'Nincs bejelentett foglalkoztató',
+    emptyBody:'A NAV nyilvántartása szerint nincs saját foglalkoztatói jogviszony, vagy frissítsd a NAV ügyfélportált.',
+    cols:[
+      ['client_name','Adózó'],
+      ['employer_name','Foglalkoztató neve'],
+      ['employer_tax_number','Foglalkoztató adószáma'],
+      ['employer_tax_id','Foglalkoztató adóazonosítója'],
+      ['relationship_start','Jogviszony kezdete'],
+      ['relationship_type','Jogviszony'],
+      ['weekly_hours','Heti óra']
+    ],
+    renderCell:(r,c)=>{
+      if(c==='client_name')return ttClientCell(r);
+      if(c==='employer_name')return `<b>${esc(r.employer_name)}</b>`;
+      if(c==='employer_tax_number'||c==='employer_tax_id')return `<span class="mono">${esc(r[c]??'')}</span>`;
+      if(c==='weekly_hours')return r.weekly_hours!=null?`${r.weekly_hours} óra`:'<span class="mut">–</span>';
+      return esc(r[c]??'');
+    }
+  },
+  efo_declarations:{
+    unit:'EFO bejelentés',
+    title:'Egyszerűsített foglalkoztatottak',
+    lead:'A NAV felé benyújtott egyszerűsített foglalkoztatási bejelentések adatai.',
+    placeholder:'Kezdj el gépelni…',
+    syncSupported:true,
+    emptyTitle:'Nincs egyszerűsített foglalkoztatási bejelentés',
+    emptyBody:'A NAV nyilvántartása szerint a lekérdezett időszakban nem érkezett EFO-bejelentés.',
+    cols:[
+      ['client_name','Adózó'],
+      ['employee_name','Név'],
+      ['employee_tax_id','Adóazonosító'],
+      ['employee_taj','TAJ'],
+      ['declaration_code','Bejelentés'],
+      ['employment_type','Foglalkoztatás'],
+      ['start_date','Kezdő nap'],
+      ['end_date','Záró nap'],
+      ['reg_no','Ikt. szám'],
+      ['status','Állapot'],
+      ['filing_type','Bejelentés típusa'],
+      ['submitted_at','Benyújtva'],
+      ['seq_no','Sorszám']
+    ],
+    renderCell:(r,c)=>{
+      if(c==='client_name')return ttClientCell(r);
+      if(c==='employee_name')return `<b>${esc(r.employee_name)}</b>`;
+      if(c==='employee_tax_id'||c==='employee_taj'||c==='reg_no')return `<span class="mono">${esc(r[c]??'')}</span>`;
+      if(c==='status')return `<span class="st ok">${ic('check')}${esc(r.status||'Befogadva')}</span>`;
+      return esc(r[c]??'');
+    }
+  },
+  efo_quotas:{
+    unit:'napkeret tétel',
+    title:'Egyszerűsített foglalkoztatottak – Napkeret',
+    lead:'Az idei EFO-napok dolgozónként, a NAV szerint minden munkáltatónál együtt számolva.',
+    placeholder:'Kezdj el gépelni…',
+    syncSupported:true,
+    emptyTitle:'Nincs rögzített EFO-napkeret',
+    emptyBody:'A NAV nyilvántartása szerint a tárgyévben nincs egyszerűsített foglalkoztatási napkeret.',
+    cols:[
+      ['client_name','Adózó'],
+      ['year','Év'],
+      ['employee_name','Munkavállaló neve'],
+      ['employee_tax_id','Adóazonosító'],
+      ['employee_taj','TAJ'],
+      ['employment_type','Foglalkoztatás'],
+      ['quota_limit','Keret'],
+      ['used_days','Felhasznált'],
+      ['remaining_days','Hátralévő']
+    ],
+    renderCell:(r,c)=>{
+      if(c==='client_name')return ttClientCell(r);
+      if(c==='employee_name')return `<b>${esc(r.employee_name)}</b>`;
+      if(c==='employee_tax_id'||c==='employee_taj')return `<span class="mono">${esc(r[c]??'')}</span>`;
+      if(c==='remaining_days'){
+        const rem=+r.remaining_days;
+        const cls=rem<=0?'fic':rem<=5?'appr':'ok';
+        return `<span class="st ${cls}">${rem} nap</span>`;
+      }
+      return esc(r[c]??'');
+    }
+  },
+  reconciliations:{
+    unit:'adategyeztetés',
+    title:'Adategyeztetések',
+    lead:'A NAV adategyeztetései az adózóidnál és azok állapota.',
+    placeholder:'Keresés adózóra, adategyeztetőre, státuszra…',
+    syncSupported:true,
+    emptyTitle:'Nincs rögzített adategyeztetés',
+    emptyBody:'A NAV ügyfélportál szerint jelenleg nincs folyamatban lévő vagy lezárt adategyeztető eljárás.',
+    cols:[
+      ['client_name','Adózó neve'],
+      ['client_tax','Adószám'],
+      ['reconciler_name','Adategyeztető neve'],
+      ['status','Státusz'],
+      ['created_date','Létrehozva'],
+      ['submitted_date','Beküldve']
+    ],
+    renderCell:(r,c)=>{
+      if(c==='client_name')return ttClientCell(r);
+      if(c==='client_tax')return `<span class="mono">${esc(r.client_tax)}</span>`;
+      if(c==='reconciler_name')return `<b>${esc(r.reconciler_name)}</b>`;
+      if(c==='status'){
+        const ok=/beküldve|lezárt|elfogad/i.test(r.status||'');
+        return `<span class="st ${ok?'ok':'appr'}">${esc(r.status||'Függőben')}</span>`;
+      }
+      return esc(r[c]??'')||'<span class="mut">–</span>';
+    }
+  },
+  calendar:{
+    unit:'adózó',
+    title:'Adónaptár',
+    lead:'Adózónként a tárgyév bevallási kötelezettségei és állapotuk.',
+    placeholder:'Kezdj el gépelni…',
+    syncSupported:true,
+    emptyTitle:'Nincs megjeleníthető adónaptár-tétel',
+    emptyBody:'Frissítsd a NAV adónaptárat, vagy válassz másik tárgyévet.',
+    cols:[]
+  }
+};
+
+function initTablesState(){
+  if(!S.tables)S.tables={tab:'returns',subtab:'missing',q:'',client:'',year:(new Date()).getFullYear(),status:'',sortCol:'',sortDir:'asc',page:1,pageSize:50,loading:false,data:null,expOpen:false};
+  return S.tables;
+}
+
+function getActiveTableView(){
+  const t=initTablesState().tab||'returns';
+  if(t==='returns')return S.tables.subtab==='all'?'returns':'missing_returns';
+  if(t==='efo')return S.tables.subtab==='quotas'?'efo_quotas':'efo_declarations';
+  return t;
+}
+
+let TABLES_TIMER=null;
+function refreshTablesData(){
+  if(S.area!=='tables')return;
+  if(TABLES_TIMER)clearTimeout(TABLES_TIMER);
+  TABLES_TIMER=setTimeout(()=>{fetchTaxTables()},180);
+}
+
+async function fetchTaxTables(){
+  if(typeof api!=='function')return;
+  const t=initTablesState(),v=getActiveTableView();
+  t.loading=true;
+  const p=new URLSearchParams();
+  p.set('view',v);
+  p.set('page',t.page);
+  p.set('per_page',t.pageSize);
+  if(t.q)p.set('search',t.q);
+  if(t.client)p.set('client_id',t.client);
+  if(t.year)p.set('year',t.year);
+  if(t.status)p.set('status',t.status);
+  if(t.sortCol)p.set('sort_by',t.sortCol);
+  if(t.sortDir)p.set('sort_dir',t.sortDir);
+  try{
+    const res=await api('GET','taxpayer-tables/data?'+p.toString());
+    t.data=res;
+    t.loading=false;
+  }catch(e){
+    t.loading=false;
+    if(!t.data)t.data={items:[],total:0,page:1,per_page:t.pageSize,years:[],clients:[],sync_supported:TAX_TABLE_VIEWS[v]?.syncSupported!==false};
+  }
+  const activeEl=typeof document!=='undefined'?document.activeElement:null;
+  const keepQ=activeEl&&activeEl.id==='tableq',selS=keepQ?activeEl.selectionStart:null,selE=keepQ?activeEl.selectionEnd:null;
+  if(typeof renderDetail==='function')renderDetail();
+  if(keepQ&&typeof document!=='undefined'){
+    const n=document.getElementById('tableq');
+    if(n){n.focus({preventScroll:true});if(selS!=null)try{n.setSelectionRange(selS,selE)}catch(e){}}
+  }
+}
+
+function downloadTaxTablesExport(fmt){
+  const v=getActiveTableView(),t=S.tables||{};
+  const p=new URLSearchParams();
+  p.set('view',v);
+  p.set('format',fmt);
+  if(t.q)p.set('search',t.q);
+  if(t.client)p.set('client_id',t.client);
+  if(t.year)p.set('year',t.year);
+  if(t.status)p.set('status',t.status);
+  if(t.sortCol)p.set('sort_by',t.sortCol);
+  if(t.sortDir)p.set('sort_dir',t.sortDir);
+  const a=document.createElement('a');
+  a.href='/api/taxpayer-tables/export?'+p.toString();
+  a.download=`${v}-export.${fmt}`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>a.remove(),1000);
+}
+
+const CAL_MONTH_NAMES=['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
+const CAL_ST_META={
+  submitted:{cls:'ok',label:'Beadva'},
+  submittable:{cls:'appr',label:'Beadható'},
+  conditional:{cls:'cond',label:'Feltételes'},
+  missing:{cls:'fic',label:'Hiányzó'},
+  unknown:{cls:'na',label:'Ismeretlen'}
+};
+
+function openTaxCalendarMonth(cid,monthIdx){
+  const t=initTablesState();
+  const rows=(t.data&&t.data.items)||[];
+  const row=rows.find(x=>String(x.client_id)===String(cid));
+  if(!row)return;
+  const m=row.months&&(row.months[monthIdx]||row.months[String(monthIdx)]);
+  const list=(m&&m.items)||[];
+  if(!list.length)return;
+  const mName=(CAL_MONTH_NAMES[monthIdx-1]||'').toLowerCase();
+  const trs=list.map(it=>{
+    const meta=CAL_ST_META[it.status]||CAL_ST_META.unknown;
+    const kindTxt=it.kind&&it.kind!=='ALAPBEVALLAS'?` <span class="mut">(${esc(ttReturnKindLabel(it.kind))})</span>`:'';
+    const dtTxt=it.submitted_at?`Beadva: <span class="mono">${esc(it.submitted_at)}</span>`:(it.due_date?`Esedékes: <span class="mono">${esc(it.due_date)}</span>`:'<span class="mut">–</span>');
+    return `<tr>
+      <td class="mono"><b>${esc(it.form_code||'–')}</b></td>
+      <td>${esc(it.title||'–')}${kindTxt}</td>
+      <td class="mono">${esc(it.period||'–')}</td>
+      <td>${dtTxt}</td>
+      <td><span class="st ${meta.cls}">${meta.label}</span></td>
+    </tr>`;
+  }).join('');
+  simpleDlg(`<h3>${esc(row.client_name)} — ${t.year}. ${esc(mName)}</h3>
+    ${row.client_tax?`<p class="mut mono" style="margin:-4px 0 12px">${esc(row.client_tax)}</p>`:''}
+    ${tblw(`<table class="tbl"><thead><tr><th>Bevallás</th><th>Megnevezés</th><th>Időszak</th><th>Dátum</th><th>Állapot</th></tr></thead><tbody>${trs}</tbody></table>`)}
+    <div class="acts" style="margin-top:14px;justify-content:space-between">
+      <button type="button" class="btn ghost" data-tables-jump-returns="${esc(row.client_id)}">Megnyitás a Bevallások fülön</button>
+      <form method="dialog" style="margin:0"><button class="btn">Bezárás</button></form>
+    </div>`,true);
+}
+
+function vTables(){
+  const t=initTablesState();
+  if(!t.data&&!t.loading&&typeof api==='function')fetchTaxTables();
+  const v=getActiveTableView();
+  const tCfg=TAX_TABLE_VIEWS[v]||{title:'Adózói táblák',lead:'',placeholder:'Kezdj el gépelni…',syncSupported:true,unit:'tétel',cols:[]};
+  const isCal=v==='calendar',hasYear=isCal||v==='efo_quotas';
+  const data=t.data||{};
+  const items=data.items||[];
+  const total=data.total!=null?data.total:items.length;
+  const page=data.page||t.page||1;
+  const pageSize=data.per_page||t.pageSize||50;
+  const years=(data.years&&data.years.length)?data.years:[2026,2025,2024];
+  const clients=(data.clients&&data.clients.length)?data.clients:(typeof CLIENTS!=='undefined'?CLIENTS:[]);
+  const syncOk=data.sync_supported!=null?!!data.sync_supported:tCfg.syncSupported!==false;
+  const upoBusy=typeof UPO_BUSY!=='undefined'&&!!UPO_BUSY;
+  const CAL_MONTHS=CAL_MONTH_NAMES;
+  const nf=(t.client?1:0)+(t.status?1:0)+((t.q||'').trim()?1:0);
+
+  const TABS=[
+    ['returns','Bevallások'],
+    ['insured','Biztosítottak'],
+    ['employers','Saját foglalkoztatók'],
+    ['efo','Egyszerűsített foglalkoztatottak'],
+    ['reconciliations','Adategyeztetések'],
+    ['calendar','Adónaptár']
+  ];
+
+  let subSeg='',calStatusRow='';
+  if(t.tab==='returns'){
+    subSeg=`<div class="seg subseg" role="tablist" aria-label="Bevallások nézetei">
+      <button type="button" role="tab" data-tsubtab="missing" aria-selected="${t.subtab!=='all'}" aria-pressed="${t.subtab!=='all'}">Hiányzó bevallások</button>
+      <button type="button" role="tab" data-tsubtab="all" aria-selected="${t.subtab==='all'}" aria-pressed="${t.subtab==='all'}">Bevallások</button>
+    </div>`;
+  } else if(t.tab==='efo'){
+    subSeg=`<div class="seg subseg" role="tablist" aria-label="EFO nézetek">
+      <button type="button" role="tab" data-tsubtab="declarations" aria-selected="${t.subtab!=='quotas'}" aria-pressed="${t.subtab!=='quotas'}">Bejelentések</button>
+      <button type="button" role="tab" data-tsubtab="quotas" aria-selected="${t.subtab==='quotas'}" aria-pressed="${t.subtab==='quotas'}">Napkeret</button>
+    </div>`;
+  } else if(isCal){
+    calStatusRow=`<div class="ttbar" style="margin-bottom:10px">
+      <div class="seg subseg" role="group" aria-label="Adónaptár státusz szűrők">
+        ${[['','Mind'],['submittable','Beadható'],['missing','Hiányzó'],['submitted','Beadva'],['conditional','Feltételes'],['unknown','Ismeretlen']].map(([stKey,stLab])=>`<button type="button" data-tables-status="${stKey}" aria-pressed="${t.status===stKey}">${stLab}</button>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  const sortTh=(colKey,colLabel)=>{
+    const active=t.sortCol===colKey;
+    const aria=active?(t.sortDir==='asc'?'ascending':'descending'):'none';
+    return `<th class="sortable" data-tables-sort="${colKey}" aria-sort="${aria}"><span>${colLabel}</span>${active?`<span class="sort-arr">${t.sortDir==='asc'?'↑':'↓'}</span>`:''}</th>`;
+  };
+
+  let tableHtml='';
+  if(!items.length){
+    if(nf>0){
+      tableHtml=`<div class="card empty"><b>A szűrőknek egy tétel sem felel meg</b>Módosítsd a keresést, vagy töröld a szűrőket.</div>`;
+    } else if(!syncOk){
+      tableHtml=`<div class="card empty"><b>Ehhez a táblához még nincs élő NAV-szinkron</b>A(z) ${esc(tCfg.title.toLowerCase())} automatikus ügyfélportál-lekérdezése még nincs bekötve, ezért jelenleg nincs megjeleníthető adat.</div>`;
+    } else {
+      tableHtml=`<div class="card empty"><b>${esc(tCfg.emptyTitle||'Még nincs megjeleníthető adat')}</b>${esc(tCfg.emptyBody||'Frissítsd a NAV ügyfélportált, vagy ellenőrizd a szűrőket.')}</div>`;
+    }
+  } else if(isCal){
+    tableHtml=tblw(`<table class="tbl">
+      <thead>
+        <tr>
+          ${sortTh('client_name','Adózó')}
+          ${CAL_MONTHS.map(m=>`<th style="text-align:center">${m}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        ${items.map(r=>`<tr>
+          <td>${ttClientCell(r)}${r.client_tax?`<div class="mut mono" style="font-size:11.5px;margin-top:2px">${esc(r.client_tax)}</div>`:''}</td>
+          ${Array.from({length:12},(_,i)=>{
+            const m=r.months&&(r.months[i+1]||r.months[String(i+1)]);
+            if(!m||!m.items||!m.items.length)return `<td style="text-align:center"><span class="mut">–</span></td>`;
+            const named=m.items.filter(x=>x&&x.form_code);
+            if(named.length){
+              const shown=named.slice(0,3).map(it=>{
+                const meta=CAL_ST_META[it.status]||CAL_ST_META.unknown;
+                return `<span class="st ${meta.cls}">${esc(it.form_code)}</span>`;
+              });
+              if(named.length>3)shown.push(`<span class="st na">+${named.length-3}</span>`);
+              const tip=named.map(it=>{
+                const meta=CAL_ST_META[it.status]||CAL_ST_META.unknown;
+                const dt=it.submitted_at||it.due_date||'';
+                return `${it.form_code}: ${meta.label}${dt?` (${dt.slice(0,10)})`:''}`;
+              }).join(' · ');
+              return `<td style="text-align:center"><button type="button" class="calcell-btn" data-tables-calcell="${r.client_id}:${i+1}" data-tip="${esc(tip)}">${shown.join('')}</button></td>`;
+            }
+            const s=m.summary||{};
+            const pills=[];
+            if(s.missing)pills.push(`<span class="st fic" title="${s.missing} hiányzó">${s.missing}</span>`);
+            if(s.submittable)pills.push(`<span class="st appr" title="${s.submittable} beadható">${s.submittable}</span>`);
+            if(s.submitted)pills.push(`<span class="st ok" title="${s.submitted} beadva">${s.submitted}</span>`);
+            if(s.conditional)pills.push(`<span class="st cond" title="${s.conditional} feltételes">${s.conditional}</span>`);
+            if(s.unknown)pills.push(`<span class="st na" title="${s.unknown} ismeretlen">${s.unknown}</span>`);
+            return `<td style="text-align:center"><div style="display:inline-flex;gap:3px;justify-content:center">${pills.join('')||'<span class="mut">–</span>'}</div></td>`;
+          }).join('')}
+        </tr>`).join('')}
+      </tbody>
+    </table>`);
+  } else {
+    tableHtml=tblw(`<table class="tbl">
+      <thead>
+        <tr>
+          ${tCfg.cols.map(([colKey,colLabel])=>sortTh(colKey,colLabel)).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        ${items.map(r=>`<tr>${tCfg.cols.map(([colKey])=>`<td>${tCfg.renderCell(r,colKey)}</td>`).join('')}</tr>`).join('')}
+      </tbody>
+    </table>`);
+  }
+
+  const pagiHtml=total>0?`<div class="pagi">
+    <div class="pagi-count">${(page-1)*pageSize+1}–${Math.min(page*pageSize,total)} / ${total} ${isCal?'adózó':tCfg.unit}</div>
+    <div class="pagi-r">
+      <label><span>Oldalanként</span>
+        <select class="chip" data-tables-pagesize aria-label="Oldalméret">
+          ${[25,50,100].map(n=>`<option value="${n}" ${pageSize===n?'selected':''}>${n}</option>`).join('')}
+        </select>
+      </label>
+      <div class="pagi-btns">
+        <button type="button" class="btn ghost" data-tables-page="${page-1}" ${page<=1?'disabled':''} aria-label="Előző oldal">${ic('back')}</button>
+        <button type="button" class="btn ghost" data-tables-page="${page+1}" ${page*pageSize>=total?'disabled':''} aria-label="Következő oldal">${ic('chev')}</button>
+      </div>
+    </div>
+  </div>`:'';
+
+  return `<div class="page full">
+    <h3>Adózói táblák</h3>
+    <div class="seg tabs settabs" role="tablist" aria-label="Adózói táblák">
+      ${TABS.map(([k,l])=>`<button type="button" role="tab" data-ttab="${k}" aria-selected="${t.tab===k}" aria-pressed="${t.tab===k}">${l}</button>`).join('')}
+    </div>
+    <div class="ph">
+      <div>
+        <p class="lead">${esc(tCfg.lead)}${!syncOk?` <span class="st wait" style="vertical-align:1px;margin-left:6px" title="Az automatikus NAV ügyfélportál-szinkron ehhez a táblához még nincs bekötve">${ic('clock')}Élő szinkron még nincs bekötve</span>`:''}</p>
+      </div>
+      <div class="acts">
+        ${syncOk?`<button type="button" class="btn ghost ${upoBusy?'spin':''}" data-uposync ${upoBusy?'disabled':''}>${ic('sync')}${upoBusy?'NAV-portál olvasása…':((v==='missing_returns'||v==='calendar')?'NAV adónaptár frissítése':'NAV ügyfélportál frissítése')}</button>`:''}
+        <div class="exp-wrap">
+          <button type="button" class="btn ghost" data-tables-expmenu aria-expanded="${!!t.expOpen}" title="Export">${ic('down')}Export</button>
+          <div class="exp-pop" id="tablesExpPop" role="menu" ${t.expOpen?'':'hidden'}>
+            <button type="button" role="menuitem" data-tables-exp="csv">${ic('file')}CSV letöltése (.csv)</button>
+            <button type="button" role="menuitem" data-tables-exp="xlsx">${ic('file')}Excel letöltése (.xlsx)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    ${calStatusRow}
+    <div class="ttbar ${subSeg?'':'nosub'}">
+      ${subSeg}
+      <div class="ttctrl">
+        <div class="search ttsearch">
+          ${ic('search')}
+          <input id="tableq" type="search" placeholder="${esc(tCfg.placeholder||'Kezdj el gépelni…')}" aria-label="Keresés a táblázatban" value="${esc(t.q||'')}">
+          <kbd>/</kbd>
+        </div>
+        <select class="chip ttsel" id="tableclient" aria-label="Adózó szűrő">
+          <option value="">Minden adózó</option>
+          ${clients.map(c=>`<option value="${c.id}" ${String(t.client)===String(c.id)?'selected':''}>${esc(c.name)}</option>`).join('')}
+        </select>
+        ${hasYear?`<select class="chip ttsel" id="tableyear" aria-label="Évválasztó">${years.map(y=>`<option value="${y}" ${+t.year===+y?'selected':''}>${y}</option>`).join('')}</select>`:''}
+        ${nf?`<button type="button" class="lnk" data-tables-clear>Szűrők törlése</button>`:''}
+      </div>
+    </div>
+    ${tableHtml}
+    ${pagiHtml}
+  </div>`;
+}
+
 function vRules(){
   const r=RULES[S.rule]||RULES[0];if(!r)return `<div class="page full">${setHead('rules')}${typePolicyCard()}${officeCards()}${polTable()}</div>`;const dirty=isDirty(r),hit=(S.dryHits||[]).map(id=>M.find(m=>m.id===id)).filter(Boolean);
   const sel=(k,opts)=>`<select data-rf="${k}" ${r.locked&&k!=='notify'&&k!=='dlMode'?'disabled':''}>${opts.map(([v,l])=>`<option value="${v}" ${r[k]===v?'selected':''}>${l}</option>`).join('')}</select>`;
@@ -2106,21 +2657,20 @@ function vRules(){
        ${hit.map(m=>`<div class="todo"><span class="snd">${esc(m.s)}</span><div>${goBtn(m)}<small>${esc(C(m.c).name)} → ${r.pri==='Sürgős'?'sürgős jelölés':r.pri.toLowerCase()+' prioritás'}${r.as?', felelős: '+PEOPLE[r.as]:''}${r.notify!=='Nincs'?', értesítés: '+r.notify.toLowerCase():''} · letöltés: ${r.dlMode==='auto_override_legal'?'automatikus (felülírással, ha a típus engedi)':'az irattípus szabálya szerint'}</small></div></div>`).join('')||'<p class="mut">A mintában nincs ilyen irat.</p>'}</div>`:''}
     </div></div>${typePolicyCard()}${officeCards()}${polTable()}</div>`;
 }
-function logTabs(){return `<div class="seg tabs logtabs" role="tablist" aria-label="Napló választása">${[['sync','Szinkronnapló'],['audit','Auditnapló']].map(([k,l])=>`<button role="tab" data-area="${k}" aria-selected="${S.area===k}" aria-pressed="${S.area===k}">${l}</button>`).join('')}</div>`}
 function vSync(){
-  return `<div class="page full"><h3>Naplók</h3>${logTabs()}<div class="ph"><div><p class="lead">A listázás csak megnézi, mi érkezett: iratot nem nyit meg és nem vesz át. A szinkronizálás be is lép a kapcsolattal, és a NAV ügyfélportált is frissíti.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost ${SYNCBUSY?'spin':''}" data-resync ${SYNCBUSY?'disabled':''}>${ic('sync')}${SYNCBUSY?'Listázás…':'Listázás most'}</button><button class="btn" data-syncfull ${SYNCBUSY?'disabled':''} title="Teljes szinkron: belépés, Tárhely és NAV ügyfélportál">${ic('sync')}Szinkronizálás</button></div></div>
+  return `<div class="page full">${setHead('sync')}<div class="ph"><div><p class="lead">A listázás csak megnézi, mi érkezett: iratot nem nyit meg és nem vesz át. A szinkronizálás be is lép a kapcsolattal, és a NAV ügyfélportált is frissíti.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost ${SYNCBUSY?'spin':''}" data-resync ${SYNCBUSY?'disabled':''}>${ic('sync')}${SYNCBUSY?'Listázás…':'Listázás most'}</button><button class="btn" data-syncfull ${SYNCBUSY?'disabled':''} title="Teljes szinkron: belépés, Tárhely és NAV ügyfélportál">${ic('sync')}Szinkronizálás</button></div></div>
    ${tblw(`<table class="tbl"><thead><tr><th>Ügyfél</th><th>Tárhely</th><th>Állapot</th><th>Utolsó siker</th><th>Eredmény</th><th></th></tr></thead><tbody>${[...SYNCS].sort((a,b)=>(a.st==='ok')-(b.st==='ok')).map(s=>`<tr><td><button class="lnk" data-cl="${s.c.id}">${esc(s.c.name)}</button></td><td>${BOXN[s.b]}</td><td>${st(...(SYN[s.st]||SYN.queue))}</td><td>${esc(s.at)}</td><td>${esc(s.note)}</td><td>${s.st==='need'?`<button class="btn ghost" data-reauth="${s.id}">Újrahitelesítés</button>`:''}</td></tr>`).join('')}</tbody></table>`)}
    <p class="mut" style="margin-top:10px">Hiba után a korábbi adatok megmaradnak, „nem naprakész” jelzéssel. Átvételt a rendszer újrapróbálkozásból sem indít.</p>${aspCard()}</div>`;
 }
 function vAudit(){
   const rows=AUDIT.filter(r=>!S.af||r[1]===S.af);
-  return `<div class="page full"><h3>Naplók</h3>${logTabs()}<p class="lead">Csak bővíthető napló: bejegyzés nem módosítható és nem törölhető – ezt az adatbázis kényszeríti ki. ${canAdmin()?'':'Könyvelőként a saját ügyfeleid és a saját műveleteid eseményeit látod.'}</p>
+  return `<div class="page full">${setHead('audit')}<p class="lead">Csak bővíthető napló: bejegyzés nem módosítható és nem törölhető – ezt az adatbázis kényszeríti ki. ${canAdmin()?'':'Könyvelőként a saját ügyfeleid és a saját műveleteid eseményeit látod.'}</p>
    <div class="chips" style="margin-bottom:12px"><select class="chip" data-af aria-label="Szűrés szereplőre"><option value="">Mindenki</option>${['Rendszer',...Object.values(PEOPLE)].map(k=>`<option value="${k}" ${S.af===k?'selected':''}>${k}</option>`).join('')}</select></div>
    ${tblw(`<table class="tbl"><thead><tr><th>Időpont</th><th>Ki</th><th>Mi történt</th><th>Ügyfél</th><th>Bizonyíték</th><th>Szabályzat</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="mono">${esc(r[0])}</td><td>${esc(r[1])}</td><td>${/átvétel|Elutasított/i.test(r[2])?'<b>'+esc(r[2])+'</b>':esc(r[2])}</td><td>${esc(r[3])}</td><td>${esc(r[4])}</td><td>${esc(r[5])}</td></tr>`).join('')}</tbody></table>`)}</div>`;
 }
-// A Beállítások fejléce és fülei. A Szabályok fül belül a 'rules' terület (a régi hivatkozások miatt), a többi a 'settings'.
+// A Beállítások fejléce és fülei. A Szabályok, a Szinkronnapló és az Auditnapló belül saját terület ('rules', 'sync', 'audit' – a közvetlen hivatkozások miatt), a többi a 'settings'.
 function setHead(t){return `<h3>Beállítások</h3><p class="lead">${esc(OFFICE.name)}</p>
-   <div class="seg tabs settabs" role="tablist" aria-label="Beállítások csoportjai">${[['portals','Belépők és rendszerek'],['mail','E-mail értesítő'],['team','Munkatársak és szerepkörök'],['rules','Szabályok és letöltés'],['device','Ez a gép'],...(MEU.role==='admin'?[['ai','AI-kapcsolat (MCP)']]:[]),...(window.iratkapuDesktop?.kapu?[['kapu','Kapu']]:[])].map(([k,l])=>`<button role="tab" data-stab="${k}" aria-selected="${t===k}" aria-pressed="${t===k}">${l}</button>`).join('')}</div>`}
+   <div class="seg tabs settabs" role="tablist" aria-label="Beállítások csoportjai">${[['portals','Belépők és rendszerek'],['mail','E-mail értesítő'],['team','Munkatársak és szerepkörök'],['rules','Szabályok és letöltés'],['device','Ez a gép'],['sync','Szinkronnapló'],['audit','Auditnapló'],...(MEU.role==='admin'?[['ai','AI-kapcsolat (MCP)']]:[]),...(window.iratkapuDesktop?.kapu?[['kapu','Kapu']]:[])].map(([k,l])=>`<button role="tab" data-stab="${k}" aria-selected="${t===k}" aria-pressed="${t===k}">${l}</button>`).join('')}</div>`}
 function polTable(){return `<h4 class="sub">Tárhelyműveletek szabályzata – ${esc(OFFICE.policy)}</h4>
    ${tblw(`<table class="tbl"><thead><tr><th>Művelet</th><th>Lehetséges joghatás</th><th>Jóváhagyás</th><th>Futhat háttérben</th><th>Élő tárhelyen</th><th>Bizonyíték</th></tr></thead><tbody>${Object.entries(POL).map(([k,p])=>`<tr><td><b>${({listAccounts:'Tárhelyek listázása',listMessages:'Küldemények listázása',getMetadata:'Részletek lekérése',getReceipt:'Igazolás lekérése',download:'Átvétel, letöltés',moveToDurable:'Tartós tárba helyezés',delete:'Törlés',send:'Küldés'})[k]||k}</b></td><td>${({none:'nincs',unknown:'nem ismert',possible:'lehetséges',certain:'biztos'})[p.effect]}</td><td>${p.approval?'kell':'nem kell'}</td><td>${p.auto?'igen':'nem'}</td><td>${st(p.live==='TILTOTT'?'fic':p.live==='BLOKKOLT'?'wait':'na',p.live==='TILTOTT'?'alert':'lock',p.live)}</td><td class="mut">${esc(p.evidence)}</td></tr>`).join('')}</tbody></table>`)}
    <p class="mut" style="margin-top:8px">Ezt a táblát a szerver őrfüggvénye kényszeríti ki; a felületről nem módosítható. Változtatása jogi felülvizsgálathoz kötött.</p>`}
@@ -2240,7 +2790,7 @@ document.addEventListener('click',e=>{const xa=e.target.closest('[data-xmlall]')
 ['dragenter','dragover'].forEach(t=>document.addEventListener(t,e=>{if(S.area!=='es3'||![...(e.dataTransfer?.types||[])].includes('Files'))return;e.preventDefault();$('#es3drop')?.classList.add('over')}));
 document.addEventListener('dragleave',e=>{if(!e.relatedTarget)$('#es3drop')?.classList.remove('over')});
 document.addEventListener('drop',e=>{if(S.area!=='es3'||!e.dataTransfer?.files.length)return;e.preventDefault();$('#es3drop')?.classList.remove('over');es3Load(e.dataTransfer.files[0])});
-const VIEWS={kapu:()=>'',es3:vEs3,home:vHome,tasks:vTasks,cal:vCal,upo:vUpo,clients:vClients,rules:vRules,sync:vSync,notif:vNotif,audit:vAudit,settings:vSettings};
+const VIEWS={kapu:()=>'',es3:vEs3,home:vHome,tasks:vTasks,cal:vCal,upo:vUpo,clients:vClients,tables:vTables,rules:vRules,sync:vSync,notif:vNotif,audit:vAudit,settings:vSettings};
 const WIZ=[
  ['Az ügyfél és a tárhely adatai',()=>`<details class="ntc" style="margin:0 0 14px" data-keep="wizwhy"${KEEP.wizwhy?' open':''}><summary>Jelszó nélküli ügyfélmappa meglévő belépőhöz · <span style="color:var(--violet)">Mire jó ez?</span></summary><p style="margin-top:0;color:var(--ink-2);line-height:1.45"><b>Nem kér jelszót és sehová nem jelentkezik be</b> – csak egy külön ügyfélmappát hoz létre a már bekötött Ügyfélkapu+ / DÁP belépőd mellé:</p><p style="line-height:1.45">• <b>Saját tárhelyen keveredő NAV-iratok szétválogatása:</b> egyéni vállalkozóknak és magánszemélyeknek nincs Cégkapujuk, ezért meghatalmazottként a NAV a te személyes tárhelyedre küldi az irataikat (a levél tárgyának elején az adószámmal / adóazonosító jellel). Felvétel után a KapuMail ez alapján automatikusan külön mappába válogatja őket.</p><p style="line-height:1.45">• <b>Előre rögzített vagy adószám nélküli postafiók:</b> ha szerződéskötéskor előre felvennéd az ügyfelet, vagy egy Cégkapu nevéből hiányzik az adószám.</p><p style="line-height:1.45">Ha új belépési fiókot (jelszóval vagy DÁP-pal) kötnél be: <button type="button" class="lnk" style="font-weight:600" data-portalnew>Új Ügyfélkapu / DÁP összekapcsolása →</button></p></details><div class="form"><label>Ügyfél neve<input id="wzname" value="${esc(S.wz.name||'')}" placeholder="pl. Sárarany Kerámia Kft." style="padding:9px 10px;border-radius:10px;border:1px solid var(--line)"></label><label><span id="wztaxl">${wizTaxLabel()}</span><input id="wztax" value="${esc(S.wz.tax||'')}" placeholder="${wizTaxPh()}" inputmode="numeric" style="padding:9px 10px;border-radius:10px;border:1px solid var(--line)"></label></div>
    <div class="form" style="margin-top:10px"><span style="font-size:12.5px;font-weight:600;color:var(--ink-2)">Tárhely típusa</span>${[['CK','Cégkapu','Gazdálkodó szervezet (8 jegyű adószám-törzs alapján automatikusan összerendelhető)'],['ÜK','Ügyfélkapu','Magánszemély vagy egyéni vállalkozó'],['HK','Hivatali kapu','Csak megfelelő jogosultsággal']].map(b=>`<label class="opt"><input type="radio" name="wb" value="${b[0]}" ${S.wz.type===b[0]?'checked':''}><span><b>${b[1]}</b><small>${b[2]}</small></span></label>`).join('')}</div>`],
@@ -2413,7 +2963,7 @@ const ONB_STEPS=[
  {id:'kapu',show:()=>!!KB(),html:()=>onbKapuHtml()},
  {id:'done',show:()=>true,html:()=>`<div class="onb-ic">${ic('check')}</div>
    <h2>Minden készen áll</h2>
-   <p>${PORTALS.length?(onbCanSync()?'Bekötötted az Ügyfélkapudat. Indítsd el az első szinkront, és a KapuMail összegyűjti a tárhelyeidre érkezett iratokat.':'Az első szinkront a Szinkronnaplóból vagy a belépő melletti gombbal indíthatod el, amikor szeretnéd.'):'Az Ügyfélkaput később a Beállítások → Belépők és rendszerek lapon kötheted be. Addig a KapuMail üresen vár.'}</p>
+   <p>${PORTALS.length?(onbCanSync()?'Bekötötted az Ügyfélkapudat. Indítsd el az első szinkront, és a KapuMail összegyűjti a tárhelyeidre érkezett iratokat.':'Az első szinkront a Beállítások → Szinkronnapló lapról vagy a belépő melletti gombbal indíthatod el, amikor szeretnéd.'):'Az Ügyfélkaput később a Beállítások → Belépők és rendszerek lapon kötheted be. Addig a KapuMail üresen vár.'}</p>
    <ul class="onb-list">
      <li>${ic(ONB.lockDone?'check':'lock')}${ONB.lockDone?'A gép zárja bekapcsolva':'A zárat a Beállítások → Ez a gép lapon kapcsolhatod be'}</li>
      <li>${ic(PORTALS.length?'check':'key')}${PORTALS.length?'Ügyfélkapu bekötve':'Ügyfélkapu még nincs bekötve'}</li>
@@ -2525,7 +3075,7 @@ function trialSync(){const el=$('#trial');if(!el)return;
   trialRender(false)}
 function trialRender(force){const el=$('#trial');if(!el)return;const L=OFFICE.license||{};
   if(!L.officialBuild||L.canSync){el.hidden=true;return}
-  const subUrl=L.subscribeUrl||'https://kapumail.hu/#elofizetes',ghUrl=L.githubUrl||'https://kapumail.hu/open-source';
+  const subUrl=L.subscribeUrl||'https://kapumail.hu/#elofizetes',ghUrl=L.githubUrl||'https://github.com/interdesigncorp-lab/kapumail';
   el.innerHTML=`<div class="tr-card" role="dialog" aria-modal="true" aria-labelledby="tr-title">
     <h2 id="tr-title">A KapuMail 14 napos próbaidőszaka lejárt.</h2>
     <p>A hivatalos KapuMail használatának folytatásához aktiválj előfizetést. Az előfizetés automatikus frissítéseket, ellenőrzött kiadásokat és támogatást biztosít.</p>
@@ -2555,7 +3105,7 @@ function licenseCardHtml(inp){
     :L.state==='trial'?st('wait','clock',`14 napos próbaidőszak (${L.daysLeft} nap hátra)`)
     :L.state==='expired'?st('fic','alert','Próbaidőszak lejárt')
     :st('ok','shield','Open source kiadás (GNU AGPLv3)');
-  const subUrl=L.subscribeUrl||'https://kapumail.hu/#elofizetes',ghUrl=L.githubUrl||'https://kapumail.hu/open-source';
+  const subUrl=L.subscribeUrl||'https://kapumail.hu/#elofizetes',ghUrl=L.githubUrl||'https://github.com/interdesigncorp-lab/kapumail';
   const desc=L.state==='active'?`A hivatalos KapuMail előfizetésed aktív${L.validUntil?` (érvényes: <b>${esc(L.validUntil)}</b>)`:''}${L.licenseId?` · azonosító: <span class="mono">${esc(L.licenseId)}</span>`:''}.`
     :L.state==='trial'?`A hivatalos KapuMail 14 napos teljes értékű próbaidőszaka <b>${esc(L.trialEndsAt)}</b> napig tart. A már letöltött dokumentumaidhoz és azok teljes exportjához lejárat után is korlátlanul hozzáférsz.`
     :L.state==='expired'?`A 14 napos próbaidőszak lejárt: az új szinkronizáláshoz aktiválj előfizetést, vagy térj át a saját fordítású nyílt forráskódú változatra. A már letöltött dokumentumaidat továbbra is megnyithatod és exportálhatod.`
@@ -2633,7 +3183,7 @@ function updWhenTxt(iso){
 function updateCardHtml(){
   const U=window.iratkapuDesktop&&window.iratkapuDesktop.updater;
   if(!U)return '';
-  const st=UPD.state,ver=esc((st&&st.current)||(navigator.userAgent.match(/KapuMail-Desktop\/([\d.]+)/)||[])[1]||'0.2.0');
+  const st=UPD.state,ver=esc((st&&st.current)||(navigator.userAgent.match(/KapuMail-Desktop\/([\d.]+)/)||[])[1]||'0.2.1');
   const renew=!!(OFFICE.license&&OFFICE.license.officialBuild&&!OFFICE.license.canSync);
   const lines=[`<p class="mut" style="margin:0 0 6px">Ez a KapuMail <b>${ver}</b>.</p>`];
   if(st&&!st.enabled){
@@ -2835,17 +3385,17 @@ function renderSyncOv(){let o=document.getElementById('syncov');const B=PS.batch
   const v=au?{t:'Szinkronizálás folyamatban',who:'Minden belépő, egymás után',box:'Böngészőablak nélkül, a tárolt hitelesítővel',ind:true,pct:0,cnt:'',last:Object.assign(document.createElement('i'),{innerHTML:AUTO.last}).textContent,
       why:'Belépőnként lekérjük a levéllistát, és csak az automatikusnak jelölt iratokat (nyugtákat) töltjük le. Más iratot nem nyitunk meg és nem veszünk át.',
       acts:'<button class="btn ghost" data-autobg>Folytatás a háttérben</button>'}
-    :up?{t:'NAV ügyfélportál frissítése',who:UPOV.who,box:['Lekérdezés','Mentés'][UPOV.step],pct:UPOV.step*50,cnt:`${UPOV.step+1} / 2 lépés`,last:UPOV.sub,
+    :up?{t:'NAV ügyfélportál frissítése',who:UPOV.who,box:['Lekérdezés','Mentés'][UPOV.step]||'Lekérdezés',pct:typeof UPOV.pct==='number'?UPOV.pct:UPOV.step*50,cnt:(UPOV.tot>1?`${UPOV.idx+1} / ${UPOV.tot} kapcsolat · `:'')+`${UPOV.step+1} / 2 lépés`,last:UPOV.sub,
       why:'Az adónaptárat és a beküldött bevallásokat olvassuk ki a meglévő belépéssel. Semmit nem küldünk be: az adónaptár tételeit a NAV a saját nyilvántartásából frissíti, ahogy a portál Adónaptár oldalának megnyitásakor.',
       acts:'<button class="btn ghost" data-upobg>Folytatás a háttérben</button>'}
-    :ps?{t:'Szinkronizálás folyamatban',who:p?p.name:'',box:PSTEPS[PS.step]||'',pct:(B?(B.i+Math.min(PS.step,n)/n)/B.n:PS.step/n)*100,cnt:(B?`${B.i+1} / ${B.n} kapcsolat · `:'')+`${Math.min(PS.step+1,n)} / ${n} lépés`,last:PS.sub||'Kapcsolódás…',
+    :ps?{t:'Szinkronizálás folyamatban',who:p?p.name:'',box:PSTEPS[PS.step]||'',pct:(B?(B.i+Math.min(PS.step+(PS.stepPct||0)/100,n)/n)/B.n:Math.min(1,(PS.step+(PS.stepPct||0)/100)/n))*100,cnt:(B?`${B.i+1} / ${B.n} kapcsolat · `:'')+`${Math.min(PS.step+1,n)} / ${n} lépés`,last:PS.sub||'Kapcsolódás…',
       why:'A Tárhely és a NAV ügyfélportál egyetlen hivatalos belépéssel (KAÜ) fut végig, ezért csak egyszer kell azonosítanod magad.',
       acts:`${window.iratkapuDesktop?.live?`<button class="btn ghost" data-ptogglewin>${ic('eye')}${PS.winVis?'Belépőablak elrejtése':'Belépőablak megjelenítése'}</button>`:''}<button class="btn ghost" data-psynccancel>Megszakítás</button>`}
-    :{t:'Listázás folyamatban',who:c?c.c.name:'',box:c?(BOXN[c.b]||c.b):'',pct:SY.n?SY.i/SY.n*100:0,cnt:SY.n?`${Math.min(SY.i+1,SY.n)} / ${SY.n} tárhely`:'',last:SY.last,
+    :{t:'Listázás folyamatban',who:c?c.c.name:'',box:c?(BOXN[c.b]||c.b):'',pct:SY.n?SY.i/SY.n*100:0,cnt:SY.n?`${Math.min(SY.i+1,SY.n)} / ${SY.n} tárhely`:'',last:SY.last||(c?'Küldeménylista lekérdezése…':''),
       why:'A tárhelyeket egyesével, szünetekkel kérdezzük le, hogy a hivatalos oldal ne léptessen ki. Csak listázunk: iratot nem nyitunk meg és nem veszünk át.',
       acts:`<button class="btn ghost" data-syncstop${SY.stop?' disabled':''}>${SY.stop?'Leállás a mostani tárhely után…':'Megszakítás'}</button>`};
   o.setAttribute('aria-label',v.t);q('b').textContent=v.t;q('.sy-who').textContent=v.who;q('.sy-box').textContent=v.box;
-  q('.sy-bar').classList.toggle('ind',!!v.ind);q('.sy-bar span').style.width=v.ind?'':v.pct+'%';q('.sy-cnt').textContent=v.cnt;q('.sy-last').textContent=v.last;q('.sy-why').textContent=v.why;
+  q('.sy-bar').classList.toggle('ind',!!v.ind);q('.sy-bar span').style.width=v.ind?'':v.pct+'%';q('.sy-cnt').textContent=v.cnt;q('.sy-last').textContent=v.last;q('.sy-last').title=v.last||'';q('.sy-why').textContent=v.why;
   const a=q('.sy-acts');if(a.dataset.h!==v.acts){const had=a.contains(document.activeElement);a.dataset.h=v.acts;a.innerHTML=v.acts;if(fresh||had){const b=a.querySelector('button:not(:disabled)');b&&b.focus()}}}
 async function syncAll(){if(trialGuardSync())return;const list=[...SYNCS];if(!list.length){toast('Nincs listázható tárhely');return}
   SYNCBUSY=true;Object.assign(SY,{i:0,n:list.length,cur:list[0],last:'',stop:false});let created=0,need=0,done=0,err=false;render();renderSyncOv();
@@ -3060,17 +3610,21 @@ const UPO_MAX=240000; // ennyit várunk a NAV ügyfélportál olvasására (bel�
 // C kör: egy NAV-dokumentum a szervernek szánt alakban
 const navDoc=x=>({barcode:x.barcode||null,regNo:x.regNo||null,subject:x.subject||null,docType:x.docType||null,formCode:x.formCode||null,formName:x.formName||null,caseType:x.caseType||null,caseNo:x.caseNo||null,krNo:x.krNo||null,submittedAt:x.submittedAt||null,arrivedAt:x.arrivedAt||null,downloadedAt:x.downloadedAt||null,files:x.files||0});
 const navRet=x=>({regNo:x.regNo,formCode:x.formCode,title:x.title||null,periodStart:x.periodStart||null,periodEnd:x.periodEnd||null,submittedAt:x.submittedAt||null,state:x.state||null,kind:x.kind||null});
-async function navPortalStep(p,{daily=true}={}){
+async function navPortalStep(p,{daily=true,onStep=null}={}){
   const NV=window.iratkapuDesktop&&window.iratkapuDesktop.nav;
   const idle=()=>api('POST',`portals/${p.id}/status`,{upoState:'idle'}).catch(()=>{});
+  const emit=(step,pct,text)=>{if(onStep)try{onStep({step,pct,text})}catch(_){}};
   if(!sysOn(p,'upo'))return{skip:'NAV ügyfélportál kikapcsolva ennél a belépőnél'};
   if(!NV)return{skip:'NAV ügyfélportál kihagyva: az olvasásához frissebb asztali alkalmazás kell'};
   if(!p.mine){await idle();return{skip:'NAV ügyfélportál kihagyva: a NAV-adatokat csak a belépő gazdája olvashatja ki a saját gépén'}}
   if(p.authMode!=='totp'){await idle();return{skip:'NAV ügyfélportál kihagyva: csak kódos (Ügyfélkapu+) belépővel, elmentett belépési adatokkal olvasható'}}
   if(daily&&p.nav&&String(p.nav.at||'').slice(0,10)===TODAY)return{skip:'NAV ügyfélportál: ma már kiolvasva, naponta egyszer olvassuk'};
   // B kör: képviselet-váltás az ügyfelek adataihoz – csak ha a tulajdonos bekapcsolta; a szerver mondja meg, kikre.
-  let tg=[];if(OFFICE.nav_switch){try{tg=((await api('GET','nav/targets?portalId='+p.id))||{}).ids||[]}catch(x){if(x.message==='auth')throw x}}
-  const nv=await NV.readOwn(p.vaultKey,tg,!!OFFICE.nav_queries);
+  let tg=[];if(OFFICE.nav_switch){emit(0,4,'Képviselt adózók célpontjainak lekérése…');try{tg=((await api('GET','nav/targets?portalId='+p.id+(daily?'':'&force=1')))||{}).ids||[]}catch(x){if(x.message==='auth')throw x}}
+  if(onStep&&typeof NV.onProgress==='function')NV.onProgress(ev=>{if(!ev||(ev.key&&ev.key!==p.vaultKey))return;emit(0,typeof ev.pct==='number'?ev.pct:null,ev.text||'')});
+  let nv;
+  try{nv=await NV.readOwn(p.vaultKey,tg,!!OFFICE.nav_queries)}
+  finally{if(onStep&&typeof NV.onProgress==='function')NV.onProgress(null)}
   if(!nv||!nv.ok){
     await idle();
     if(nv&&nv.ineligible)return{skip:'NAV ügyfélportál kihagyva: ehhez a belépőhöz nincs elmentve a jelszó és a kódgeneráló kulcs'};
@@ -3078,11 +3632,13 @@ async function navPortalStep(p,{daily=true}={}){
     return{error:String((nv&&nv.error)||'ismeretlen ok')};
   }
   const ci=nv.calendarInfo||{},sub=nv.subject||null;let nr;
+  emit(1,92,'NAV-adatok mentése és párosítása a tárhelyes nyugtákkal…');
   try{nr=await api('POST','nav/ingest',{portalId:p.id,user:{taxId:(nv.user||{}).taxId||null},profiles:(nv.profiles||[]).map(x=>({name:x.name,stem:x.stem,taxId:x.taxId})),account:nv.account||null,
     missingCount:nv.missingCount,futureCount:nv.futureCount,calendarCount:nv.calendarCount,
     subject:sub?{stem:sub.stem||null,taxId:sub.taxId||null,own:!!sub.own}:null,
     obligations:(nv.obligations||[]).map(o=>({formCode:o.formCode,title:o.title||null,dueDate:o.dueDate,periodStart:o.periodStart||null,periodEnd:o.periodEnd||null,status:o.status||null,...(o.conditional?{conditional:true}:{})})),
-    ...(Array.isArray(nv.returns)?{returns:nv.returns.map(navRet)}:{}),...(Array.isArray(nv.documents)?{documents:nv.documents.map(navDoc)}:{})})}
+    ...(Array.isArray(nv.returns)?{returns:nv.returns.map(navRet)}:{}),...(Array.isArray(nv.documents)?{documents:nv.documents.map(navDoc)}:{}),
+    ...(nv.taxpayerTables?{taxpayerTables:nv.taxpayerTables}:{})})}
   catch(x){if(x.message==='auth')throw x;return{error:'a NAV-adatokat a szerver nem fogadta be'}}
   const cal=nr.calendar||null,dropped=(ci.unknown||0)+(ci.missingUnknown||0),rows=[];
   let text=`NAV-portál kiolvasva – ${nr.total} képviselt adózó`+(nr.suggested?`, <b>${nr.suggested} ajánlott ügyfél</b>`:'');
@@ -3096,14 +3652,16 @@ async function navPortalStep(p,{daily=true}={}){
   }
   if(sub&&!sub.own&&cal&&cal.matched&&cal.upserted)text+=` (a NAV-nál kiválasztott adózó: ${esc(sub.name||sub.stem||sub.taxId||'')})`;
   if(dropped)text+=`, ${dropped} tétel ismeretlen alakú, kihagyva`;
-  const kc=nv.clients||null;let crRet=0,crDoc=0;
+  const kc=nv.clients||null;let crRet=0,crDoc=0,crTt=null;
   if(kc){
+    emit(1,96,'Ügyfelek adószámlájának és adónaptárának mentése…');
     const good=(kc.clients||[]).filter(c=>c.ok);let cr=null;crRet=0;
     try{cr=await api('POST','nav/ingest-clients',{portalId:p.id,restored:kc.restored!==false,clients:good.map(c=>({stem:c.stem||null,taxId:c.stem?null:(c.taxId||null),account:c.account||null,missingCount:c.missingCount,futureCount:c.futureCount,calendarCount:c.calendarCount,
       obligations:(c.obligations||[]).map(o=>({formCode:o.formCode,title:o.title||null,dueDate:o.dueDate,periodStart:o.periodStart||null,periodEnd:o.periodEnd||null,status:o.status||null,...(o.conditional?{conditional:true}:{})})),
-      ...(Array.isArray(c.returns)?{returns:c.returns.map(navRet)}:{}),...(Array.isArray(c.documents)?{documents:c.documents.map(navDoc)}:{})}))})}
+      ...(Array.isArray(c.returns)?{returns:c.returns.map(navRet)}:{}),...(Array.isArray(c.documents)?{documents:c.documents.map(navDoc)}:{}),
+      ...(c.taxpayerTables?{taxpayerTables:c.taxpayerTables}:{})}))})}
     catch(x){if(x.message==='auth')throw x}
-    if(cr){crRet=cr.returns||0;crDoc=cr.documents||0}
+    if(cr){crRet=cr.returns||0;crDoc=cr.documents||0;crTt=cr.taxpayerTables||null}
     const bad=(kc.clients||[]).length-good.length;
     text+=cr?`; ügyfelenként: <b>${cr.saved} ügyfél adószámlája és adónaptára frissítve</b>`+(cr.skipped?`, ${cr.skipped} kihagyva`:''):'; az ügyfelenkénti adatokat a szerver nem fogadta be';
     if(bad)text+=`, ${bad} adózónál a váltás vagy az olvasás nem sikerült`;
@@ -3139,12 +3697,22 @@ async function navPortalStep(p,{daily=true}={}){
     if(di.error)dv.push(`Saját lekérdezés sikertelen (${esc(di.error)})`);
     if(dcerr)dv.push(`${dcerr} ügyfélnél sikertelen`);
     if(dv.length)rows.push({k:'NAV-dokumentumok',v:dv.join(' · '),warn:!!(di.error||dcerr)&&!nd});
+    if(nr.taxpayerTables||crTt){
+      const ownTt=nr.taxpayerTables||{},sumTt=k=>(ownTt[k]||0)+(crTt&&crTt[k]?crTt[k]:0);
+      const ti=sumTt('insured_persons'),te=sumTt('employers'),tefo=sumTt('efo_declarations')+sumTt('efo_quotas'),trec=sumTt('reconciliations'),ttAll=ti+te+tefo+trec;
+      const tv=[];
+      if(ti)tv.push(`<b>${ti}</b> biztosított`);
+      if(te)tv.push(`<b>${te}</b> foglalkoztató`);
+      if(tefo)tv.push(`<b>${tefo}</b> EFO-tétel`);
+      if(trec)tv.push(`<b>${trec}</b> adategyeztetés`);
+      rows.push({k:'Adózói táblák',v:ttAll?tv.join(' · '):'Frissítve <span class="mut">· 0 aktív tétel a NAV szerint</span>'});
+    }
   }
   return{ok:true,text,rows,upserted:cal?cal.upserted||0:0,nr,info:ci};
 }
 /*END NAVSTEP*/
-let UPOV=null; // a NAV ügyfélportál önálló frissítésének képernyője: {who,step,sub,bg}
-const PS={run:false,cancel:false,step:0,sub:'',err:'',doneMsg:'',doneRows:[],winVis:false,unmapped:[],portalId:null};
+let UPOV=null; // a NAV ügyfélportál önálló frissítésének képernyője: {who,step,pct,idx,tot,sub,bg}
+const PS={run:false,cancel:false,step:0,stepPct:0,sub:'',err:'',doneMsg:'',doneRows:[],winVis:false,unmapped:[],portalId:null};
 const syncRowsHtml=rows=>`<div class="syncsum">${rows.map(r=>`<div class="syncrow${r.warn?' warn':''}"><span class="synck">${esc(r.k)}</span><span class="syncv">${r.v}</span></div>`).join('')}</div>`;
 function renderPortalSyncDlg(){
   const dl=$('#dlg'),p=PORTALS.find(x=>x.id==PS.portalId);if(!p)return;
@@ -3169,7 +3737,7 @@ const liveOwnedBy=(st,p)=>!!(p&&p.vaultKey&&st&&st.portalId===String(p.vaultKey)
 async function runPortalSync(portalId){
   if(trialGuardSync())return;
   const p=PORTALS.find(x=>x.id==portalId);if(!p)return;
-  Object.assign(PS,{run:true,cancel:false,step:0,sub:'Hitelesítés előkészítése…',err:'',doneMsg:'',doneRows:[],winVis:false,unmapped:[],portalId:p.id});
+  Object.assign(PS,{run:true,cancel:false,step:0,stepPct:0,sub:'Hitelesítés előkészítése…',err:'',doneMsg:'',doneRows:[],winVis:false,unmapped:[],portalId:p.id});
   renderPortalSyncDlg();
   const D=window.iratkapuDesktop;
   if(!D||!D.live){
@@ -3216,15 +3784,20 @@ async function runPortalSync(portalId){
       }
       if(PS.cancel){await D.live.close();return}
     }
-    PS.step=2;PS.winVis=false;PS.sub=`Tárhely postafiókok (Beérkezett + Tartós tár${OFFICE.live_sent?' + Elküldött':''}) és kvóták lekérdezése…`;renderPortalSyncDlg();
-    const lr=await D.live.list(null,mailboxFilterFor(p),{sent:!!OFFICE.live_sent});
+    PS.step=2;PS.stepPct=5;PS.winVis=false;PS.sub=`Tárhely postafiókok (Beérkezett + Tartós tár${OFFICE.live_sent?' + Elküldött':''}) és kvóták lekérdezése…`;renderPortalSyncDlg();
+    if(D.live.onProgress)D.live.onProgress(ev=>{if(PS.cancel||!ev||!ev.text)return;PS.sub=`Tárhely: ${ev.text}`;if(ev.total>0)PS.stepPct=Math.min(55,Math.round((ev.index/ev.total)*55));renderPortalSyncDlg()});
+    let lr;
+    try{lr=await D.live.list(null,mailboxFilterFor(p),{sent:!!OFFICE.live_sent})}
+    finally{if(D.live.onProgress)D.live.onProgress(null)}
     if(!lr.ok)throw new Error(lr.error||'A tárhely listázása nem sikerült.');
+    PS.stepPct=60;PS.sub=`Levéllista feldolgozása (${(lr.letters||[]).length} küldemény)…`;renderPortalSyncDlg();
     const ing=await ingestLive(lr.letters,{mailboxes:mbMeta(lr.mailboxes),quotas:lr.quotas||{},autoMap:true,portalId:p.id});
     let autoCnt=0,autoSkip=0;const autoFail=[];
     const qAuto=(p.dlActive&&OFFICE.live_download)?(ing.autoDownload||[]):[];
     for(let i=0;i<qAuto.length&&!PS.cancel;i++){
       const a=qAuto[i];
-      PS.sub=`Automatikus letöltés (${i+1} / ${qAuto.length}): ${a.eid}…`;renderPortalSyncDlg();
+      PS.stepPct=65+Math.round(((i+1)/qAuto.length)*30);
+      PS.sub=`Automatikus letöltés (${i+1} / ${qAuto.length}): ${autoDlLabel(a)}…`;renderPortalSyncDlg();
       const via={auto:true,viaRuleId:a.ruleId||undefined};
       // A szerver engedélyét az asztali főfolyamat kéri meg a tárhely érintése előtt; elutasításnál az elem kimarad.
       const dl=await D.live.downloadOne({messageId:a.id,auto:true,viaRuleId:a.ruleId||null});
@@ -3232,20 +3805,21 @@ async function runPortalSync(portalId){
       try{await api('POST',`messages/${a.id}/live-download`,{fileName:dl.fileName,bytesBase64:dl.bytesBase64,...via});autoCnt++}
       catch(e){if(e.message==='auth')throw e;autoFail.push(a.eid)}
     }
-    PS.step=3;PS.sub='NAV ügyfélportál: adónaptár és hiányzó bevallások olvasása…';renderPortalSyncDlg();
+    PS.step=3;PS.stepPct=4;PS.sub='NAV ügyfélportál: adónaptár és hiányzó bevallások olvasása…';renderPortalSyncDlg();
     // A megszűnt upo.nav.gov.hu ablakos bejárása helyett az új ügyfélportál olvasója fut (böngésző nélkül, a belépő tárolt adataival).
-    const upo=await Promise.race([navPortalStep(p).catch(x=>{if(x&&x.message==='auth')throw x;return{error:String((x&&x.message)||x)}}),sleep(UPO_MAX).then(()=>({error:'a NAV ügyfélportál nem válaszolt időben'}))]);
+    const upo=await Promise.race([navPortalStep(p,{onStep:s=>{if(PS.cancel||!s)return;if(typeof s.pct==='number')PS.stepPct=s.pct;if(s.text)PS.sub=`NAV ügyfélportál: ${s.text.replace(/^NAV[- ]ügyfélportál:\s*/i,'')}`;renderPortalSyncDlg()}}).catch(x=>{if(x&&x.message==='auth')throw x;return{error:String((x&&x.message)||x)}}),sleep(UPO_MAX).then(()=>({error:'a NAV ügyfélportál nem válaszolt időben'}))]);
     if(PS.cancel)return;
     const upoTxt=upo.ok?upo.text:upo.skip?upo.skip:`NAV ügyfélportál: az olvasás most nem sikerült – ${esc(upo.error||'nem érhető el')}`;
     let asp={skip:true};
     if(!PS.cancel&&ASPDESK()&&ASPDESK().readOwnAuto&&p.mine&&p.authMode==='totp'&&sysOn(p,'tarhely_personal')&&p.subjectScope!=='business'){
-      PS.sub='Önkormányzati portál: saját helyi adók olvasása…';renderPortalSyncDlg();
+      PS.stepPct=95;PS.sub='Önkormányzati portál: saját helyi adók olvasása…';renderPortalSyncDlg();
       asp=await Promise.race([aspOwnStep(p).catch(x=>{if(x&&x.message==='auth')throw x;return{error:String((x&&x.message)||x)}}),sleep(95000).then(()=>({error:'az önkormányzati portál nem válaszolt időben'}))]);
     }
     if(PS.cancel)return;
     const aspTxt=asp.ok?` ${asp.text}.`:typeof asp.skip==='string'?` ${asp.skip}.`:asp.error?` Önkormányzati portál: ${esc(asp.error)}.`:'';
     await load();
-    PS.run=false;PS.step=4;
+    if(S.area==='tables')await fetchTaxTables();
+    PS.run=false;PS.step=4;PS.stepPct=0;
     PS.unmapped=ing.unmappedNames||[];
     PS.doneMsg=`Tárhely: ${ing.created} új küldemény (${ing.known} már ismert)${autoCnt?`, ${autoCnt} irat automatikusan letöltve`:''}${autoSkip?`, ${autoSkip} automatikus letöltés kimaradt`:''}${autoFail.length?`. FIGYELEM: ${autoFail.length} irat a tárhelyről letöltődött, de az archiválása nem sikerült (${esc(autoFail.join(', '))}) – nézd meg a hivatalos tárhelyen`:''}${ing.discovery&&ing.discovery.created?`, ${ing.discovery.created} új ügyfél felvéve`:''}${ing.discovery&&ing.discovery.own?`, a saját tárhelyed felismerve (csak te látod)`:''}${ing.discovery&&ing.discovery.pending?`, ${ing.discovery.pending} postafiók besorolásra vár (Ügyfelek nézet)`:''}${ing.inactive?`, ${ing.inactive} levél inaktív ügyfélé`:''}${ing.systemOff?`, ${ing.systemOff} levél kikapcsolt rendszerből (kihagyva)`:''}${ing.autoDownloadDeferred?`, ${ing.autoDownloadDeferred} automatikus letöltés a következő szinkronra maradt (futásonként legfeljebb 50)`:''}${ing.unmapped?`, ${ing.unmapped} levél kimaradt hozzárendelés nélküli postafiókból`:''}. ${upoTxt}.${aspTxt}`;
     const rows=[{k:'Tárhely',v:(ing.created?`<b>${ing.created} új küldemény</b>`:'Nincs új küldemény')+` <span class="mut">· ${ing.known} korábbi már a listán</span>`}];
@@ -3349,20 +3923,22 @@ async function downloadLiveMessage(mid){
 async function upoSyncNow(){
   if(UPO_BUSY)return;
   const D=window.iratkapuDesktop;
-  if(!D||!D.nav){await load();toast('Az adónaptár frissítve – a NAV ügyfélportál élő olvasása az asztali alkalmazásban fut');return}
+  if(!D||!D.nav){await load();if(S.area==='tables')await fetchTaxTables();toast('Az adónaptár frissítve – a NAV ügyfélportál élő olvasása az asztali alkalmazásban fut');return}
   // Azok a belépők, amelyekről a NAV-portál olvasható; ha nincs ilyen, az első belépő adja meg az érthető „kihagyva” okot.
   const fit=PORTALS.filter(x=>x.mine&&sysOn(x,'upo')&&x.authMode==='totp'),list=fit.length?fit:PORTALS.slice(0,1);
   if(!list.length){toast('Előbb adj hozzá egy Ügyfélkapu+ kapcsolatot!',true);return}
   UPO_BUSY=true;render();
   try{
     const out=[];let bad=false;
-    for(const p of list){
-      UPOV={who:p.name,step:0,sub:'NAV ügyfélportál: adónaptár és hiányzó bevallások olvasása…',bg:false};renderSyncOv();
-      const r=await navPortalStep(p,{daily:false});
+    for(let pi=0;pi<list.length;pi++){
+      const p=list[pi];
+      UPOV={who:p.name,step:0,pct:4,idx:pi,tot:list.length,sub:'NAV ügyfélportál: adónaptár és adózói táblák olvasása…',bg:false};renderSyncOv();
+      const r=await navPortalStep(p,{daily:false,onStep:s=>{if(!UPOV||!s)return;if(s.step!=null)UPOV.step=s.step;if(typeof s.pct==='number')UPOV.pct=Math.max(UPOV.pct||0,s.pct);if(s.text)UPOV.sub=s.text;renderSyncOv()}});
       if(!r.ok)bad=true;
       out.push((list.length>1?esc(p.name)+': ':'')+(r.ok?r.text:r.skip||`a NAV ügyfélportál olvasása nem sikerült – ${esc(r.error||'ismeretlen ok')}`));
     }
     await load();
+    if(S.area==='tables')await fetchTaxTables();
     toast(out.join(' · '),bad);
   }catch(e){}
   finally{UPO_BUSY=false;UPOV=null;renderSyncOv();render()}
@@ -3421,7 +3997,7 @@ document.addEventListener('click',async e=>{
   const ldok=e.target.closest('[data-livedlok]');if(ldok){$('#dlg').close();downloadLiveMessage(ldok.dataset.livedlok);return}
   const dtb=e.target.closest('[data-dtab]');if(dtb){S.dtab=dtb.dataset.dtab;renderDetail();return}
   if(e.target.closest('[data-wbsched]')){winbarSyncClick();return}
-  const stb=e.target.closest('[data-stab]');if(stb){const k=stb.dataset.stab;S.area=k==='rules'?'rules':'settings';if(k!=='rules')S.stab=k;render();$('#detail').scrollTop=0;return}
+  const stb=e.target.closest('[data-stab]');if(stb){const k=stb.dataset.stab,own=['rules','sync','audit'].includes(k);S.area=own?k:'settings';if(!own)S.stab=k;$('#app').classList.remove('open');render();$('#detail').scrollTop=0;return}
   const ut=e.target.closest('[data-upotab]');if(ut){S.upo.tab=ut.dataset.upotab;render();return}
   const cj=e.target.closest('[data-caljump]');if(cj){S.cal.at=cj.dataset.caljump;S.cal.cats.upo=true;S.area='cal';S.cv=null;$('#app').classList.remove('open');render();$('#detail').scrollTop=0;return}
   const uj=e.target.closest('[data-upojump]');if(uj){S.upo.tab=uj.dataset.upojump||'list';S.upo.q='';S.area='upo';S.cv=null;$('#app').classList.remove('open');render();$('#detail').scrollTop=0;return}
@@ -3534,7 +4110,10 @@ document.addEventListener('change',e=>{const d=e.target.dataset;
   if('dense' in d){S.dense=e.target.checked;try{localStorage.setItem('dense',S.dense?'1':'')}catch(x){}render()}
 });
 
-function render(){if(!TODAY)return;syncHid();writeHash();$('#app').classList.toggle('wide',S.area!=='inbox'&&S.area!=='kapu');$('#app').classList.toggle('kapu',S.area==='kapu');renderRail();renderFolders();renderHead();renderRows();renderDetail();if(tipEl&&!tipEl.isConnected)showTip(null);window.KapuView?.onArea()}
+// A Határidők és bevallások ('cal' / 'upo') és az Adózói táblák ('tables') oldalon a rózsaszín Iratok mappasáv alapból összecsukódik, más nézetre visszalépve pedig visszaáll.
+const isCalArea=a=>a==='cal'||a==='upo'||a==='tables';
+function syncCalFold(){if(S.area!=='cal'&&S.cal)S.cal.fopen=false;if(S.area!=='tables'&&S.tables)S.tables.expOpen=false;const app=$('#app');if(!app)return;const now=isCalArea(S.area),was=isCalArea(S.lastArea);if(now&&!was){S.prevNofold=S.lastArea?app.classList.contains('nofold'):innerWidth>=760;app.classList.remove('nofold')}else if(!now&&was)app.classList.toggle('nofold',innerWidth>=760&&S.prevNofold!==false);S.lastArea=S.area}
+function render(){if(!TODAY)return;syncHid();writeHash();syncCalFold();$('#app').classList.toggle('wide',S.area!=='inbox'&&S.area!=='kapu');$('#app').classList.toggle('kapu',S.area==='kapu');renderRail();renderFolders();renderHead();renderRows();renderDetail();if(tipEl&&!tipEl.isConnected)showTip(null);window.KapuView?.onArea()}
 
 let tipEl=null;
 function placeTipRect(r,w,h,vw,vh,right){
@@ -3630,6 +4209,17 @@ document.addEventListener('click',e=>{
   if(b.dataset.reauth!==undefined){if(!b.dataset.reauth){toast('Ehhez a tárhelyhez nincs teendő');return}reauthOpen(+b.dataset.reauth);return}
   if(b.dataset.back!==undefined){$('#app').classList.remove('open');document.getElementById(S.sel)?.focus();return}
   if(b.dataset.bulk){const k=b.dataset.bulk,ids=[...S.checked];S.checked.clear();if(k==='x'){renderRows();return}run(()=>api('POST','messages/bulk',{ids,action:k==='read'?'markread':k}),x=>x.skipped?`${x.skipped} irat kimaradt (átvételre vár vagy már kész)`:'Kész');return}
+  if(S.tables?.expOpen&&!t.closest('.exp-wrap')){S.tables.expOpen=false;const p=$('#tablesExpPop');if(p)p.hidden=true;const eb=document.querySelector('[data-tables-expmenu]');if(eb)eb.setAttribute('aria-expanded','false')}
+  if(b.dataset.tablesExpmenu!==undefined){initTablesState();S.tables.expOpen=!S.tables.expOpen;const p=$('#tablesExpPop');if(p)p.hidden=!S.tables.expOpen;b.setAttribute('aria-expanded',String(!!S.tables.expOpen));return}
+  if(b.dataset.tablesExp){const fmt=b.dataset.tablesExp;initTablesState();S.tables.expOpen=false;const p=$('#tablesExpPop');if(p)p.hidden=true;downloadTaxTablesExport(fmt);return}
+  if(b.dataset.tablesClear!==undefined){initTablesState();S.tables.q='';S.tables.client='';S.tables.status='';S.tables.page=1;renderDetail();fetchTaxTables();return}
+  if(b.dataset.ttab){initTablesState();const tab=b.dataset.ttab;if(S.tables.tab!==tab){S.tables.tab=tab;S.tables.page=1;S.tables.status='';S.tables.sortCol='';S.tables.data=null;renderDetail();fetchTaxTables()}return}
+  if(b.dataset.tsubtab){initTablesState();const st=b.dataset.tsubtab;if(S.tables.subtab!==st){S.tables.subtab=st;S.tables.page=1;S.tables.sortCol='';S.tables.data=null;renderDetail();fetchTaxTables()}return}
+  if(b.dataset.tablesSort){initTablesState();const col=b.dataset.tablesSort;if(S.tables.sortCol===col){S.tables.sortDir=S.tables.sortDir==='asc'?'desc':'asc'}else{S.tables.sortCol=col;S.tables.sortDir='asc'}S.tables.page=1;fetchTaxTables();return}
+  if(b.dataset.tablesPage!==undefined&&!b.disabled){initTablesState();const pg=+b.dataset.tablesPage;if(pg>=1){S.tables.page=pg;fetchTaxTables()}return}
+  if(b.dataset.tablesCalcell){const [cid,mi]=b.dataset.tablesCalcell.split(':');openTaxCalendarMonth(cid,+mi);return}
+  if(b.dataset.tablesJumpReturns!==undefined){$('#dlg')?.close();initTablesState();S.tables.tab='returns';S.tables.subtab='all';S.tables.client=String(b.dataset.tablesJumpReturns||'');S.tables.page=1;S.tables.sortCol='';S.tables.data=null;renderDetail();fetchTaxTables();return}
+  if(b.dataset.tablesStatus!==undefined){initTablesState();S.tables.status=b.dataset.tablesStatus;S.tables.page=1;renderDetail();fetchTaxTables();return}
   const m=M.find(x=>x.id===S.sel);
   if(b.dataset.act&&m){act(m,b.dataset.act);return}
   if(b.dataset.receive!==undefined&&m){askReceive(m);return}
@@ -3647,11 +4237,15 @@ document.addEventListener('change',e=>{const t=e.target,m=M.find(x=>x.id===S.sel
   if(t.dataset.tkf){S.tk[t.dataset.tkf]=t.value;render();return}
   if(t.dataset.pv!==undefined&&m){S.pv[m.id]=+t.value;renderDetail();return}
   if(t.id==='fbox'){S.box=t.value;renderRows();writeHash()} if(t.id==='fsnd'){S.snd=t.value;renderRows();writeHash()}
+  if(t.id==='tableclient'){initTablesState();S.tables.client=t.value;S.tables.page=1;renderDetail();fetchTaxTables();return}
+  if(t.id==='tableyear'){initTablesState();S.tables.year=+t.value||2026;S.tables.page=1;renderDetail();fetchTaxTables();return}
+  if(t.dataset.tablesPagesize!==undefined){initTablesState();S.tables.pageSize=+t.value||50;S.tables.page=1;fetchTaxTables();return}
   if(t.dataset.task!==undefined){run(()=>api('POST',`tasks/${t.dataset.task}`,{done:t.checked}))}
   if(t.dataset.assign!==undefined&&m){t.value?act(m,'assign',t.value):toast('A felelős nem törölhető, csak átadható',true)}
   if(t.dataset.status!==undefined&&m){run(()=>api('POST',`messages/${m.id}/action`,{action:'status',to:t.value}),'Belső állapot módosítva – a hivatalos állapot nem változott')}
 });
 document.addEventListener('input',e=>{if(e.target.id==='q'&&S.area==='kapu'){window.KapuView?.onSearch(e.target.value);return}if(e.target.id==='q'){S.q=e.target.value;renderRows();writeHash()}
+  if(e.target.id==='tableq'){S.tables.q=e.target.value;S.tables.page=1;refreshTablesData();return}
   if(e.target.id==='cdq'){S.cdq={cid:S.cv,q:e.target.value};const p=e.target.selectionStart;render();const n=$('#cdq');if(n){n.focus();n.setSelectionRange(p,p)}return}
   if(e.target.id==='cq'){S.cq=e.target.value;const p=e.target.selectionStart;renderFolders();const n=$('#cq');n.focus();n.setSelectionRange(p,p)}
   if(e.target.id==='upoq'){S.upo.q=e.target.value;const p=e.target.selectionStart;renderDetail();const n=$('#upoq');if(n){n.focus();n.setSelectionRange(p,p)}}});
@@ -3699,7 +4293,7 @@ document.addEventListener('keydown',e=>{const inp=e.target;if(!inp.matches?.('.t
 
 document.addEventListener('keydown',e=>{
   const typing=/INPUT|TEXTAREA|SELECT/.test(e.target.tagName||'');
-  if(e.key==='Escape'){if($('#menu').innerHTML){closeMenu();return} if(typing){e.target.blur();return} $('#app').classList.remove('open');document.getElementById(S.sel)?.focus();return}
+  if(e.key==='Escape'){if($('#menu').innerHTML){closeMenu();return} if(S.tables?.expOpen){S.tables.expOpen=false;const p=$('#tablesExpPop');if(p)p.hidden=true;document.querySelector('[data-tables-expmenu]')?.focus();return} if(S.cal?.fopen){S.cal.fopen=false;render();document.querySelector('[data-calfopen]')?.focus();return} if(typing){e.target.blur();return} $('#app').classList.remove('open');document.getElementById(S.sel)?.focus();return}
   if(typing||e.metaKey||e.ctrlKey||e.altKey||$('#dlg').open) return;
   if(S.area==='kapu'&&e.key!=='/'&&e.key!=='?')return;
   const v=visible(), i=v.findIndex(m=>m.id===S.sel), m=v[i], k=e.key.toLowerCase();
@@ -3707,14 +4301,14 @@ document.addEventListener('keydown',e=>{
   if(k==='j'||e.key==='ArrowDown'){if(e.target.closest?.('.detail')&&e.key==='ArrowDown')return;e.preventDefault();const n=v[Math.min(i+1,v.length-1)];if(n)select(n.id,true,!narrow)}
   else if(k==='k'||e.key==='ArrowUp'){if(e.target.closest?.('.detail')&&e.key==='ArrowUp')return;e.preventDefault();const n=v[Math.max(i-1,0)];if(n)select(n.id,true,!narrow)}
   else if(e.key==='Enter'&&e.target.classList?.contains('row')){e.preventDefault();select(e.target.dataset.id,false);$('#detail').focus()}
-  else if(e.key==='/'){e.preventDefault();$('#q').focus()}
+  else if(e.key==='/'){e.preventDefault();(S.area==='tables'?$('#tableq'):S.area==='upo'?$('#upoq'):S.area==='clients'&&S.cv?$('#cdq'):$('#q'))?.focus()}
   else if(e.key==='?'){showHelp()}
   else if(m&&k==='x'){S.checked.has(m.id)?S.checked.delete(m.id):S.checked.add(m.id);renderRows();document.getElementById(m.id)?.focus()}
   else if(m&&k==='a')act(m,'me'); else if(m&&k==='u')act(m,'read'); else if(m&&k==='e')act(m,'done');
 });
 addEventListener('hashchange',()=>{});
 const BOOT0=performance.now(),bootOff=()=>setTimeout(()=>{const b=$('#boot');if(!b)return;b.classList.add('off');setTimeout(()=>b.remove(),600)},Math.max(0,700-(performance.now()-BOOT0)));
-readHash(); if(innerWidth<760)$('#app').classList.remove('nofold'); load().catch(e=>{if(e.message!=='auth')bootOff();throw e}).then(()=>{bootOff(); if(!S.sel&&innerWidth>1180&&S.area==='inbox'){const v=visible()[0]; if(v){S.sel=v.id;render()}} });
+readHash(); if(innerWidth<760)$('#app').classList.remove('nofold'); syncCalFold(); load().catch(e=>{if(e.message!=='auth')bootOff();throw e}).then(()=>{bootOff(); if(!S.sel&&innerWidth>1180&&S.area==='inbox'){const v=visible()[0]; if(v){S.sel=v.id;render()}} });
 </script>
 <script src="/ui/kapu-md.js"></script>
 <script src="/ui/kapu-typing.js"></script>

@@ -50,9 +50,21 @@ class ConnectionsStatus extends IratkapuTool
                 'needs_attention' => $boxes->where('sync_state', 'need')->map(fn ($b) => ['client' => $names[$b->client_id] ?? null, 'type' => $b->type, 'note' => $b->sync_note])->values()],
             'recent_sync_runs' => DB::table('sync_runs')->where('office_id', $user->office_id)->whereIn('mailbox_id', $boxes->pluck('id'))->orderByDesc('id')->limit(10)->get()
                 ->map(fn ($r) => ['at' => $r->created_at, 'state' => $r->state, 'listed' => $r->listed, 'new' => $r->created, 'note' => $r->note])->values(),
-            'nav' => ['client_snapshots' => DB::table('nav_client_snapshots')->whereIn('client_id', $cids)->count(),
+            'nav' => [
+                'client_snapshots' => DB::table('nav_client_snapshots')->whereIn('client_id', $cids)->count(),
                 'latest_client_snapshot' => DB::table('nav_client_snapshots')->whereIn('client_id', $cids)->max('fetched_at'),
-                'latest_returns_query' => DB::table('nav_returns')->whereIn('client_id', $cids)->max('updated_at')],
+                'latest_returns_query' => DB::table('nav_returns')->whereIn('client_id', $cids)->max('updated_at'),
+                'insured_persons' => DB::table('nav_insured_persons')->where('office_id', $user->office_id)->whereIn('client_id', $cids)->count(),
+                'own_employers' => DB::table('nav_employers')->where('office_id', $user->office_id)->whereIn('client_id', $cids)->count(),
+                'efo_declarations' => DB::table('nav_efo_declarations')->where('office_id', $user->office_id)->whereIn('client_id', $cids)->count(),
+                'reconciliations' => DB::table('nav_reconciliations')->where('office_id', $user->office_id)->whereIn('client_id', $cids)->count(),
+                'latest_taxpayer_tables_at' => collect([
+                    DB::table('nav_insured_persons')->where('office_id', $user->office_id)->whereIn('client_id', $cids)->max('fetched_at'),
+                    DB::table('nav_employers')->where('office_id', $user->office_id)->whereIn('client_id', $cids)->max('fetched_at'),
+                    DB::table('nav_efo_declarations')->where('office_id', $user->office_id)->whereIn('client_id', $cids)->max('fetched_at'),
+                    DB::table('nav_reconciliations')->where('office_id', $user->office_id)->whereIn('client_id', $cids)->max('fetched_at'),
+                ])->filter()->max(),
+            ],
             'asp_local_tax' => ['statements' => DB::table('asp_statements')->where('office_id', $user->office_id)->whereIn('client_id', $cids)->count(),
                 'latest' => DB::table('asp_statements')->where('office_id', $user->office_id)->whereIn('client_id', $cids)->max('fetched_at')],
             'email_smtp' => ['configured' => OfficeMail::summary($user->office_id)['configured'], 'server' => Scope::seesAll($user) && ! empty($s['smtp']) ? "{$s['smtp']['host']}:{$s['smtp']['port']}" : null,

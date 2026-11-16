@@ -101,6 +101,7 @@ class TermsTest extends TestCase
         $r = $this->get('/legal/aszf')->assertOk()->assertHeader('Content-Type', 'text/html; charset=UTF-8');
         $r->assertSee('Általános Szerződési Feltételek')->assertSee('Kiemelt rendelkezések')->assertSee('Laczkovszki Gábor E.V.');
         $r->assertSee('GNU AGPLv3')->assertSee('14 napig minden funkcióját díjmentesen használhatja')->assertDontSee('MIT licenc');
+        $r->assertSee('https://github.com/interdesigncorp-lab/kapumail');
         $r->assertSee('href="/legal/adatkezeles"', false)->assertDontSee('ADATKEZELESI-TAJEKOZTATO.md', false);
         $this->assertStringContainsString("default-src 'none'", $r->headers->get('Content-Security-Policy'));
         $this->get('/legal/adatkezeles')->assertOk()->assertSee('Nemzeti Adatvédelmi')->assertSee('Laczkovszki Gábor E.V.')->assertDontSee('Adatvédelmi tisztviselő');

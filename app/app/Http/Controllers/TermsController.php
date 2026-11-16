@@ -144,6 +144,7 @@ class TermsController extends Controller
             $md = str_replace(']('.$f.')', '](/legal/'.$k.')', $md);
         }
         $body = Str::markdown($md, ['html_input' => 'escape', 'allow_unsafe_links' => false]);
+        $body = preg_replace('/<a href="(https:\/\/[^"]+)">/', '<a href="$1" target="_blank" rel="noopener noreferrer">', $body) ?? $body;
         $html = '<!doctype html><html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'.e($title).'</title><style>'
             .'body{font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:#1d1a2e;background:#fff;margin:0;padding:24px 28px 48px;max-width:860px}'
             .'h1{font-size:24px;margin:0 0 8px}h2{font-size:18px;margin:28px 0 8px}h3{font-size:16px}table{border-collapse:collapse;width:100%;font-size:14px;margin:10px 0}'

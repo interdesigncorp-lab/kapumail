@@ -48,6 +48,7 @@ contextBridge.exposeInMainWorld('iratkapuDesktop', {
       auto: !!(req && req.auto),
       viaRuleId: Number.isInteger(req && req.viaRuleId) ? req.viaRuleId : null,
     }),
+    onProgress: cb => { ipcRenderer.removeAllListeners('live:progress'); if (typeof cb === 'function') ipcRenderer.on('live:progress', (_e, p) => cb(p)); },
   },
   // ADR-008 C: felügyelet nélküli, többügyfeles listázás (böngészőablak nélkül)
   // NAV ügyfélportál: a belépő saját nevében olvasható adatok (csak GET). Képviseletet csak akkor vált, ha célokat kap.
@@ -55,7 +56,8 @@ contextBridge.exposeInMainWorld('iratkapuDesktop', {
   // `queries` (nem kötelező): a beadott bevallások lekérdezése is fusson (C kör; a NAV oldalán lekérdezést hoz létre)
   nav: { readOwn: (key, clientIds, queries) => ipcRenderer.invoke('nav:readOwn', String(key), Array.isArray(clientIds) ? clientIds.map(String) : null, queries === true),
     // letölthető kimutatások egy adózóra (target: adószám-törzs / adóazonosító jel, vagy null a belépő saját maga)
-    exports: (key, target, kinds) => ipcRenderer.invoke('nav:exports', String(key), target == null ? null : String(target), Array.isArray(kinds) ? kinds.map(String) : null) },
+    exports: (key, target, kinds) => ipcRenderer.invoke('nav:exports', String(key), target == null ? null : String(target), Array.isArray(kinds) ? kinds.map(String) : null),
+    onProgress: cb => { ipcRenderer.removeAllListeners('nav:progress'); if (typeof cb === 'function') ipcRenderer.on('nav:progress', (_e, p) => cb(p)); } },
   // Önkormányzati portál (ASP): osztott képernyős szinkronablak ügyféllistával és pipákkal + saját neves háttér-olvasás (csak GET)
   asp: {
     readWindow: opts => ipcRenderer.invoke('asp:readWindow', opts && typeof opts === 'object' ? {
@@ -79,6 +81,7 @@ contextBridge.exposeInMainWorld('iratkapuDesktop', {
     downloadManual: (key, req) => ipcRenderer.invoke('auto:downloadManual', String(key), { messageId: String((req && req.messageId) || ''), sent: !!(req && req.sent) }),
     // Csak az irat azonosítója megy át; hogy letölthető-e, azt a főfolyamat a szervertől kérdezi meg, és csak automatikus típust enged.
     downloadOne: (key, req) => ipcRenderer.invoke('auto:downloadOne', String(key), { messageId: String((req && req.messageId) || ''), viaRuleId: Number.isInteger(req && req.viaRuleId) ? req.viaRuleId : null }),
+    onProgress: cb => { ipcRenderer.removeAllListeners('auto:progress'); if (typeof cb === 'function') ipcRenderer.on('auto:progress', (_e, p) => cb(p)); },
   },
   lock: {
     get: () => ipcRenderer.invoke('lock:get'),

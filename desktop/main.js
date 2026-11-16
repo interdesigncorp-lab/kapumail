@@ -573,12 +573,22 @@ function registerIpc() {
     autoCtl.recordWindowResult(String(key), res);
     return res;
   });
+  const sendProgress = (sender, channel, payload) => {
+    try { if (sender && !sender.isDestroyed()) sender.send(channel, payload); } catch { /* ablak bezárult */ }
+  };
   ipcMain.handle('live:windowVisible', (e, vis) => { guard(e); return live.setWindowVisible(Boolean(vis)); });
   ipcMain.handle('live:close', async e => { guard(e); await live.close(); return { ok: true }; });
   ipcMain.handle('live:mailboxes', e => { guard(e); return live.mailboxes(); });
   ipcMain.handle('live:list', async (e, since, filter, opts) => {
     guard(e);
-    const r = await live.list(since ? String(since) : null, { mailboxFilter: cleanFilter(filter), includeSent: !!(opts && opts.sent) });
+    const r = await live.list(since ? String(since) : null, {
+      mailboxFilter: cleanFilter(filter),
+      includeSent: !!(opts && opts.sent),
+      onProgress: p => sendProgress(e.sender, 'live:progress', {
+        index: p.index, total: p.total,
+        text: `Postafiók (${p.index} / ${p.total}): ${p.mailbox} – ${p.folder}${p.page > 1 ? ` (${p.page}. oldal)` : ''}…`,
+      }),
+    });
     if (!r.ok) return r;
     const letters = slimLiveLetters(r);
     ledger.record(letters);
@@ -696,28 +706,59 @@ function registerIpc() {
       if (!(await tarhelyAuto.eligibleClients([key], async () => creds)).length) return { ok: false, ineligible: true, error: 'Ehhez a belépőhöz nincs felügyelet nélküli belépésre alkalmas (TOTP-kulcsos) hitelesítő elmentve.' };
       let data;
       try {
+        const want = (Array.isArray(clientIds) ? clientIds : []).map(String).filter(x => /^(\d{8}|8\d{9})$/.test(x)).slice(0, navHttp.MAX_CLIENTS);
+        const navStep = (pct, text) => sendProgress(e.sender, 'nav:progress', { key, pct: Math.max(0, Math.min(92, Math.round(pct))), text: String(text || '').slice(0, 220) });
         // A tárhely szinkronja közvetlenül előtte ugyanezzel a kulccsal lépett be. Megvárjuk a következő kódablakot, hogy a
         // NAV-belépés ne ugyanazt a hatjegyű kódot használja újra (azt az azonosító szolgáltató elutasíthatja).
-        await new Promise(r => setTimeout(r, (secondsLeftInWindow() + 1) * 1000));
+        const waitSec = secondsLeftInWindow() + 1;
+        for (let rem = waitSec; rem > 0; rem--) {
+          navStep(4 + ((waitSec - rem) / Math.max(1, waitSec)) * 8, `Új 6 jegyű hitelesítő kódra várunk (${rem} mp)…`);
+          await new Promise(r => setTimeout(r, 1000));
+        }
         markTotpUsed(key);
+        navStep(14, 'Belépés a NAV ügyfélportálra (KAÜ)…');
         const ctx = await navHttp.loginNav({ username: creds.username, password: creds.password, seed: creds.totpSeed });
-        data = await navHttp.readOwn(ctx);
+        const ownEnd = want.length ? 32 : (queries === true ? 46 : 88);
+        data = await navHttp.readOwn(ctx, {
+          onStep: s => navStep(16 + ((s.step || 1) / (s.total || 7)) * (ownEnd - 16), s.text),
+        });
         // B kör (ADR-010): képviselet-váltás csak akkor, ha a szerver célokat adott (ott tulajdonosi kapcsoló engedi). Csak arra
         // az adózóra váltunk, akit a NAV maga is a belépő képviselt adózói között sorol fel; a végén a modul visszavált.
-        const want = (Array.isArray(clientIds) ? clientIds : []).map(String).filter(x => /^(\d{8}|8\d{9})$/.test(x)).slice(0, navHttp.MAX_CLIENTS);
         if (want.length) {
           const targets = (data.profiles || []).filter(p => (p.stem && want.includes(p.stem)) || (!p.stem && p.taxId && want.includes(p.taxId)));
-          data.clients = targets.length ? await navHttp.readClients(ctx, data.user.profileId, targets, { queries: queries === true }) : { clients: [], restored: true, skipped: 0, error: null };
+          const clStart = 34, clEnd = queries === true ? 74 : 88, subsPerClient = queries === true ? 5 : 2;
+          data.clients = targets.length ? await navHttp.readClients(ctx, data.user.profileId, targets, {
+            queries: queries === true,
+            onStep: s => {
+              const frac = Math.min(1, ((s.index || 0) + Math.min(1, (s.sub || 0) / subsPerClient)) / Math.max(1, s.count || targets.length));
+              navStep(clStart + frac * (clEnd - clStart), s.text);
+            },
+          }) : { clients: [], restored: true, skipped: 0, error: null };
         }
-        // C kör: a beadott bevallások lekérdezése a kiválasztott (a váltások után megint a saját) adózóra – csak kérésre.
+        // C kör: a beadott bevallások, dokumentumok és adózói táblák lekérdezése a kiválasztott (a váltások után megint a saját) adózóra – csak kérésre.
         if (queries === true && data.subject && (!data.clients || data.clients.restored !== false)) {
+          const qStart = want.length ? 75 : 48;
           const own = data.subject.stem || data.subject.taxId;
-          if (own) { Object.assign(data, await navHttp.withReturns(ctx, own, {})); Object.assign(data, await navHttp.withDocuments(ctx, own, {})); }
+          if (own) {
+            Object.assign(data, await navHttp.withReturns(ctx, own, {}, { onStep: s => navStep(qStart + 3, `Saját ${s.text}`) }));
+            Object.assign(data, await navHttp.withDocuments(ctx, own, {}, { onStep: s => navStep(qStart + 7, `Saját ${s.text}`) }));
+          }
+          const pid = data.user && (data.user.subjectProfileId || data.user.profileId);
+          let ttIdx = 0;
+          if (pid) Object.assign(data, await navHttp.withTaxpayerTables(ctx, pid, {}, {
+            kind: (data.user && data.user.subjectKind) || null,
+            onStep: lbl => { ttIdx++; navStep(Math.min(90, qStart + 9 + ttIdx * 3), `Adózói táblák: ${lbl}…`); },
+          }));
         }
         // Összegzés a naplóba, érték nélkül: ebből látszik, mi futott le és mi nem (darabszámok és hibaokok).
         const di = x => (x && x.documentsInfo ? (x.documentsInfo.error ? `hiba: ${x.documentsInfo.error}` : `${(x.documents || []).length} / ${x.documentsInfo.total} sor`) : 'nem futott');
         const ri = x => (x && x.returnsInfo ? (x.returnsInfo.error ? `hiba: ${x.returnsInfo.error}` : `${(x.returns || []).length} / ${x.returnsInfo.total} sor`) : 'nem futott');
-        console.log(`NAV-olvasás: ${(data.profiles || []).length} képviselt adózó; kért ügyfél: ${want.length}; váltás: ${data.clients ? `${data.clients.clients.filter(c => c.ok).length} sikeres, ${data.clients.clients.filter(c => !c.ok).length} sikertelen, visszaváltás ${data.clients.restored ? 'rendben' : 'NEM IGAZOLT'}${data.clients.error ? ', megszakadt: ' + data.clients.error : ''}` : 'nem volt'}; bevallás-lekérdezés (saját): ${queries === true ? ri(data) : 'kikapcsolva'}${data.clients ? '; ügyfeleknél: ' + (data.clients.clients.map(c => (c.ok ? ri(c) : 'kihagyva')).join(' | ') || '–') : ''}; dokumentumok (saját): ${queries === true ? di(data) : 'kikapcsolva'}${data.clients ? '; ügyfeleknél: ' + (data.clients.clients.map(c => (c.ok ? di(c) : 'kihagyva')).join(' | ') || '–') : ''}`);
+        const ti = x => {
+          if (!x || !x.taxpayerTables) return x && x.taxpayerTablesInfo && x.taxpayerTablesInfo.error ? `hiba: ${x.taxpayerTablesInfo.error}` : 'nem futott';
+          const t = x.taxpayerTables;
+          return `bizt:${Array.isArray(t.insured_persons) ? t.insured_persons.length : (t.insured_xlsx_base64 ? 'xlsx' : '–')},fogl:${Array.isArray(t.employers) ? t.employers.length : '–'},efo:${Array.isArray(t.efo_declarations) ? t.efo_declarations.length : '–'},egyezt:${Array.isArray(t.reconciliations) ? t.reconciliations.length : '–'}`;
+        };
+        console.log(`NAV-olvasás: ${(data.profiles || []).length} képviselt adózó; kért ügyfél: ${want.length}; váltás: ${data.clients ? `${data.clients.clients.filter(c => c.ok).length} sikeres, ${data.clients.clients.filter(c => !c.ok).length} sikertelen, visszaváltás ${data.clients.restored ? 'rendben' : 'NEM IGAZOLT'}${data.clients.error ? ', megszakadt: ' + data.clients.error : ''}` : 'nem volt'}; bevallás-lekérdezés (saját): ${queries === true ? ri(data) : 'kikapcsolva'}${data.clients ? '; ügyfeleknél: ' + (data.clients.clients.map(c => (c.ok ? ri(c) : 'kihagyva')).join(' | ') || '–') : ''}; dokumentumok (saját): ${queries === true ? di(data) : 'kikapcsolva'}${data.clients ? '; ügyfeleknél: ' + (data.clients.clients.map(c => (c.ok ? di(c) : 'kihagyva')).join(' | ') || '–') : ''}; adózói táblák (saját): ${queries === true ? ti(data) : 'kikapcsolva'}${data.clients ? '; ügyfeleknél: ' + (data.clients.clients.map(c => (c.ok ? ti(c) : 'kihagyva')).join(' | ') || '–') : ''}`);
       } catch (err) {
         const error = String((err && err.message) || err).slice(0, 300);
         // Csak a jelszóhibát számoljuk a közös tiltáshoz: a NAV-portál egyéb hibája ne tiltsa le a tárhely szinkronját.
@@ -894,6 +935,10 @@ function registerIpc() {
       guard(e);
       let summary; let simulator = false;
       const wantSent = !!(opts && opts.sent);
+      const emitAuto = s => sendProgress(e.sender, 'auto:progress', {
+        key: s.key, index: s.index, total: s.total, phase: s.phase,
+        mailbox: s.mailbox || null, folder: s.folder || null, mbIndex: s.mbIndex || null, mbTotal: s.mbTotal || null,
+      });
       if (process.env.IRATKAPU_SIMULATOR === '1' && !app.isPackaged) {
         simulator = true;
         // Fejlesztői mód: a valódi tárhely helyett a helyi szimulátor könyvelői mintája fut (hálózat nélkül).
@@ -904,7 +949,7 @@ function registerIpc() {
         // így a letöltés kapuja és a letöltés maga is kipróbálható hálózat nélkül.
         const simKey = Array.isArray(keys) && keys.length ? String(keys[0]) : 'konyvelo';
         autoSessions.clear();
-        summary = await tarhelyAuto.runClients([simKey], { getCreds: async () => twin.credentials.konyvelo, fetchImpl: twin.fetchImpl, sleep: async () => {}, sent: true, onSession: autoSessions.put,
+        summary = await tarhelyAuto.runClients([simKey], { getCreds: async () => twin.credentials.konyvelo, fetchImpl: twin.fetchImpl, sleep: async () => {}, sent: true, onSession: autoSessions.put, onStep: emitAuto,
           onProgress: r => { r.letters = slimLiveLetters(r, 50000); ledger.record(r.letters); } });
       } else {
         const all = portalKeys();
@@ -918,7 +963,7 @@ function registerIpc() {
         // Üres listanyilvántartásnál (az alkalmazás indítása utáni első futás) mindenkinél teljes lista kell: letölteni csak azt lehet, amit ebben a futásban listáztunk.
         if (ledger.size() === 0) for (const k of eligible) force[k] = true;
         autoSessions.clear(); // új futás: a régi munkamenetek nem kellenek
-        summary = await tarhelyAuto.runClients(eligible, { getCreds: k => readPortalCreds(k), state, filters: perKey, forceFull: force, sent: wantSent, onSession: autoSessions.put,
+        summary = await tarhelyAuto.runClients(eligible, { getCreds: k => readPortalCreds(k), state, filters: perKey, forceFull: force, sent: wantSent, onSession: autoSessions.put, onStep: emitAuto,
           onProgress: r => { if (r && r.key) markTotpUsed(r.key); r.letters = slimLiveLetters(r, 50000); ledger.record(r.letters); ledger.noteMailboxes(r.mailboxes); autoCtl.saver(state)(r); } });
       }
       // Figyelem: a `summary.ok` a sikeres ügyfelek SZÁMA, ezért külön mezőben adjuk át (okCount),
