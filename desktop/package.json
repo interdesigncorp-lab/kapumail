@@ -1,7 +1,7 @@
 {
   "name": "kapumail",
   "productName": "KapuMail",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "KapuMail asztali keret (Windows, macOS)",
   "main": "main.js",
   "private": true,

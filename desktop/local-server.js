@@ -73,6 +73,10 @@ function buildPhpEnvMap(paths, appUrl) {
     env.SSL_CERT_FILE = paths.caFile;
     env.CURL_CA_BUNDLE = paths.caFile;
   }
+  // A windowsos PHP-ben az OpenSSL kulcs- és tanúsítványkérelem-műveletei (openssl_csr_new stb.) csak
+  // openssl.cnf mellett működnek; enélkül a mintaadatok betöltése (aláírt minta e-akta) elbukik.
+  const sslConf = path.join(path.dirname(paths.php), 'extras', 'ssl', 'openssl.cnf');
+  if (fs.existsSync(sslConf)) env.OPENSSL_CONF = sslConf;
   return env;
 }
 
@@ -188,12 +192,18 @@ function runPhpCommand(paths, args, { timeoutMs = 60000, env = process.env } = {
       const child = spawn(paths.php, [...phpIniArgs(paths), ...args], {
         cwd: paths.appRoot,
         env: spawnEnv(paths, null, env),
-        stdio: ['ignore', 'ignore', 'pipe'],
+        stdio: ['ignore', 'pipe', 'pipe'],
         windowsHide: true,
       });
       let stderr = '';
+      let stdout = '';
       if (child.stderr) {
         child.stderr.on('data', (c) => { if (stderr.length < 4096) stderr += c.toString('utf8'); });
+      }
+      // Az artisan a hibáit a szabványos kimenetre írja; ennek a végét megőrizzük, különben a felhasználó
+      // csak általános hibaüzenetet lát, és a hiba oka távolról kideríthetetlen.
+      if (child.stdout) {
+        child.stdout.on('data', (c) => { stdout = (stdout + c.toString('utf8')).slice(-4096); });
       }
       const timer = setTimeout(() => {
         try { child.kill(); } catch {}
@@ -205,7 +215,8 @@ function runPhpCommand(paths, args, { timeoutMs = 60000, env = process.env } = {
       });
       child.on('close', (code) => {
         clearTimeout(timer);
-        resolve({ ok: code === 0, code, stderr: stderr.trim() });
+        const out = stdout.replace(/\s+/g, ' ').trim();
+        resolve({ ok: code === 0, code, stderr: stderr.trim() || (code === 0 ? '' : out.slice(-600)) });
       });
     } catch (err) {
       resolve({ ok: false, stderr: (err && err.message) || String(err) });
@@ -417,4 +428,6 @@ module.exports = {
   preparePackagedState,
   pickFreePort,
   pingHealth,
+  buildPhpEnvMap,
+  runPhpCommand,
 };

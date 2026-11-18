@@ -31,5 +31,13 @@ if (is_string($envDir = getenv('IRATKAPU_ENV_DIR') ?: null) && $envDir !== '') {
 if (is_string($storageDir = getenv('IRATKAPU_STORAGE_PATH') ?: null) && $storageDir !== '') {
     $app->useStoragePath($storageDir);
 }
+// Windowson a meghajtóbetűs útvonalat (C:\...) a Laravel nem tekinti abszolútnak (csak a / és \ kezdetűt),
+// ezért az adatmappába irányított gyorsítótárfájlok elé odafűzné a programkönyvtárat, és már a migráció
+// előtt elbukna („The C:\...\app-server\C:\...\cache directory must be present and writable”).
+foreach (['APP_SERVICES_CACHE', 'APP_PACKAGES_CACHE', 'APP_CONFIG_CACHE', 'APP_ROUTES_CACHE', 'APP_EVENTS_CACHE'] as $cacheKey) {
+    if (is_string($cachePath = getenv($cacheKey) ?: null) && preg_match('/^[A-Za-z]:[\\\\\/]/', $cachePath) === 1) {
+        $app->addAbsoluteCachePathPrefix(substr($cachePath, 0, 3));
+    }
+}
 
 return $app;

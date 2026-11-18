@@ -9,10 +9,10 @@
 //  5. Felépíti és Developer ID-val aláírja a `KapuMail.app` csomagokat (arm64 és x64), ellenőrzi a beépített PHP/SQLite
 //     futását írásvédett programkönyvtár mellett, majd Apple-notarizálja és tűzi (`stapler`) mindkét `.app`-ot.
 //  6. Becsomagolja, aláírja, notarizálja, tűzi és Gatekeeperrel (`spctl`) ellenőrzi a két `.dmg` lemezképet:
-//       - desktop/dist/KapuMail-0.2.4-arm64.dmg
-//       - desktop/dist/KapuMail-0.2.4-x64.dmg
+//       - desktop/dist/KapuMail-0.2.5-arm64.dmg
+//       - desktop/dist/KapuMail-0.2.5-x64.dmg
 //  7. Felépíti a Windows x64 telepítőt Kapu-plüss ikonnal:
-//       - desktop/dist/KapuMail-Setup-0.2.4.exe
+//       - desktop/dist/KapuMail-Setup-0.2.5.exe
 //  8. Frissíti a `marketing/landing/letoltes/` szimlinkeket és kiírja a SHA-256 ellenőrzőösszegeket.
 
 const { execFile, execFileSync, spawnSync } = require('node:child_process');
@@ -67,6 +67,8 @@ const WIN_PHP_FILES = [
   'ext/php_sodium.dll',
   'ext/php_sqlite3.dll',
   'ext/php_zip.dll',
+  // Az OpenSSL kulcs- és tanúsítványkérelem-műveleteihez Windowson kötelező (OPENSSL_CONF, lásd local-server.js).
+  'extras/ssl/openssl.cnf',
 ];
 
 function log(msg) {
@@ -507,6 +509,7 @@ async function buildWindowsInstaller(winPhpDir, appServerDir) {
     'php/vcruntime140_1.dll',
     'php/php.ini',
     'php/cacert.pem',
+    'php/extras/ssl/openssl.cnf',
     'php/ext/php_pdo_sqlite.dll',
     'app-server/vendor/autoload.php',
     'app-server/artisan',

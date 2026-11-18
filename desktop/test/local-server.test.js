@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const net = require('node:net');
-const { resolvePaths, preparePackagedState, pickFreePort, createLocalServer } = require('../local-server');
+const { resolvePaths, preparePackagedState, pickFreePort, createLocalServer, buildPhpEnvMap, runPhpCommand } = require('../local-server');
 const { userAgent } = require('../mode');
 
 test('resolvePaths: fejlesztői és csomagolt útvonalak elválasztása', () => {
@@ -76,6 +76,33 @@ test('preparePackagedState: létrehozza az írható adatmappát, .env-et, router
     const second = preparePackagedState(paths);
     assert.equal(second.isNewDb, false);
     assert.equal(fs.readFileSync(path.join(paths.stateDir, '.env'), 'utf8'), envText);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('runPhpCommand: a szabványos kimenetre írt hibát is visszaadja (az artisan oda írja a hibáit)', async () => {
+  const paths = { isPackaged: false, php: 'php', appRoot: os.tmpdir() };
+  const failed = await runPhpCommand(paths, ['-r', 'echo "In PackageManifest.php line 179:\n\n  A cache mappa nem irhato.  \n"; exit(1);']);
+  assert.equal(failed.ok, false);
+  assert.match(failed.stderr, /PackageManifest\.php line 179: A cache mappa nem irhato\./);
+
+  const viaStderr = await runPhpCommand(paths, ['-r', 'echo "zaj"; fwrite(STDERR, "valodi hiba"); exit(1);']);
+  assert.equal(viaStderr.stderr, 'valodi hiba');
+
+  const fine = await runPhpCommand(paths, ['-r', 'echo "minden rendben";']);
+  assert.deepEqual({ ok: fine.ok, stderr: fine.stderr }, { ok: true, stderr: '' });
+});
+
+test('buildPhpEnvMap: ha a PHP mellett van openssl.cnf (Windows), OPENSSL_CONF rámutat', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kapu-ls-ssl-'));
+  try {
+    const paths = resolvePaths({ isPackaged: true, appDir: tmp, resourcesPath: tmp, userData: path.join(tmp, 'u'), platform: 'darwin' });
+    assert.equal('OPENSSL_CONF' in buildPhpEnvMap(paths), false);
+    const conf = path.join(tmp, 'php', 'extras', 'ssl', 'openssl.cnf');
+    fs.mkdirSync(path.dirname(conf), { recursive: true });
+    fs.writeFileSync(conf, '# teszt');
+    assert.equal(buildPhpEnvMap(paths).OPENSSL_CONF, conf);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
