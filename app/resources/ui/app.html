@@ -2870,7 +2870,9 @@ const ONB={on:false,i:0,steps:[],lock:null,lockDone:false,err:'',code:''};
 // A belépés a főfolyamatban rejtett munkamenetben fut, a szolgáltató OAuth-oldala a böngészőben nyílik, mi csak az állapotot figyeljük.
 const KB=()=>window.iratkapuDesktop&&window.iratkapuDesktop.kapu;
 const ONBK_E=[['claude','Claude','Anthropic','Claude Pro vagy Max előfizetés'],['codex','ChatGPT','OpenAI','ChatGPT Plus vagy Pro előfizetés (Codex)'],['agy','Antigravity','Google','Google-fiók (Gemini)']];
-const ONBK={eng:null,loading:false,sel:null,sign:null,hidden:false,cmd:'',url:'',code:false,err:'',ok:null,busy:false,timer:0,t0:0};
+const ONBK={eng:null,loading:false,sel:null,sign:null,inst:null,instSrc:'',hidden:false,cmd:'',url:'',code:false,err:'',ok:null,busy:false,timer:0,t0:0};
+// A hiányzó parancssort a szolgáltató hivatalos telepítőjével a háttérben feltesszük (régebbi asztali appban ez nincs).
+const onbCanInst=()=>{const B=KB();return !!(B&&B.install)};
 const onbKapuLabel=e=>(ONBK_E.find(x=>x[0]===e)||[])[1]||e;
 const onbMark=e=>window.KapuMark?KapuMark(e):'';
 const onbCanSync=()=>!!(PORTALS.length&&window.iratkapuDesktop&&window.iratkapuDesktop.auto&&canAdmin());
@@ -2881,27 +2883,32 @@ function onbKapuHtml(){const K=ONBK;
   if(K.ok)return head+`<div class="onb-ok">${onbMark(K.ok)}Kapu bekapcsolva, a(z) ${esc(onbKapuLabel(K.ok))}-előfizetéseddel dolgozik.</div>
    <p style="margin-top:14px">A bal oldali sávban a Kapu-gombbal nyitod meg. Kérdezz tőle bármit a fiókodról, vagy beszélgess vele élőszóban.</p>
    <div class="onb-acts"><button class="btn" data-onbnext>Tovább</button></div>`;
+  if(K.inst)return head+`<div class="onb-wait" role="status"><span class="onb-wmk">${onbMark(K.inst)}<span class="ks-spin"></span></span><div><b>Telepítjük a(z) ${esc(onbKapuLabel(K.inst))} parancssori eszközét.</b> A szolgáltató hivatalos telepítője fut${K.instSrc?` (${esc(K.instSrc)})`:''}, rendszergazdai jog nem kell. Ez általában 1–3 perc; utána magától jön a belépés.</div></div>
+   <div class="onb-acts"><button class="skip" data-onbnext>Most kihagyom (a telepítés a háttérben befejeződik)</button></div>`;
   if(K.sign)return head+`<div class="onb-wait" role="status"><span class="onb-wmk">${onbMark(K.sign)}<span class="ks-spin"></span></span><div>${K.hidden
      ?`<b>Megnyitottuk a(z) ${esc(onbKapuLabel(K.sign))} belépőoldalát a böngésződben.</b> Lépj be az előfizetéses fiókoddal, és engedélyezd a hozzáférést. Utána magától továbblépünk.`
      :`<b>Megnyitottuk a Terminált a(z) ${esc(onbKapuLabel(K.sign))} belépéséhez.</b> Kövesd az ott látható lépéseket; utána magától továbblépünk.${K.cmd?` Ha nem nyílt meg, futtasd: <code>${esc(K.cmd)}</code>`:''}`}</div></div>
    ${K.code?`<form class="onb-f" data-onbkcode><label>A böngésző egy kódot mutat? Másold ide:<input type="text" name="c" autocomplete="off" spellcheck="false" placeholder="belépési kód" required></label><button class="btn ghost">Kód elküldése</button></form>`:''}
    ${K.err?`<div class="mut" role="alert" style="margin-top:10px;color:var(--red);font-weight:600">${esc(K.err)}</div>`:''}
    <div class="onb-acts">${K.url?`<button class="btn ghost" data-onbkopen>${ic('k-login')}Belépőoldal újranyitása</button>`:''}<button class="skip" data-onbkcancel>Mégse, másikat választok</button></div>`;
-  const row=([e,n,mk,d])=>{const s=(K.eng||[]).find(x=>x.engine===e),ok=s&&s.installed;
-    const chip=!K.eng?'<span class="st na">Ellenőrzés…</span>':!ok?'<span class="st na">Nincs telepítve</span>':s.signedIn?`<span class="st ok">${ic('check')}Be vagy lépve</span>`:'<span class="st wait">Belépés a böngészőben</span>';
+  const inst=onbCanInst();
+  const row=([e,n,mk,d])=>{const s=(K.eng||[]).find(x=>x.engine===e),ok=s&&s.installed||inst;
+    const chip=!K.eng?'<span class="st na">Ellenőrzés…</span>':!(s&&s.installed)?`<span class="st na">${inst?'Telepítjük':'Nincs telepítve'}</span>`:s.signedIn?`<span class="st ok">${ic('check')}Be vagy lépve</span>`:'<span class="st wait">Belépés a böngészőben</span>';
     return `<label class="onb-eng${K.sel===e?' on':''}${K.eng&&!ok?' off':''}"><input type="radio" name="onbk" value="${e}" ${K.sel===e?'checked':''} ${K.eng&&!ok?'disabled':''}>${window.KapuMark?KapuMark(e):`<span class="keng ${e}">${({claude:'C',codex:'G',agy:'A'})[e]}</span>`}<span class="nm"><b>${n}</b><small>${esc(d)}</small></span>${chip}</label>`};
   const missing=K.eng&&K.eng.some(x=>!x.installed);
+  const selS=K.sel&&(K.eng||[]).find(x=>x.engine===K.sel),selNew=!!(K.sel&&K.eng&&!(selS&&selS.installed));
   return head+`<p>Ha van Claude-, ChatGPT- vagy Antigravity-előfizetésed, <b>Kapu</b>, a KapuMail AI-segédje azzal dolgozik. Átlátja a fiókodban lévő iratokat, határidőket és ügyfeleket, és ismeri az adózási jogszabályokat, ezért a te ügyeidre szabott választ ad. Írhatsz neki, vagy élőszóban is beszélgethetsz vele.</p>
    <ul class="onb-ex"><li>„Mi érkezett ma, és mi sürgős belőle?”</li><li>„Kinek jár le határidő ezen a héten?”</li><li>„Mit jelent ez a NAV-végzés, és mi a teendőm?”</li></ul>
    <div class="onb-engs" role="radiogroup" aria-label="Melyik előfizetésed van?"><span class="onb-lbl">Melyik előfizetésed van? Egyet választhatsz.</span>${ONBK_E.map(row).join('')}</div>
-   ${missing?`<p class="mut" style="margin:8px 0 0;font-size:12.5px">A „Nincs telepítve” jelű szolgáltatóhoz előbb a parancssori eszközét kell telepíteni (Claude Code, Codex vagy Antigravity CLI). <button type="button" class="lnk" data-onbkrecheck>Újra ellenőrzöm</button></p>`:''}
+   ${missing?(inst?`<p class="mut" style="margin:8px 0 0;font-size:12.5px">A „Telepítjük” jelű szolgáltató parancssori eszköze még nincs ezen a gépen. Ha azt választod, a KapuMail a szolgáltató hivatalos telepítőjével felteszi; rendszergazdai jog nem kell. Az előfizetésedet a belépésnél ellenőrizzük. <button type="button" class="lnk" data-onbkrecheck>Újra ellenőrzöm</button></p>`
+     :`<p class="mut" style="margin:8px 0 0;font-size:12.5px">A „Nincs telepítve” jelű szolgáltatóhoz előbb a parancssori eszközét kell telepíteni (Claude Code, Codex vagy Antigravity CLI). <button type="button" class="lnk" data-onbkrecheck>Újra ellenőrzöm</button></p>`):''}
    ${K.err?`<div class="mut" role="alert" style="margin-top:10px;color:var(--red);font-weight:600">${esc(K.err)}</div>`:''}
-   <div class="onb-acts"><button class="btn" data-onbkgo ${!K.sel||K.busy?'disabled':''}>${K.busy?'Bekapcsolás…':K.sel?onbMark(K.sel)+'Összekapcsolás: '+esc(onbKapuLabel(K.sel)):'Válassz szolgáltatót'}</button><button class="skip" data-onbnext>Nincs ilyen előfizetésem, kihagyom</button></div>
+   <div class="onb-acts"><button class="btn" data-onbkgo ${!K.sel||K.busy?'disabled':''}>${K.busy?'Bekapcsolás…':K.sel?onbMark(K.sel)+(selNew?'Telepítés és összekapcsolás: ':'Összekapcsolás: ')+esc(onbKapuLabel(K.sel)):'Válassz szolgáltatót'}</button><button class="skip" data-onbnext>Nincs ilyen előfizetésem, kihagyom</button></div>
    <p class="mut" style="margin:12px 0 0;font-size:12.5px">Amit Kaputól kérdezel, és amit ehhez a fiókodból lekér, a választott szolgáltatóhoz kerül; a beszélgetések csak ezen a gépen maradnak. Később a Beállítások → Kapu lapon cserélheted vagy kikapcsolhatod.</p>`}
 async function onbKapuLoad(){const B=KB();if(!B||ONBK.loading)return;ONBK.loading=true;
   const c=await B.config().catch(()=>null);if(c&&c.ok&&c.on&&c.engine&&c.hasToken)ONBK.ok=c.engine;
   const s=await B.status().catch(()=>null);ONBK.loading=false;ONBK.eng=s&&s.ok?(s.engines||[]):[];
-  if(!ONBK.sel||!ONBK.eng.some(x=>x.engine===ONBK.sel&&x.installed)){const f=ONBK.eng.find(x=>x.signedIn)||ONBK.eng.find(x=>x.installed);ONBK.sel=f?f.engine:null}
+  if(!ONBK.sel||!(onbCanInst()||ONBK.eng.some(x=>x.engine===ONBK.sel&&x.installed))){const f=ONBK.eng.find(x=>x.signedIn)||ONBK.eng.find(x=>x.installed);ONBK.sel=f?f.engine:null}
   if(ONB.steps[ONB.i]&&ONB.steps[ONB.i].id==='kapu')onbRender()}
 function onbKapuStop(){clearTimeout(ONBK.timer);ONBK.sign=null;ONBK.url='';ONBK.code=false;const B=KB();B&&B.cancelSignIn().catch(()=>{})}
 async function onbKapuEnable(e){const B=KB();ONBK.busy=true;ONBK.err='';onbRender();
@@ -2912,10 +2919,22 @@ async function onbKapuEnable(e){const B=KB();ONBK.busy=true;ONBK.err='';onbRende
   ONBK.ok=e;if(window.KapuView)KapuView.sync({on:true,engine:e,hasToken:true},ONBK.eng);if(window.KapuSettings)KapuSettings.sync({on:true,engine:e,hasToken:true});onbRender()}
 async function onbKapuGo(){const e=ONBK.sel,B=KB();if(!e||!B)return;const s=(ONBK.eng||[]).find(x=>x.engine===e);
   if(s&&s.signedIn)return onbKapuEnable(e);
+  if(!(s&&s.installed)&&B.install)return onbKapuInstall(e);
   ONBK.err='';ONBK.sign=e;ONBK.url='';ONBK.code=false;ONBK.hidden=true;ONBK.t0=Date.now();onbRender();
   const r=await B.signIn(e).catch(x=>({ok:false,error:x&&x.message}));if(ONBK.sign!==e)return;
   if(!r||!r.ok){ONBK.sign=null;ONBK.err=(r&&r.error)||'A belépés nem indult el.';onbRender();return}
   ONBK.hidden=!!r.hidden;ONBK.cmd=r.command||'';onbRender();ONBK.timer=setTimeout(onbKapuTick,1500)}
+// Telepítés a háttérben, 2 mp-enként figyelve; ha kész, magától indul a belépés.
+async function onbKapuInstall(e){const B=KB();ONBK.err='';ONBK.inst=e;ONBK.instSrc='';onbRender();
+  const r=await B.install(e).catch(x=>({ok:false,error:x&&x.message}));
+  if(!r||!r.ok){ONBK.inst=null;ONBK.err=(r&&r.error)||'A telepítés nem indult el.';onbRender();return}
+  ONBK.instSrc=r.source||'';onbRender();ONBK.timer=setTimeout(()=>onbKapuInstTick(e),2000)}
+async function onbKapuInstTick(e){const B=KB();if(ONBK.inst!==e||!ONB.on)return;
+  const st=await B.installState().catch(()=>null);if(ONBK.inst!==e)return;
+  if(st&&st.ok&&st.running){ONBK.timer=setTimeout(()=>onbKapuInstTick(e),2000);return}
+  const s=await B.status().catch(()=>null);if(s&&s.ok)ONBK.eng=s.engines||ONBK.eng;ONBK.inst=null;
+  if(st&&st.ok&&st.engine===e&&st.installed&&ONBK.eng.some(x=>x.engine===e&&x.installed)){onbRender();return onbKapuGo()}
+  ONBK.err=(st&&st.error)||'A telepítés nem sikerült. Próbáld újra.';onbRender()}
 async function onbKapuTick(){const e=ONBK.sign,B=KB();if(!e||!B||!ONB.on)return;
   if(Date.now()-ONBK.t0>600000){onbKapuStop();ONBK.err='Tíz percig nem láttuk a belépést. Próbáld újra.';onbRender();return}
   if(ONBK.hidden){const st=await B.signInState().catch(()=>null);if(ONBK.sign!==e)return;
@@ -3209,7 +3228,7 @@ function updWhenTxt(iso){
 function updateCardHtml(){
   const U=window.iratkapuDesktop&&window.iratkapuDesktop.updater;
   if(!U)return '';
-  const st=UPD.state,ver=esc((st&&st.current)||(navigator.userAgent.match(/KapuMail-Desktop\/([\d.]+)/)||[])[1]||'0.2.6');
+  const st=UPD.state,ver=esc((st&&st.current)||(navigator.userAgent.match(/KapuMail-Desktop\/([\d.]+)/)||[])[1]||'0.2.7');
   const renew=!!(OFFICE.license&&OFFICE.license.officialBuild&&!OFFICE.license.canSync);
   const lines=[`<p class="mut" style="margin:0 0 6px">Ez a KapuMail <b>${ver}</b>.</p>`];
   if(st&&!st.enabled){

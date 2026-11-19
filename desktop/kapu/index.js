@@ -62,6 +62,7 @@ function createKapu({
   providers = require('./providers'),
   models = require('./models'),
   hiddenSignIn = require('./signin').create(),
+  installer = require('./installer').createInstaller(),
 }) {
   const ENGINES = providers.ENGINES;
   let scope = null;
@@ -325,6 +326,15 @@ function createKapu({
       return { ok: false, command, error: (e && e.message) || 'A terminál nem nyílt meg.' };
     }
   }
+  /** A hiányzó parancssor telepítése a szolgáltató hivatalos telepítőjével, a háttérben (a felület az installState-et figyeli). */
+  function install(engine) {
+    if (!ENGINES.includes(engine)) throw new Error('Ismeretlen motor.');
+    const r = installer.start(engine);
+    if (r && r.ok) liveTried[engine] = false;
+    return r;
+  }
+  /** A telepítés állapota: {running, engine, installed?, error?, source?}. */
+  const installState = () => installer.state();
   /** A rejtett belépés állapota: {running, engine, url, needsCode}. */
   const signInState = () => hiddenSignIn.state();
   /** A szolgáltató oldalán kapott kód továbbítása a rejtett belépésnek. */
@@ -511,7 +521,7 @@ function createKapu({
   return {
     start() { try { isolation.sweep(userData); } catch { /* következő indításkor */ } },
     warmup,
-    resetScope, config, setConfig, hasToken, storeToken, status, signIn, signInState, signInCode, signInUrlOk, cancelSignIn, lockStop, modelCatalog, setModel,
+    resetScope, config, setConfig, hasToken, storeToken, status, install, installState, signIn, signInState, signInCode, signInUrlOk, cancelSignIn, lockStop, modelCatalog, setModel,
     scope: async () => ({ ...(await ready()).scope }),
     list: async () => (await ready()).store.list(),
     get: async (id) => (await ready()).store.get(id),

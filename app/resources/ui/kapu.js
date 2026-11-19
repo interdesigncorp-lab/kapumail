@@ -1362,7 +1362,7 @@
     if (K.dd) {
       dd = '<div class="kdd" role="menu">' + ORDER.map(function (x) {
         var s = engInfo(x), ok = s && s.signedIn;
-        var sub = !K.engines ? 'Ellenőrzés…' : !s || !s.installed ? 'Nincs telepítve' : !s.signedIn ? 'Nincs bejelentkezve – belépés a beállításoknál' : 'Bejelentkezve' + (s.account ? ': ' + s.account.charAt(0).toUpperCase() + s.account.slice(1) : '');
+        var sub = !K.engines ? 'Ellenőrzés…' : !s || !s.installed ? 'Nincs telepítve – a beállításoknál telepíthető' : !s.signedIn ? 'Nincs bejelentkezve – belépés a beállításoknál' : 'Bejelentkezve' + (s.account ? ': ' + s.account.charAt(0).toUpperCase() + s.account.slice(1) : '');
         return '<button type="button" role="menuitemradio" aria-checked="' + (x === e) + '" data-keng="' + x + '"' + (ok || (s && s.installed) ? '' : ' disabled') + '>' +
           engMark(x) + '<span>' + ENG[x] + '<small>' + esc(sub) + '</small></span>' + (x === e ? '<span class="ck">' + ic('check') + '</span>' : '') + '</button>';
       }).join('') + '<div class="kdd-f"><button type="button" data-stab="kapu">' + ic('gear') + 'Kapu beállításai</button></div></div>';

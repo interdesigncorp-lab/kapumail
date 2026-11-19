@@ -9,10 +9,10 @@
 //  5. Felépíti és Developer ID-val aláírja a `KapuMail.app` csomagokat (arm64 és x64), ellenőrzi a beépített PHP/SQLite
 //     futását írásvédett programkönyvtár mellett, majd Apple-notarizálja és tűzi (`stapler`) mindkét `.app`-ot.
 //  6. Becsomagolja, aláírja, notarizálja, tűzi és Gatekeeperrel (`spctl`) ellenőrzi a két `.dmg` lemezképet:
-//       - desktop/dist/KapuMail-0.2.6-arm64.dmg
-//       - desktop/dist/KapuMail-0.2.6-x64.dmg
+//       - desktop/dist/KapuMail-0.2.7-arm64.dmg
+//       - desktop/dist/KapuMail-0.2.7-x64.dmg
 //  7. Felépíti a Windows x64 telepítőt Kapu-plüss ikonnal:
-//       - desktop/dist/KapuMail-Setup-0.2.6.exe
+//       - desktop/dist/KapuMail-Setup-0.2.7.exe
 //  8. Frissíti a `marketing/landing/letoltes/` szimlinkeket és kiírja a SHA-256 ellenőrzőösszegeket.
 
 const { execFile, execFileSync, spawnSync } = require('node:child_process');

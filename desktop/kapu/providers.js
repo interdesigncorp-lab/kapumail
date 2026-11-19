@@ -46,7 +46,11 @@ function resolveBin(engine, env = process.env, platform = process.platform) {
   checkEngine(engine);
   const win = platform === 'win32';
   const home = env.HOME || env.USERPROFILE || os.homedir();
-  const dirs = [...(env.PATH || env.Path || '').split(path.delimiter), path.join(home, '.local', 'bin'), '/opt/homebrew/bin', '/usr/local/bin'].filter(Boolean);
+  // A hivatalos telepítők célmappái is (a telepítés utáni PATH-ot a futó app nem látja). Windowson a Codex
+  // a %LOCALAPPDATA%\Programs\OpenAI\Codex\bin, az agy a %LOCALAPPDATA%\agy\bin alá telepít.
+  const local = win ? (env.LOCALAPPDATA || env.LocalAppData || (home ? path.join(home, 'AppData', 'Local') : '')) : '';
+  const winDirs = win && local ? [path.join(local, 'Programs', 'OpenAI', 'Codex', 'bin'), path.join(local, 'agy', 'bin')] : [];
+  const dirs = [...(env.PATH || env.Path || '').split(path.delimiter), path.join(home, '.local', 'bin'), ...winDirs, '/opt/homebrew/bin', '/usr/local/bin'].filter(Boolean);
   const names = win ? ['.exe', '.cmd', '.bat', ''].map((x) => engine + x) : [engine];
   for (const d of dirs) {
     for (const n of names) {

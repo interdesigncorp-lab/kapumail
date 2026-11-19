@@ -122,6 +122,8 @@ contextBridge.exposeInMainWorld('iratkapuDesktop', {
   // az új send a futót megszakítja és lecseréli, ezért a felület futás közben tiltsa a Küldést.
   kapu: {
     status: () => ipcRenderer.invoke('kapu:status'),
+    install: engine => ipcRenderer.invoke('kapu:install', String(engine)),
+    installState: () => ipcRenderer.invoke('kapu:installState'),
     signIn: engine => ipcRenderer.invoke('kapu:signIn', String(engine)),
     cancelSignIn: () => ipcRenderer.invoke('kapu:cancelSignIn'),
     signInState: () => ipcRenderer.invoke('kapu:signInState'),

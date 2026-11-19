@@ -387,6 +387,9 @@ function registerIpc() {
   // Kapu-chat: minden válasz {ok:true, ...} vagy {ok:false, error}. A hatókört (iroda, felhasználó) a főfolyamat a szervertől kérdezi.
   const kTry = async fn => { try { return await fn(); } catch (err) { return { ok: false, error: (err && err.message) || 'Hiba történt.' }; } };
   ipcMain.handle('kapu:status', e => { guard(e); return kTry(async () => ({ ok: true, engines: await kapu.status() })); });
+  // A hiányzó AI-parancssor telepítése (a szolgáltató hivatalos telepítője, rendszergazdai jog nélkül); az állapotot a felület kérdezi.
+  ipcMain.handle('kapu:install', (e, engine) => { guard(e); return kTry(async () => kapu.install(String(engine))); });
+  ipcMain.handle('kapu:installState', e => { guard(e); return kTry(async () => ({ ok: true, ...(await kapu.installState()) })); });
   ipcMain.handle('kapu:signIn', (e, engine) => { guard(e); return kTry(() => kapu.signIn(String(engine))); });
   ipcMain.handle('kapu:cancelSignIn', e => { guard(e); return kTry(() => kapu.cancelSignIn()); });
   ipcMain.handle('kapu:signInState', e => { guard(e); return kTry(async () => ({ ok: true, ...(await kapu.signInState()) })); });

@@ -11,7 +11,7 @@
   var POLL_MS = 2000, POLL_MAX_MS = 10 * 60 * 1000;
   var bridge = function () { return window.iratkapuDesktop && window.iratkapuDesktop.kapu; };
 
-  var SS = { cfg: null, engines: null, err: '', tokenErr: '', busy: false, signing: null, loaded: 0 };
+  var SS = { cfg: null, engines: null, err: '', tokenErr: '', busy: false, signing: null, installing: null, loaded: 0 };
 
   var cap = function (s) { s = String(s || ''); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; };
 
@@ -24,11 +24,16 @@
           : '<span class="st ok">' + ic('check') + 'Bejelentkezve' + (s.account ? ': ' + esc(cap(s.account)) : '') + '</span>';
     var acts = '';
     if (s && s.installed && !s.signedIn) acts += '<button type="button" class="kbtn sec" data-kssign="' + e + '"' + (SS.signing ? ' disabled' : '') + '>' + ic('k-login') + 'Belépés</button>';
-    if (SS.engines && (!s || !s.installed)) acts += '<button type="button" class="kbtn sec" data-ksrecheck>Újra ellenőrzöm</button>';
+    var canInst = !!(bridge() && bridge().install);
+    var busyInst = SS.installing && SS.installing.engine === e;
+    if (SS.engines && (!s || !s.installed) && canInst) acts += '<button type="button" class="kbtn sec" data-ksinstall="' + e + '"' + (SS.installing || SS.signing ? ' disabled' : '') + '>' + (busyInst ? '<span class="ks-spin" style="width:11px;height:11px;border-width:1.5px"></span>Telepítés…' : ic('down') + 'Telepítés') + '</button>';
+    if (SS.engines && (!s || !s.installed)) acts += '<button type="button" class="kbtn sec" data-ksrecheck' + (busyInst ? ' disabled' : '') + '>Újra ellenőrzöm</button>';
     return '<div class="ks-e' + (sel ? ' on' : '') + '"><label class="hd">' + (window.KapuMark ? KapuMark(e) : '<span class="keng ' + e + '">' + MARK[e] + '</span>') + '<span><b>' + ENG[e] + '</b><br><span class="mut" style="font-size:12px;font-weight:500">' + MAKER[e] + '</span></span>' +
       '<input type="radio" name="kseng" value="' + e + '"' + (sel ? ' checked' : '') + (s && s.signedIn ? '' : ' disabled') + ' aria-label="' + ENG[e] + ' használata"></label>' +
       st + (s && s.error ? '<span class="er">' + esc(s.error) + '</span>' : '') +
-      (!s || !s.installed ? (SS.engines ? '<span class="mut" style="font-size:12px">Telepítsd a(z) ' + ENG[e] + ' parancssori eszközét, majd ellenőrizd újra.</span>' : '') : '') +
+      (!s || !s.installed ? (SS.engines ? '<span class="mut" style="font-size:12px">' + (busyInst ? 'A szolgáltató hivatalos telepítője fut' + (SS.installing.source ? ' (' + esc(SS.installing.source) + ')' : '') + ', 1–3 perc. Utána jöhet a belépés.'
+        : canInst ? 'A parancssori eszköz még nincs a gépen. A Telepítés gomb a szolgáltató hivatalos telepítőjével felteszi, rendszergazdai jog nélkül.'
+          : 'Telepítsd a(z) ' + ENG[e] + ' parancssori eszközét, majd ellenőrizd újra.') + '</span>' : '') : '') +
       (acts ? '<div class="acts">' + acts + '</div>' : '') + '</div>';
   }
 
@@ -151,6 +156,37 @@
     g.timer = setTimeout(tick, POLL_MS);
   }
 
+  // A hiányzó parancssor telepítése a háttérben; ha kész, magától indul a belépés.
+  async function install(engine) {
+    var b = bridge();
+    if (!b || !b.install || !ENG[engine] || SS.installing) return;
+    var g = SS.installing = { engine: engine, source: '' };
+    paint();
+    var r = await b.install(engine).catch(function (e) { return { ok: false, error: e && e.message }; });
+    if (SS.installing !== g) return;
+    if (!r || !r.ok) { SS.installing = null; toast(esc((r && r.error) || 'A telepítés nem indult el.'), true); paint(); return; }
+    g.source = r.source || '';
+    paint();
+    var tick = async function () {
+      if (SS.installing !== g) return;
+      var st = await b.installState().catch(function () { return null; });
+      if (st && st.ok && st.running) { setTimeout(tick, POLL_MS); return; }
+      SS.installing = null;
+      var s = await b.status().catch(function () { return null; });
+      if (s && s.ok) SS.engines = s.engines || [];
+      var me = (SS.engines || []).filter(function (x) { return x.engine === engine; })[0];
+      if (st && st.ok && st.installed && me && me.installed) {
+        toast(ENG[engine] + ' telepítve.');
+        paint();
+        if (!me.signedIn && document.getElementById('kapuset')) signIn(engine);
+        return;
+      }
+      toast(esc((st && st.error) || 'A telepítés nem sikerült.'), true);
+      paint();
+    };
+    setTimeout(tick, POLL_MS);
+  }
+
   document.addEventListener('change', async function (e) {
     var t = e.target;
     if (!t.closest || !t.closest('#kapuset')) return;
@@ -177,6 +213,7 @@
     if (!t) return;
     var d = t.dataset;
     if (d.kssign) { signIn(d.kssign); return; }
+    if (d.ksinstall) { install(d.ksinstall); return; }
     if ('kscancel' in d) { stopSign(); bridge().cancelSignIn().catch(function () {}); paint(); return; }
     if ('kscopy' in d) {
       var cmd = SS.signing && SS.signing.command;
