@@ -91,6 +91,11 @@ Route::middleware('auth')->group(function () {
         Route::post('mcp/grants/{id}', [\App\Http\Controllers\McpController::class, 'grantLevel']);
         Route::delete('mcp/grants/{id}', [\App\Http\Controllers\McpController::class, 'revokeGrant']);
         Route::post('desktop/heartbeat', [\App\Http\Controllers\McpController::class, 'heartbeat'])->middleware('throttle:30,1');
+        // MCP-ből indítható szinkron (ADR-016): az asztali felület veszi fel és zárja le a kéréseket
+        Route::get('desktop/mcp-sync/next', [\App\Http\Controllers\McpSyncController::class, 'next'])->middleware('throttle:60,1');
+        Route::get('desktop/mcp-sync/{id}', [\App\Http\Controllers\McpSyncController::class, 'show'])->whereNumber('id')->middleware('throttle:60,1');
+        Route::post('desktop/mcp-sync/{id}/start', [\App\Http\Controllers\McpSyncController::class, 'start'])->whereNumber('id')->middleware('throttle:60,1');
+        Route::post('desktop/mcp-sync/{id}/finish', [\App\Http\Controllers\McpSyncController::class, 'finish'])->whereNumber('id')->middleware('throttle:60,1');
         // Kapu-chat (ADR-014): bármely bejelentkezett felhasználó a saját, szűk szintű tokenjét kéri
         Route::get('kapu/me', [\App\Http\Controllers\KapuController::class, 'me']);
         Route::get('kapu/premium', [\App\Http\Controllers\KapuController::class, 'premium'])->middleware('throttle:30,1');

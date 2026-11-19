@@ -316,6 +316,32 @@ class NavPortalTest extends TestCase
         $this->actingAs($lg)->postJson('/api/nav/ingest-clients', $body)->assertStatus(422);
     }
 
+    public function test_ujra_beolvasott_bevallasok_es_dokumentumok_uj_valtozott_es_valtozatlan_szerint_szamlalodnak(): void
+    {
+        config(['iratkapu.nav_switch' => true, 'iratkapu.nav_queries' => true]);
+        $lg = $this->u('LG');
+        $doc = ['barcode' => '8104920114', 'regNo' => '8104920114/2026/NAV', 'subject' => 'Havi bevallás', 'formCode' => '2608', 'submittedAt' => '2026-10-12 09:41', 'files' => 2];
+        $body = $this->clientsBody(); $body['clients'][0]['returns'] = self::RET; $body['clients'][0]['documents'] = [$doc];
+        $r = $this->actingAs($lg)->postJson('/api/nav/ingest-clients', $body)->assertOk()->json();
+        $this->assertSame([['new' => 2, 'changed' => 0, 'same' => 0], ['new' => 1, 'changed' => 0, 'same' => 0]], [$r['returnsTally'], $r['documentsTally']]);
+        $before = DB::table('nav_returns')->where('reg_no', '8100000002')->value('fetched_at');
+
+        $this->travel(1)->hours();
+        $r = $this->actingAs($lg)->postJson('/api/nav/ingest-clients', $body)->assertOk()->json();
+        $this->assertSame([['new' => 0, 'changed' => 0, 'same' => 2], ['new' => 0, 'changed' => 0, 'same' => 1]], [$r['returnsTally'], $r['documentsTally']], 'ugyanaz a lista nem „új”');
+        $this->assertNotSame($before, DB::table('nav_returns')->where('reg_no', '8100000002')->value('fetched_at'), 'az utoljára látva időpont frissül');
+
+        $body['clients'][0]['returns'][1]['state'] = 'Feldolgozott';
+        $body['clients'][0]['returns'] = [$body['clients'][0]['returns'][1]];
+        $r = $this->actingAs($lg)->postJson('/api/nav/ingest-clients', $body)->assertOk()->json();
+        $this->assertSame(['new' => 0, 'changed' => 1, 'same' => 0], $r['returnsTally']);
+        $this->assertSame(2, DB::table('nav_returns')->count(), 'a listából kimaradt sor nem törlődik');
+
+        $own = $this->ingest('LG', ['subject' => ['stem' => '24817365', 'taxId' => null, 'own' => false], 'returns' => self::RET, 'documents' => [$doc]])->assertOk()->json();
+        $this->assertSame(['new' => 0, 'changed' => 1, 'same' => 1], $own['returnsTally'], 'a saját néven küldött lista is számlál; az előbb módosult sor most visszaváltozott');
+        $this->assertSame(1, $own['documentsTally']['same']);
+    }
+
     public function test_a_sajat_neven_lekerdezett_bevallasok_csak_ismert_alanyhoz_tarolodnak(): void
     {
         config(['iratkapu.nav_queries' => true]);

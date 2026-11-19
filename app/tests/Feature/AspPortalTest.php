@@ -96,6 +96,21 @@ class AspPortalTest extends TestCase
         $this->assertNotNull($row, 'az irat megjelenik az iratok között');
     }
 
+    public function test_masnap_valtozatlan_kivonatbol_nem_lesz_uj_irat_valtozottbol_igen(): void
+    {
+        $lg = $this->u('LG');
+        $this->travelTo(now()->startOfDay()->addHours(9));
+        $this->assertSame(1, $this->actingAs($lg)->postJson('/api/asp/ingest', $this->body(self::FIRM))->assertOk()->json('filed'));
+        $this->travel(1)->days();
+        $this->assertSame(0, $this->actingAs($lg)->postJson('/api/asp/ingest', $this->body(self::FIRM))->assertOk()->json('filed'), 'ugyanaz a PDF nem lesz újra irat');
+        $this->assertSame(1, DB::table('messages')->where('source_id', 'like', 'asp:%')->count());
+        $this->assertNotNull(DB::table('asp_statements')->where('tenant_uid', 'szim-tenant-0001')->value('pdf_path'), 'a táblázat sora így is frissül');
+        $this->travel(1)->days();
+        $b = $this->body(self::FIRM); $b['tenants'][0]['balance']['pdfBase64'] = $this->pdf('uj-egyenleg');
+        $this->assertSame(1, $this->actingAs($lg)->postJson('/api/asp/ingest', $b)->assertOk()->json('filed'), 'megváltozott kivonatból új irat lesz');
+        $this->assertSame(2, DB::table('messages')->where('source_id', 'like', 'asp:%')->count());
+    }
+
     public function test_sajat_adat_magan_csak_a_beolvaso_latja(): void
     {
         $lg = $this->u('LG');

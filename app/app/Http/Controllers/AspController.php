@@ -101,6 +101,10 @@ class AspController extends Controller
         if (!$box) return false;
         $source = 'asp:' . $tenant['uid'] . ":$year:" . now()->toDateString();
         if (DB::table('messages')->where('mailbox_id', $box->id)->where('source_id', $source)->exists()) return false;
+        // Ha a legutóbbi iratként rögzített kivonat tartalma ugyanez, nem jön új irat: a változatlan kivonat ne jelenjen meg
+        // minden nap újként. A friss lekérdezés ideje és fájlja a „Helyi adók” táblázatban így is frissül.
+        $prev = DB::table('messages')->where('mailbox_id', $box->id)->where('source_id', 'like', 'asp:' . $tenant['uid'] . ":$year:%")->orderByDesc('id')->value('id');
+        if ($prev && DB::table('documents')->where('message_id', $prev)->where('sha256', hash('sha256', $bytes))->exists()) return false;
         $city = trim((string) ($tenant['city'] ?? '')) ?: 'önkormányzat';
         $id = DB::table('messages')->insertGetId([
             'office_id' => $u->office_id, 'client_id' => $client->id, 'mailbox_id' => $box->id, 'source_id' => $source,

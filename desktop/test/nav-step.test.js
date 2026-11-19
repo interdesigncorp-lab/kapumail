@@ -189,6 +189,23 @@ test('szinkron-összesítő sorok: tagolt, magyaros kulcs–érték sorok minden
   assert.match(r.rows[4].v, /<b>33 irat<\/b> az elmúlt fél évből/);
 });
 
+test('szinkron-összesítő: az újra beolvasott NAV-sorok új, változott és változatlan szerint jelennek meg, nem „átvéve”', async () => {
+  const readOwn = async () => ({
+    ok: true, user: { taxId: '8400000000' }, profiles: [], account: null, subject: { taxId: '8400000000', own: true },
+    obligations: [], calendarInfo: {}, returns: [], returnsInfo: { total: 2 }, documents: [], documentsInfo: { total: 1 },
+    clients: { clients: [{ ok: true, stem: '12345676', account: { debt: 0 }, obligations: [], returns: [], returnsInfo: { total: 190 }, documents: [], documentsInfo: { total: 33 } }], restored: true, skipped: 0 },
+  });
+  const server = url => url.startsWith('nav/targets') ? { enabled: true, ids: ['12345676'] }
+    : url === 'nav/ingest-clients' ? { ok: true, saved: 1, skipped: 0, returns: 190, documents: 33, restored: true, returnsTally: { new: 3, changed: 1, same: 186 }, documentsTally: { new: 0, changed: 0, same: 33 } }
+    : { ok: true, total: 2, suggested: 0, returns: 2, documents: 1, returnsTally: { new: 0, changed: 0, same: 2 }, documentsTally: { new: 0, changed: 0, same: 1 }, calendar: { upserted: 0, paired: 0, received: 0, matched: true } };
+  const { step } = makeStep({ readOwn, server, office: { nav_switch: true, nav_queries: true } });
+  const r = await step(portal());
+  const row = k => r.rows.find(x => x.k === k).v;
+  assert.match(row('Beadott bevallások'), /<b>3 új bevallás<\/b> · <b>1<\/b> állapota változott · <span class="mut">188 változatlan<\/span>/);
+  assert.doesNotMatch(row('Beadott bevallások'), /átvéve/);
+  assert.match(row('NAV-dokumentumok'), /^Nincs új irat · <span class="mut">34 változatlan<\/span>/);
+});
+
 test('kézi frissítés (daily:false): force=1 paraméterrel kéri a célokat, és továbbítja az adózói táblákat (taxpayerTables)', async () => {
   const twin = createGovTwin(accountantScenario());
   const c = twin.credentials.konyvelo;

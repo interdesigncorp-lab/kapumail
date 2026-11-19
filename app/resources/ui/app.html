@@ -1824,12 +1824,13 @@ const mbMeta=list=>(list||[]).filter(m=>m&&!m.skipped).map(m=>({name:m.name,rawN
 const autoDlLabel=a=>{if(!a)return'';const s=[a.sender,a.subject].filter(Boolean).join(' · ');return s?`${s.slice(0,84)} (${a.eid})`:String(a.eid||'')};
 // ---- Felügyelet nélküli szinkron minden TOTP-kulcsos belépővel. `source`: 'manual' (gomb) vagy 'scheduled' (ütemező).
 async function runAutoAll(source){
-  const sched=source==='scheduled';
+  // Az MI-ből (MCP) kért futás (ADR-016) ugyanúgy fut, mint az ütemezett: háttérben, a kiválasztott belépőkkel.
+  const sched=source==='scheduled'||source==='mcp';
   if(sched){if(trialBlocked())return}else if(trialGuardSync())return;
   if(AUTO.busy)return;const A=window.iratkapuDesktop&&window.iratkapuDesktop.auto;if(!A)return;
   // Ütemezve a belépők listája itt, egyszer dől el. Üres listával nem indulunk: azt a főfolyamat „minden belépő”-nek értené.
   const runKeys=(sched?schedPortals():PORTALS).map(p=>p.vaultKey);if(sched&&!runKeys.length)return;
-  AUTO.busy=true;AUTO.last=(sched?'Ütemezett szinkron: ':'')+'belépés és listázás belépőnként, böngészőablak nélkül…';
+  AUTO.busy=true;AUTO.ok=true;AUTO.last=(source==='mcp'?'MI-kérésre indított szinkron: ':sched?'Ütemezett szinkron: ':'')+'belépés és listázás belépőnként, böngészőablak nélkül…';
   // Kézzel indítva a plüssképernyő mutatja a haladást; az ütemezett futás a háttérben marad, nem veszi el a képernyőt.
   AUTO.ov=!sched;AUTO.bg=false;const ovT=setInterval(renderSyncOv,400);render();renderSyncOv();
   try{
@@ -1845,8 +1846,8 @@ async function runAutoAll(source){
     let sum;
     try{sum=await A.run(runKeys,filters,forceFull,{sent:!!OFFICE.live_sent})} // csak a szerver által ismert belépők; ütemezve a kihagyottak nélkül
     finally{if(A.onProgress)A.onProgress(null)}
-    if(!sum||!sum.ok){AUTO.last=esc((sum&&sum.error)||'Nem sikerült elindítani.');}
-    else if(!sum.ran){AUTO.last='Egy belépőhöz sincs felügyelet nélküli belépéshez alkalmas (TOTP-kulcsos) hitelesítő elmentve.';}
+    if(!sum||!sum.ok){AUTO.ok=false;AUTO.last=esc((sum&&sum.error)||'Nem sikerült elindítani.');}
+    else if(!sum.ran){AUTO.ok=false;AUTO.last='Egy belépőhöz sincs felügyelet nélküli belépéshez alkalmas (TOTP-kulcsos) hitelesítő elmentve.';}
     else if(sum.simulator&&(sched||!confirm('SZIMULÁTOR: ez nem valódi tárhely. A mintaadatok (SZIMULÁTOR nevű ügyfelek és leveleik) bekerülnek ebbe az adatbázisba, a(z) „'+((PORTALS[0]||{}).name||'első')+'” belépő neve alatt. Folytatod?'))){AUTO.last='A szimulátor adatai nem kerültek be.';}
     else{
       // Belépőnként külön küldjük be, a belépő megjelölésével: a felderítés csak így tud ügyfelet felvenni.
@@ -1898,6 +1899,7 @@ async function runAutoAll(source){
       }
       await load();
       const done=sum.results.filter(r=>r.ok).length,blocked=sum.results.filter(r=>r.skipped),fails=sum.results.filter(r=>!r.ok&&!r.skipped);
+      if(fails.length&&!done)AUTO.ok=false;
       const nameOf=k=>esc((PORTALS.find(x=>x.vaultKey===k)||{}).name||k);
       AUTO.last=(sum.simulator?'<b>SZIMULÁTOR – nem valódi tárhely.</b> ':'')+(sched?'Ütemezett szinkron – ':'')+`${done}/${sum.ran} belépő lefutott, ${sum.letterCount} levél a listán: <b>${ing.created} új</b>, ${ing.known} már ismert`+(ing.newClients?`, ${ing.newClients} új ügyfél felvéve`:'')+(ing.own?`, ${ing.own} saját tárhely felismerve`:'')+(ing.pending?`, ${ing.pending} postafiók besorolásra vár`:'')+(ing.systemOff?`, ${ing.systemOff} levél kikapcsolt rendszerből (kihagyva)`:'')+(ing.unmapped?`, ${ing.unmapped} levél hozzárendelés nélküli postafiókból`:'')+'.'
         +(ing.got?`<br><b>${ing.got} irat automatikusan letöltve</b> (csak automatikusnak jelölt típusok).`:'')
@@ -1910,7 +1912,7 @@ async function runAutoAll(source){
         +(blocked.length?`<br><b>${blocked.length} belépő tiltva, a program nem próbálkozik vele:</b> `+blocked.map(f=>nameOf(f.key)+' – '+esc(f.error)).join('; '):'')
         +(fails.length?`<br><b>${fails.length} belépő hibázott:</b> `+fails.map(f=>nameOf(f.key)+' – '+esc(f.error)).join('; '):'')+(ing.got?'':' Iratot nem töltöttünk le.');
     }
-  }catch(x){AUTO.last=esc(x.message||'Hiba')}
+  }catch(x){AUTO.ok=false;AUTO.last=esc(x.message||'Hiba')}
   AUTO.busy=false;clearInterval(ovT);renderSyncOv();render();
 }
 // ---- Ütemezett szinkron: az időpontot az asztali app számolja; zárolt appnál a híd elutasít, így a futás a feloldásig vár.
@@ -1978,6 +1980,30 @@ async function schedTick(){
     await D.ran();await runAutoAll('scheduled');await schedRefresh()}catch(e){}
 }
 if(window.iratkapuDesktop&&window.iratkapuDesktop.schedule){schedRefresh();setInterval(schedTick,60000)}
+// ---- MI-ből (MCP) indított szinkron (ADR-016): a start_sync kérését itt vesszük fel. Zárolt appnál is lefut: a futás idejére
+//      a főfolyamat átengedi a szinkron hívásait, a zárolóképernyő végig fent marad.
+const mcpNote=h=>String(h||'').replace(/<br>/g,' · ').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").slice(0,300);
+async function mcpSyncTick(){
+  const D=window.iratkapuDesktop&&window.iratkapuDesktop.mcpSync;
+  if(!D||AUTO.busy||!canAdmin())return;
+  let req=null;try{req=(await api('GET','desktop/mcp-sync/next')).request}catch(e){return}
+  if(!req)return;
+  const id=req.id,fin=(ok,note)=>api('POST','desktop/mcp-sync/'+id+'/finish',{ok,note:mcpNote(note)}).catch(()=>{});
+  const why=trialBlocked()?'A próbaidő lejárt, ezért a szinkron nem indítható.':!OFFICE.live_listing?'Az élő listázás ki van kapcsolva az irodában.':!schedPortals().length?'Nincs futtatható belépő (az ütemezésből minden belépő ki van hagyva, vagy nincs mentett belépő).':null;
+  if(why){try{await api('POST','desktop/mcp-sync/'+id+'/start')}catch(e){return}await fin(false,why);return}
+  try{
+    const b=await D.begin(id);if(!b||!b.ok)return;
+    // Zárolt indulásnál az ütemezés (kihagyott belépők) még nem töltődött be: a futás nyitott kapujával most betöltjük.
+    await schedRefresh();
+    if(SCHED.defaults===null){await api('POST','desktop/mcp-sync/'+id+'/start').catch(()=>{});await fin(false,'Az ütemezés beállításai nem tölthetők be, ezért nem indítom a szinkront.');return}
+    if(!schedPortals().length){await api('POST','desktop/mcp-sync/'+id+'/start').catch(()=>{});await fin(false,'Nincs futtatható belépő (az ütemezésből minden belépő ki van hagyva).');return}
+    const st=await api('POST','desktop/mcp-sync/'+id+'/start');if(!st||!st.ok)return;
+    await runAutoAll('mcp');
+    await fin(AUTO.ok!==false,AUTO.last);
+  }catch(e){await fin(false,e&&e.message||'Hiba')}
+  finally{try{await D.end(id)}catch(e){}}
+}
+if(window.iratkapuDesktop&&window.iratkapuDesktop.mcpSync)setInterval(mcpSyncTick,20000);
 // Az asztali app jelentkezése a szervernek (ADR-012): az ütemezett szinkron állapota, hogy az AI-kapcsolat is lássa. Hiba esetén csendben marad.
 async function deskBeat(){if(!TODAY)return;try{await fetch('/api/desktop/heartbeat',{method:'POST',credentials:'same-origin',headers:{'Accept':'application/json','Content-Type':'application/json','X-XSRF-TOKEN':XSRF()},
   body:JSON.stringify({schedule:(SCHED.enabled?schedLabel(SCHED):'kikapcsolva').slice(0,120),next:SCHED.next?String(SCHED.next).slice(0,40):null,last:SCHED.lastRunAt?String(SCHED.lastRunAt).slice(0,40):null,version:(navigator.userAgent.match(/KapuMail-Desktop\/([\d.]+)/)||[])[1]||null})})}catch(e){}}
@@ -3183,7 +3209,7 @@ function updWhenTxt(iso){
 function updateCardHtml(){
   const U=window.iratkapuDesktop&&window.iratkapuDesktop.updater;
   if(!U)return '';
-  const st=UPD.state,ver=esc((st&&st.current)||(navigator.userAgent.match(/KapuMail-Desktop\/([\d.]+)/)||[])[1]||'0.2.5');
+  const st=UPD.state,ver=esc((st&&st.current)||(navigator.userAgent.match(/KapuMail-Desktop\/([\d.]+)/)||[])[1]||'0.2.6');
   const renew=!!(OFFICE.license&&OFFICE.license.officialBuild&&!OFFICE.license.canSync);
   const lines=[`<p class="mut" style="margin:0 0 6px">Ez a KapuMail <b>${ver}</b>.</p>`];
   if(st&&!st.enabled){
@@ -3284,7 +3310,7 @@ async function renderMcp(){const el=document.getElementById('mcpbox');if(!el)ret
   const ch=`claude mcp add --transport http iratkapu ${d.url} --header "Authorization: Bearer ${tk}"`;
   const remoteOk=!d.local&&d.https;
   const lvlSel=(name,cur,attr)=>`<select name="${name}" ${attr||''}>${Object.keys(MCPL).filter(k=>k!=='munka'||cur==='munka').map(k=>`<option value="${k}" ${k===cur?'selected':''}>${MCPL[k]}</option>`).join('')}</select>`;
-  el.innerHTML=`<p class="mut" style="margin:0 0 10px">Ezen keresztül egy AI-asszisztens (Claude, ChatGPT) a megadott munkatárs nevében, az ő jogosultságával olvassa – és a választott szinten kezeli – az iroda adatait: ügyfeleket, iratokat és szövegüket, határidőket, beállításokat. Állami oldal felé (átvétel, letöltés, NAV, szinkron) semmit nem indít, jelszót és kulcsot nem ad ki, és minden hívása bekerül a naplóba. Az AI-szolgáltató az átadott adatok feldolgozója: bekapcsolás előtt nézd át az adatvédelmi teendőket.</p>
+  el.innerHTML=`<div style="margin:0 0 12px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#f4efff"><b>Szinkron indítása MI-ből.</b> A <i>munka</i> és <i>admin</i> szintű kapcsolat – ha admin vagy vezető felhasználóé – el tudja indítani a tárhelyek szinkronját (a napi NAV- és ASP-olvasással együtt), akkor is, ha a KapuMail zárolva van, vagy nem fut: ilyenkor ablak nélkül, a háttérben indítja el. A zárolóképernyő végig fent marad, a felület nem nyílik meg. Az <i>olvasás</i> szintű kapcsolat erre nem képes. Minden indítás bekerül a naplóba.</div><p class="mut" style="margin:0 0 10px">Ezen keresztül egy AI-asszisztens (Claude, ChatGPT) a megadott munkatárs nevében, az ő jogosultságával olvassa – és a választott szinten kezeli – az iroda adatait: ügyfeleket, iratokat és szövegüket, határidőket, beállításokat. Állami oldal felé (átvétel, letöltés, NAV, szinkron) semmit nem indít, jelszót és kulcsot nem ad ki, és minden hívása bekerül a naplóba. Az AI-szolgáltató az átadott adatok feldolgozója: bekapcsolás előtt nézd át az adatvédelmi teendőket.</p>
    <label class="task"><input type="checkbox" data-mcp-on ${d.enabled?'checked':''}><span>AI-kapcsolat engedélyezése<small>Kikapcsolva minden token és OAuth-kapcsolat elutasításra kerül; bekapcsoláskor újra élnek.</small></span></label>
    ${MCPV.tok?`<div style="margin:12px 0;padding:10px 12px;border-radius:12px;background:var(--amber-bg);color:var(--amber)"><b>Az új token – csak most látszik, másold el:</b>${box(MCPV.tok,'Token másolása')}<span style="font-size:12.5px">Az alábbi beállításokba már be van írva. Ha elveszik, vond vissza és készíts újat.</span></div>`:''}
    <h4 class="sub" style="margin-top:16px">Új token</h4>
@@ -3610,6 +3636,15 @@ const UPO_MAX=240000; // ennyit várunk a NAV ügyfélportál olvasására (bel�
 // C kör: egy NAV-dokumentum a szervernek szánt alakban
 const navDoc=x=>({barcode:x.barcode||null,regNo:x.regNo||null,subject:x.subject||null,docType:x.docType||null,formCode:x.formCode||null,formName:x.formName||null,caseType:x.caseType||null,caseNo:x.caseNo||null,krNo:x.krNo||null,submittedAt:x.submittedAt||null,arrivedAt:x.arrivedAt||null,downloadedAt:x.downloadedAt||null,files:x.files||0});
 const navRet=x=>({regNo:x.regNo,formCode:x.formCode,title:x.title||null,periodStart:x.periodStart||null,periodEnd:x.periodEnd||null,submittedAt:x.submittedAt||null,state:x.state||null,kind:x.kind||null});
+// Új / változott / változatlan sorok összesítése a saját és az ügyfelenkénti NAV-lekérdezésből; null, ha a szerver nem adta meg.
+function navTally(...ts){const t=ts.filter(Boolean);if(!t.length)return null;return t.reduce((a,x)=>({new:a.new+(x.new||0),changed:a.changed+(x.changed||0),same:a.same+(x.same||0)}),{new:0,changed:0,same:0})}
+function navTallyText(t,noun,changedWord){
+  const p=[];
+  p.push(t.new?`<b>${t.new} új ${noun}</b>`:`Nincs új ${noun}`);
+  if(t.changed)p.push(`<b>${t.changed}</b> ${changedWord}`);
+  if(t.same)p.push(`<span class="mut">${t.same} változatlan</span>`);
+  return p.join(' · ');
+}
 async function navPortalStep(p,{daily=true,onStep=null}={}){
   const NV=window.iratkapuDesktop&&window.iratkapuDesktop.nav;
   const idle=()=>api('POST',`portals/${p.id}/status`,{upoState:'idle'}).catch(()=>{});
@@ -3652,7 +3687,7 @@ async function navPortalStep(p,{daily=true,onStep=null}={}){
   }
   if(sub&&!sub.own&&cal&&cal.matched&&cal.upserted)text+=` (a NAV-nál kiválasztott adózó: ${esc(sub.name||sub.stem||sub.taxId||'')})`;
   if(dropped)text+=`, ${dropped} tétel ismeretlen alakú, kihagyva`;
-  const kc=nv.clients||null;let crRet=0,crDoc=0,crTt=null;
+  const kc=nv.clients||null;let crRet=0,crDoc=0,crTt=null,crRT=null,crDT=null;
   if(kc){
     emit(1,96,'Ügyfelek adószámlájának és adónaptárának mentése…');
     const good=(kc.clients||[]).filter(c=>c.ok);let cr=null;crRet=0;
@@ -3661,7 +3696,7 @@ async function navPortalStep(p,{daily=true,onStep=null}={}){
       ...(Array.isArray(c.returns)?{returns:c.returns.map(navRet)}:{}),...(Array.isArray(c.documents)?{documents:c.documents.map(navDoc)}:{}),
       ...(c.taxpayerTables?{taxpayerTables:c.taxpayerTables}:{})}))})}
     catch(x){if(x.message==='auth')throw x}
-    if(cr){crRet=cr.returns||0;crDoc=cr.documents||0;crTt=cr.taxpayerTables||null}
+    if(cr){crRet=cr.returns||0;crDoc=cr.documents||0;crTt=cr.taxpayerTables||null;crRT=cr.returnsTally||null;crDT=cr.documentsTally||null}
     const bad=(kc.clients||[]).length-good.length;
     text+=cr?`; ügyfelenként: <b>${cr.saved} ügyfél adószámlája és adónaptára frissítve</b>`+(cr.skipped?`, ${cr.skipped} kihagyva`:''):'; az ügyfelenkénti adatokat a szerver nem fogadta be';
     if(bad)text+=`, ${bad} adózónál a váltás vagy az olvasás nem sikerült`;
@@ -3682,7 +3717,10 @@ async function navPortalStep(p,{daily=true,onStep=null}={}){
     if(ri.error)text+=`; a saját beadott bevallásaid lekérdezése nem sikerült (${esc(ri.error)})`;
     if(cerr)text+=`; ${cerr} ügyfélnél a bevallás-lekérdezés nem sikerült`;
     const rv=[];
-    if(n)rv.push(`<b>${n} bevallás</b> átvéve a NAV nyilvántartásából`);
+    // A szerver megmondja, mi volt valóban új, mi változott és mi maradt ugyanaz (régebbi szervernél csak az összes sor jön).
+    const rt=navTally(nr.returnsTally,crRT);
+    if(n&&rt)rv.push(navTallyText(rt,'bevallás','állapota változott'));
+    else if(n)rv.push(`<b>${n} bevallás</b> átvéve a NAV nyilvántartásából`);
     else if(!ri.error&&!cerr)rv.push(got?`A NAV ${got} sort adott <span class="mut">· egyik sem igényelt mentést</span>`:'Nincs rögzített bevallás');
     if(unk)rv.push(`<span class="mut">${unk} ismeretlen alakú kihagyva</span>`);
     if(ri.error)rv.push(`Saját lekérdezés sikertelen (${esc(ri.error)})`);
@@ -3693,7 +3731,9 @@ async function navPortalStep(p,{daily=true,onStep=null}={}){
     if(di.error)text+=`; a saját NAV-dokumentumaid lekérdezése nem sikerült (${esc(di.error)})`;
     if(dcerr)text+=`; ${dcerr} ügyfélnél a dokumentum-lekérdezés nem sikerült`;
     const dv=[];
-    if(nd)dv.push(`<b>${nd} irat</b> az elmúlt fél évből`);
+    const dt=navTally(nr.documentsTally,crDT);
+    if(nd&&dt)dv.push(navTallyText(dt,'irat','módosult')+' <span class="mut">(elmúlt fél év)</span>');
+    else if(nd)dv.push(`<b>${nd} irat</b> az elmúlt fél évből`);
     if(di.error)dv.push(`Saját lekérdezés sikertelen (${esc(di.error)})`);
     if(dcerr)dv.push(`${dcerr} ügyfélnél sikertelen`);
     if(dv.length)rows.push({k:'NAV-dokumentumok',v:dv.join(' · '),warn:!!(di.error||dcerr)&&!nd});
@@ -3727,6 +3767,7 @@ function renderPortalSyncDlg(){
       :`<p style="font-weight:600;margin:8px 0 4px">${esc(PS.sub||'Kapcsolódás…')}</p><p class="mut" style="margin:0">A NAV ügyfélportált a program külön, böngészőablak nélkül olvassa, a belépő elmentett adataival.</p>`}
     <div class="acts" style="margin-top:16px;justify-content:flex-end">
       ${PS.run&&window.iratkapuDesktop?.live?`<button class="btn ghost" data-ptogglewin style="margin-right:auto">${ic('eye')}${PS.winVis?'Belépőablak elrejtése':'Belépőablak megjelenítése'}</button>`:''}
+      ${PS.doneMsg&&PS.lastWin&&!PS.lastWin.full?`<button class="btn ghost" data-psyncfull="${p.id}" style="margin-right:auto" title="A tárhely teljes levéllistája a tartós tárral együtt – a régebbi levelek állapotát is újraolvassa">Teljes újraolvasás</button>`:''}
       ${PS.err||PS.doneMsg?`<button class="btn" data-dlgx>Kész</button>`:`<button class="btn ghost" data-psynccancel>Megszakítás</button>`}
     </div></div>`;
   if(!dl.open)dl.showModal();
@@ -3734,10 +3775,11 @@ function renderPortalSyncDlg(){
 
 // Az élő munkamenet ehhez a kapcsolathoz tartozik-e (az asztali app a belépéskor jegyzi fel a kapcsolat kulcsát).
 const liveOwnedBy=(st,p)=>!!(p&&p.vaultKey&&st&&st.portalId===String(p.vaultKey));
-async function runPortalSync(portalId){
+// `opts.full`: teljes újraolvasás – a tárhely teljes listája (tartós tárral) akkor is, ha a növekményes ablak még érvényes.
+async function runPortalSync(portalId,opts={}){
   if(trialGuardSync())return;
   const p=PORTALS.find(x=>x.id==portalId);if(!p)return;
-  Object.assign(PS,{run:true,cancel:false,step:0,stepPct:0,sub:'Hitelesítés előkészítése…',err:'',doneMsg:'',doneRows:[],winVis:false,unmapped:[],portalId:p.id});
+  Object.assign(PS,{run:true,cancel:false,step:0,stepPct:0,sub:'Hitelesítés előkészítése…',err:'',doneMsg:'',doneRows:[],winVis:false,unmapped:[],portalId:p.id,full:!!opts.full,lastWin:null});
   renderPortalSyncDlg();
   const D=window.iratkapuDesktop;
   if(!D||!D.live){
@@ -3787,11 +3829,16 @@ async function runPortalSync(portalId){
     PS.step=2;PS.stepPct=5;PS.winVis=false;PS.sub=`Tárhely postafiókok (Beérkezett + Tartós tár${OFFICE.live_sent?' + Elküldött':''}) és kvóták lekérdezése…`;renderPortalSyncDlg();
     if(D.live.onProgress)D.live.onProgress(ev=>{if(PS.cancel||!ev||!ev.text)return;PS.sub=`Tárhely: ${ev.text}`;if(ev.total>0)PS.stepPct=Math.min(55,Math.round((ev.index/ev.total)*55));renderPortalSyncDlg()});
     let lr;
-    try{lr=await D.live.list(null,mailboxFilterFor(p),{sent:!!OFFICE.live_sent})}
+    // Növekményes lista: csak a legutóbbi, a szerver által befogadott szinkron óta érkezett levelek (3 nap átfedéssel);
+    // hetente, új postafióknál és kérésre teljes lista. Az ablakot az asztali főfolyamat őrzi belépőnként.
+    try{lr=await D.live.list(null,mailboxFilterFor(p),{sent:!!OFFICE.live_sent,portalId:p.id,full:PS.full})}
     finally{if(D.live.onProgress)D.live.onProgress(null)}
     if(!lr.ok)throw new Error(lr.error||'A tárhely listázása nem sikerült.');
     PS.stepPct=60;PS.sub=`Levéllista feldolgozása (${(lr.letters||[]).length} küldemény)…`;renderPortalSyncDlg();
     const ing=await ingestLive(lr.letters,{mailboxes:mbMeta(lr.mailboxes),quotas:lr.quotas||{},autoMap:true,portalId:p.id});
+    // A szerver befogadta a listát: csak most lép előre a növekményes ablak (hiba esetén a következő futás nem hagy ki semmit).
+    PS.lastWin=lr.window||null;
+    if(lr.window&&D.live.ack)await D.live.ack(p.id,lr.window.full===true).catch(()=>{});
     let autoCnt=0,autoSkip=0;const autoFail=[];
     const qAuto=(p.dlActive&&OFFICE.live_download)?(ing.autoDownload||[]):[];
     for(let i=0;i<qAuto.length&&!PS.cancel;i++){
@@ -3822,7 +3869,10 @@ async function runPortalSync(portalId){
     PS.run=false;PS.step=4;PS.stepPct=0;
     PS.unmapped=ing.unmappedNames||[];
     PS.doneMsg=`Tárhely: ${ing.created} új küldemény (${ing.known} már ismert)${autoCnt?`, ${autoCnt} irat automatikusan letöltve`:''}${autoSkip?`, ${autoSkip} automatikus letöltés kimaradt`:''}${autoFail.length?`. FIGYELEM: ${autoFail.length} irat a tárhelyről letöltődött, de az archiválása nem sikerült (${esc(autoFail.join(', '))}) – nézd meg a hivatalos tárhelyen`:''}${ing.discovery&&ing.discovery.created?`, ${ing.discovery.created} új ügyfél felvéve`:''}${ing.discovery&&ing.discovery.own?`, a saját tárhelyed felismerve (csak te látod)`:''}${ing.discovery&&ing.discovery.pending?`, ${ing.discovery.pending} postafiók besorolásra vár (Ügyfelek nézet)`:''}${ing.inactive?`, ${ing.inactive} levél inaktív ügyfélé`:''}${ing.systemOff?`, ${ing.systemOff} levél kikapcsolt rendszerből (kihagyva)`:''}${ing.autoDownloadDeferred?`, ${ing.autoDownloadDeferred} automatikus letöltés a következő szinkronra maradt (futásonként legfeljebb 50)`:''}${ing.unmapped?`, ${ing.unmapped} levél kimaradt hozzárendelés nélküli postafiókból`:''}. ${upoTxt}.${aspTxt}`;
-    const rows=[{k:'Tárhely',v:(ing.created?`<b>${ing.created} új küldemény</b>`:'Nincs új küldemény')+` <span class="mut">· ${ing.known} korábbi már a listán</span>`}];
+    const lw=PS.lastWin,lwSince=lw&&!lw.full&&lw.since?new Date(lw.since):null;
+    const rows=[{k:'Tárhely',v:(ing.created?`<b>${ing.created} új küldemény</b>`:'Nincs új küldemény')+(lwSince
+      ?` <span class="mut">· csak a ${lwSince.toLocaleDateString('hu-HU',{month:'long',day:'numeric'})} óta érkezettek ellenőrizve${ing.known?`, ${ing.known} már ismert`:''}</span>`
+      :` <span class="mut">· teljes lista${lw&&lw.full?' (tartós tárral)':''}, ${ing.known} korábbi már a listán</span>`)}];
     if(autoCnt||autoSkip||ing.autoDownloadDeferred){const ap=[];if(autoCnt)ap.push(`<b>${autoCnt} irat</b> letöltve`);if(autoSkip)ap.push(`<span class="mut">${autoSkip} kimaradt</span>`);if(ing.autoDownloadDeferred)ap.push(`<span class="mut">${ing.autoDownloadDeferred} a következő futásra maradt (max. 50)</span>`);rows.push({k:'Automata letöltés',v:ap.join(' · ')})}
     if(autoFail.length)rows.push({k:'Figyelem',v:`<b>${autoFail.length} irat</b> letöltődött a tárhelyről, de az archiválása nem sikerült (${esc(autoFail.join(', '))}) – nézd meg a hivatalos tárhelyen!`,warn:true});
     if(ing.discovery&&(ing.discovery.created||ing.discovery.own||ing.discovery.pending)){const dp=[];if(ing.discovery.created)dp.push(`<b>${ing.discovery.created} új ügyfél</b> felvéve`);if(ing.discovery.own)dp.push('saját tárhelyed felismerve <span class="mut">(csak te látod)</span>');if(ing.discovery.pending)dp.push(`${ing.discovery.pending} postafiók besorolásra vár <span class="mut">(Ügyfelek nézet)</span>`);rows.push({k:'Postafiókok',v:dp.join(' · ')})}
@@ -3959,6 +4009,7 @@ document.addEventListener('click',async e=>{
   const nd=e.target.closest('[data-navdel]');if(nd){S.navDel=S.navDel||{};S.navDel[nd.dataset.navdel]=!S.navDel[nd.dataset.navdel];render();return}
   if(e.target.closest('[data-portalsyncall]')){runAllPortals();return}
   const ps=e.target.closest('[data-portalsync]');if(ps){runPortalSync(+ps.dataset.portalsync);return}
+  const pf=e.target.closest('[data-psyncfull]');if(pf){const d=$('#dlg');if(d.open){d.onclose=null;d.close()}runPortalSync(+pf.dataset.psyncfull,{full:true});return}
   // Szinkronnapló „Szinkronizálás” gombja: egy kapcsolatnál azonnal indul, többnél előbb választani kell.
   if(e.target.closest('[data-syncfull]')){
     if(!PORTALS.length){toast('Előbb adj hozzá egy Ügyfélkapu+ vagy DÁP kapcsolatot!',true);return}

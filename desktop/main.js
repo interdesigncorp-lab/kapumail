@@ -23,10 +23,13 @@ const { createKapu } = require('./kapu');
 const navExports = require('./nav-exports');
 const aspLive = require('./asp-live');
 const ledger = makeLedger(); // amit a főfolyamat ebben a futásban maga listázott a tárhelyről
-const { cleanFilter } = require('./mailbox-filter');
+const { cleanFilter, mailboxAllowed } = require('./mailbox-filter');
 const { makeAutoControl } = require('./auto-control');
+const { makeLiveListWindows } = require('./live-list-window');
 const { totpCode, secondsLeftInWindow, parseTotpInput, decodeQrDataUrl } = require('./totp');
 const lockLib = require('./lock');
+const aliveLib = require('./alive');
+const { makeMcpRun } = require('./mcp-sync');
 const { resolveMode, userAgent } = require('./mode');
 const { createLocalServer, pingHealth } = require('./local-server');
 const { createUpdater } = require('./updater');
@@ -55,9 +58,12 @@ const readCfg = () => { try { return JSON.parse(fs.readFileSync(cfgFile(), 'utf8
 // Atomi mentés: ideiglenes fájlba írunk, majd átnevezzük, hogy egy megszakadt írás ne ürítse ki a beállításokat.
 const saveCfg = patch => { const tmp = cfgFile() + '.tmp'; fs.writeFileSync(tmp, JSON.stringify({ ...readCfg(), ...patch }), { mode: 0o600 }); fs.renameSync(tmp, cfgFile()); };
 const autoCtl = makeAutoControl({ readCfg, saveCfg });
+const liveWin = makeLiveListWindows({ readCfg, saveCfg });
 let ORIGIN = process.env.IRATKAPU_URL || DEFAULT_URL;
 function validUrl(u) { try { const x = new URL(u); return x.protocol === 'https:' || (x.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]'].includes(x.hostname)) ? x.origin : null; } catch { return null; } }
 const SMOKE = process.argv.includes('--smoke');
+// MI-ből (MCP) indított app (ADR-016): ablak nélkül, a háttérben indul; az ablakot a felhasználó nyitja meg (Dock, tálca, újraindítás).
+const MCP_BG = process.argv.includes('--mcp-hatter');
 const PROBE = (process.argv.find(a => a.startsWith('--probe-kau=')) || '').split('=')[1] || null;
 // Fejlesztői üzemmód: a NAV-portál (7. fázis) és az ASP-portál (10. fázis) megfigyelője. Csak csomagolatlan appban, kifejezett kapcsolóra indul.
 const OBSERVE = process.argv.includes('--megfigyelo-nav') ? 'nav' : process.argv.includes('--megfigyelo-asp') ? 'asp' : null;
@@ -252,6 +258,7 @@ function slimLiveLetters(result, max = 2000) {
 // ---- alkalmazászár (önként bekapcsolható): PIN, macOS-en Touch ID, tétlenség és alvás utáni zárolás ----
 let mainWin = null, lockView = null, locked = false, liveWasVisible = false, aspWin = null, aspWasVisible = false;
 const throttle = new lockLib.Throttle();
+const mcpRun = makeMcpRun();
 const lockCfg = () => lockLib.normalize(readCfg().lock);
 const touchAvailable = () => process.platform === 'darwin' && systemPreferences.canPromptTouchID();
 const askTouch = reason => systemPreferences.promptTouchID(reason).then(() => true, () => false);
@@ -346,7 +353,19 @@ function watchIdle() {
 }
 
 function registerIpc() {
-  const guard = e => { if (new URL(e.senderFrame.url).origin !== new URL(ORIGIN).origin) throw new Error('Idegen origó'); if (locked) throw new Error('Az alkalmazás zárolva van'); };
+  // Zárolt appnál csak egy MI-ből indított szinkron idejére, és csak a szinkron csatornáin enged át (mcp-sync.js).
+  const guard = (e, channel) => { if (new URL(e.senderFrame.url).origin !== new URL(ORIGIN).origin) throw new Error('Idegen origó'); if (locked && !mcpRun.allows(channel)) throw new Error('Az alkalmazás zárolva van'); };
+  // MI-ből indított szinkron (ADR-016): a felület jelzi a futás elejét és végét; zárolt állapotban is hívható (csak origóellenőrzés).
+  const fromApp = e => { if (new URL(e.senderFrame.url).origin !== new URL(ORIGIN).origin) throw new Error('Idegen origó'); };
+  // A zárat csak valódi, a szerveren függő vagy futó MCP-kérés nyithatja meg (a felület szavára önmagában nem).
+  ipcMain.handle('mcpsync:begin', async (e, id) => {
+    fromApp(e); const n = Number(id); if (!Number.isInteger(n) || n <= 0) return { ok: false };
+    let status = null;
+    try { const r = await session.defaultSession.fetch(ORIGIN + '/api/desktop/mcp-sync/' + n, { credentials: 'include', headers: { Accept: 'application/json' } }); if (r.ok) status = (await r.json()).status; } catch { /* nincs kapcsolat: nem nyitunk */ }
+    if (status !== 'pending' && status !== 'running') return { ok: false };
+    return { ok: mcpRun.begin(n) };
+  });
+  ipcMain.handle('mcpsync:end', (e, id) => { fromApp(e); mcpRun.end(Number(id)); return { ok: true }; });
   // Rendszerértesítés a felület kérésére. Zárolt állapotban tartalom nélkül jelenik meg, és kattintásra sem nyit meg semmit.
   const shown = new Set();
   ipcMain.handle('notify:show', (e, n) => {
@@ -581,7 +600,16 @@ function registerIpc() {
   ipcMain.handle('live:mailboxes', e => { guard(e); return live.mailboxes(); });
   ipcMain.handle('live:list', async (e, since, filter, opts) => {
     guard(e);
+    // Növekményes kézi szinkron: a felület a belépő azonosítóját adja, az ablakot a főfolyamat számolja ki és őrzi.
+    const winKey = opts && /^\d{1,12}$/.test(String(opts.portalId || '')) ? `${ORIGIN}|${opts.portalId}` : null;
+    let win = null;
+    if (winKey) {
+      const mbs = live.mailboxes();
+      const names = mbs && mbs.ok ? mbs.mailboxes.map(m => m.name).filter(n => mailboxAllowed(n, cleanFilter(filter))) : [];
+      win = liveWin.plan(winKey, { mailboxNames: names, sent: !!(opts && opts.sent), forceFull: !!(opts && opts.full) });
+    }
     const r = await live.list(since ? String(since) : null, {
+      incomingFrom: win && !win.full ? win.incomingFrom : null,
       mailboxFilter: cleanFilter(filter),
       includeSent: !!(opts && opts.sent),
       onProgress: p => sendProgress(e.sender, 'live:progress', {
@@ -594,7 +622,15 @@ function registerIpc() {
     ledger.record(letters);
     // A postafiókok adatai a tárhely listájából (típuskód, megjelenített név): a szerver ebből ismeri fel a fajtájukat.
     const mb = live.mailboxes();
-    return { ok: true, letters, quotas: r.quotas || {}, mailboxes: mb && mb.ok ? mb.mailboxes.map(({ name, rawName, displayName, type, isDefault }) => ({ name, rawName, displayName, type, isDefault })) : [] };
+    return { ok: true, letters, quotas: r.quotas || {}, mailboxes: mb && mb.ok ? mb.mailboxes.map(({ name, rawName, displayName, type, isDefault }) => ({ name, rawName, displayName, type, isDefault })) : [],
+      ...(win ? { window: { full: win.full, since: win.incomingFrom } } : {}) };
+  });
+  // A szerver befogadta a kézi szinkron listáját: csak ezután lép előre a növekményes ablak.
+  ipcMain.handle('live:ack', (e, portalId, full) => {
+    guard(e);
+    if (!/^\d{1,12}$/.test(String(portalId || ''))) return { ok: false };
+    liveWin.ack(`${ORIGIN}|${portalId}`, { full: full === true });
+    return { ok: true };
   });
   // Letöltés: a főfolyamat maga kér engedélyt a szervertől (a KapuMail-ablak munkamenetével), és azt az iratot tölti le,
   // amelyet a szerver megnevez. A felület csak az irat azonosítóját adja meg.
@@ -634,7 +670,7 @@ function registerIpc() {
   // A felügyelet nélküli futás állapota belépőnként (hibaszámláló, tiltás): lásd auto-control.js.
   const autoState = () => autoCtl.state();
   ipcMain.handle('auto:clients', e => {
-    guard(e);
+    guard(e, 'auto:clients');
     const st = autoState();
     return { ok: true, clients: portalKeys().map(k => ({ key: k, ...portalCredSummary(readPortalCreds(k)), fails: (st[k] && st[k].fails) || 0, blocked: (st[k] && st[k].blocked) || null, lastError: (st[k] && st[k].lastError) || null, lastOkAt: (st[k] && st[k].lastOkAt) || null })) };
   });
@@ -647,7 +683,7 @@ function registerIpc() {
     const s = schedCfg(), on = s.enabled === true, next = on ? schedule.nextSlot(new Date(), s.lastRunAt || null, s) : null;
     return { enabled: on, lastRunAt: s.lastRunAt || null, extraWorkdays: s.extraWorkdays || [], extraRestdays: s.extraRestdays || [], ...schedule.normalize(s), slots: schedule.slotsOf(s).map(hhmm), next: next ? next.toISOString() : null, defaults: schedule.normalize({}) };
   };
-  ipcMain.handle('schedule:get', e => { guard(e); return schedView(); });
+  ipcMain.handle('schedule:get', e => { guard(e, 'schedule:get'); return schedView(); });
   // Időzítés mentése: mikor, mely napokon és mely belépőkre fusson. A 3 órás alsó határt itt is ellenőrizzük, nem csak a felületen.
   // A `changedAt` miatt a mentés előtti időpont nem esedékes: az átírás nem indít azonnali belépést.
   ipcMain.handle('schedule:save', (e, input) => {
@@ -669,7 +705,7 @@ function registerIpc() {
   });
   ipcMain.handle('schedule:ran', e => { guard(e); saveCfg({ schedule: { ...schedCfg(), lastRunAt: Date.now() } }); return { ok: true }; });
   // A felület visszaigazolja, hogy a szerver befogadta egy belépő listáját: a növekményes listázás innen számít.
-  ipcMain.handle('auto:ack', (e, key, full) => { guard(e); const st = autoState(); tarhelyAuto.acknowledge(st, String(key), { full: full === true }); saveCfg({ auto: st }); return { ok: true }; });
+  ipcMain.handle('auto:ack', (e, key, full) => { guard(e, 'auto:ack'); const st = autoState(); tarhelyAuto.acknowledge(st, String(key), { full: full === true }); saveCfg({ auto: st }); return { ok: true }; });
   // Letöltés a felügyelet nélküli futás után, a belépő megőrzött munkamenetével. Ember nincs jelen, ezért szigorúbb, mint a
   // kézi út: a szerver engedélye és a saját listánk egyezése mellett az is kell, hogy a szerver a letöltést automatikusnak minősítse.
   // A futásonkénti letöltési korlát (alapból 50) az IRATKAPU_MAX_DOWNLOADS környezeti változóval csak LEJJEBB vihető:
@@ -677,7 +713,7 @@ function registerIpc() {
   const autoSessions = tarhelyAuto.makeSessions({ maxDownloads: tarhelyAuto.downloadCap(process.env.IRATKAPU_MAX_DOWNLOADS) });
   ipcMain.handle('auto:downloadOne', async (e, key, req) => {
     try {
-      guard(e);
+      guard(e, 'auto:downloadOne');
       const ses = e.sender.session;
       const xsrf = (await ses.cookies.get({ url: ORIGIN, name: 'XSRF-TOKEN' }).catch(() => []))[0];
       if (!autoSessions.get(String(key))) return { ok: false, code: 3, needSession: true, error: 'Ehhez a belépőhöz nincs élő munkamenet; a letöltés a következő szinkronra marad.' };
@@ -695,7 +731,7 @@ function registerIpc() {
   // Ugyanaz a belépő és ugyanaz a védelem, mint a tárhelynél: tiltott belépővel nem próbálkozik, a jelszóhiba tilt.
   ipcMain.handle('nav:readOwn', async (e, key, clientIds, queries) => {
     try {
-      guard(e);
+      guard(e, 'nav:readOwn');
       key = String(key);
       // Ha ehhez a belépőhöz ezen a gépen nincs elmentett belépési adat (például a belépőt másik gépen vagy a varázslóban
       // vették fel, mentés nélkül), az nem hiba, hanem „nem alkalmas belépő”: a felület érthető „kihagyva” szöveget ad.
@@ -874,7 +910,7 @@ function registerIpc() {
   });
   ipcMain.handle('asp:readOwnAuto', async (e, key) => {
     try {
-      guard(e);
+      guard(e, 'asp:readOwnAuto');
       if (aspBusy) return { ok: false, busy: true, error: 'Az önkormányzati portál ablaka már nyitva van.' };
       key = String(key || '');
       if (!portalKeys().includes(key)) return { ok: false, ineligible: true, error: 'Ehhez a belépőhöz ezen a gépen nincs elmentett belépési adat.' };
@@ -932,7 +968,7 @@ function registerIpc() {
   });
   ipcMain.handle('auto:run', async (e, keys, filters, forceFull, opts) => {
     try {
-      guard(e);
+      guard(e, 'auto:run');
       let summary; let simulator = false;
       const wantSent = !!(opts && opts.sent);
       const emitAuto = s => sendProgress(e.sender, 'auto:progress', {
@@ -1067,11 +1103,19 @@ function syncTray() {
   if (process.platform !== 'darwin') tray.on('click', showMain);
 }
 
+// Életjel (ADR-016): 30 mp-enként a PHP storage/app mappájába; a helyi MCP ebből látja, fut-e az app, és hogyan indítható.
+let aliveTimer = null;
+const aliveData = ({ stopped = false } = {}) => aliveLib.payload({ now: Date.now(), pid: process.pid, isPackaged: app.isPackaged, stopped,
+  launch: aliveLib.launchInfo({ platform: process.platform, execPath: process.execPath, isPackaged: app.isPackaged }) });
+const aliveWrite = opts => { try { aliveLib.writeAlive(aliveLib.aliveFile(localSrv.resolvePaths()), aliveData(opts)); } catch { /* az életjel nem kritikus */ } };
+function startAlive() { aliveWrite(); aliveTimer = setInterval(() => aliveWrite(), 30000); aliveTimer.unref(); }
+function stopAlive() { if (!aliveTimer) return; clearInterval(aliveTimer); aliveTimer = null; aliveWrite({ stopped: true }); }
+
 async function createWindow() {
   // Az ablak címsora (és a natív párbeszédek) fixen világosak maradnak, akkor is, ha a rendszer sötét módban van.
   nativeTheme.themeSource = 'light';
   const win = new BrowserWindow({
-    width: 1440, height: 900, minWidth: 380, minHeight: 600, title: 'KapuMail', backgroundColor: '#eadff5', show: !SMOKE, icon: ICON,
+    width: 1440, height: 900, minWidth: 380, minHeight: 600, title: 'KapuMail', backgroundColor: '#eadff5', show: !SMOKE && !MCP_BG, icon: ICON,
     titleBarStyle: 'hidden', trafficLightPosition: { x: 13, y: 7 },
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true, spellcheck: false },
   });
@@ -1163,10 +1207,11 @@ app.whenReady().then(() => {
     ] },
   ]));
   createWindow(); syncTray(); syncRelay();
+  if (!SMOKE) startAlive();
   if (!SMOKE) appUpdater.start();
   app.on('activate', showMain);
 });
 app.on('before-quit', () => { quitting = true; appUpdater.stop(); kapu.cancelAll({ cleanupNow: true }); kapu.cancelSignIn().catch(() => {}); }); // a Kapu-körök gyerekfolyamatai külön csoportban futnak, ezért itt állítjuk le őket
-if (!SMOKE && !PROBE && !OBSERVE) { if (!app.requestSingleInstanceLock()) app.quit(); else app.on('second-instance', () => { if (app.isReady()) showMain(); }); }
+if (!SMOKE && !PROBE && !OBSERVE) { if (!app.requestSingleInstanceLock()) app.quit(); else app.on('second-instance', (_e, argv) => { if (Array.isArray(argv) && argv.includes('--mcp-hatter')) return; if (app.isReady()) showMain(); }); }
 app.on('window-all-closed', () => { if ((process.platform !== 'darwin' || SMOKE) && !PROBE) app.quit(); });
-app.on('quit', () => { mcpRelay.stop(); localSrv.stop(); appUpdater.applyStagedOnQuit(); });
+app.on('quit', () => { stopAlive(); mcpRelay.stop(); localSrv.stop(); appUpdater.applyStagedOnQuit(); });

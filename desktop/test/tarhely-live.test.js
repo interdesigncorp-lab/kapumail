@@ -193,3 +193,29 @@ test('automata belépésnél a kód elküldése előtt a tárhely-cím nem indí
   await s._onLoad(win);
   assert.equal(primed, 1); assert.equal(s._creds, null);
 });
+
+test('növekményes listázás: a Beérkezett a tárhely saját „mióta” szűrőjével, tartós tár nélkül, az Elküldöttből egy oldal', async () => {
+  const body = s => ({ filter: JSON.parse(/filter: (\{.*?\}) \}\) \}\);/.exec(s)[1]) });
+  assert.equal(body(L.listScript('a1', 'x', 0)).filter.incomingFromDate, null);
+  assert.equal(body(L.listScript('a1', 'x', 0, 'BEERKEZETT', '2026-11-10T08:00:00.000Z')).filter.incomingFromDate, '2026-11-10T08:00:00.000Z');
+  assert.equal(body(L.listScript('a1', 'x', 0, 'BEERKEZETT', '2026-11-10')).filter.incomingFromDate, null, 'sima dátumot a tárhely 400-zal utasít el: nem küldjük');
+
+  const calls = [];
+  const s = new L.LiveSession({ BrowserWindow: null, session: null });
+  s.s.status = 'connected'; s.sniff.mailboxes = [{ name: 'Fiók', addressId: 'a1' }]; s._switchMailbox = async () => {};
+  s.win = { webContents: { executeJavaScript: async code => {
+    if (code.includes('/mailbox/details')) return { status: 200, pct: 1 };
+    const folder = /uzenetek\/(\w+)\/kereses/.exec(code)[1]; const from = /"incomingFromDate":("[^"]*"|null)/.exec(code)[1];
+    calls.push({ folder, from });
+    return { status: 200, body: { uzenetek: [{ erkeztetesiSzam: `E-${folder}-${calls.length}`, erkezesIdopontja: '2026-11-12T10:00:00' }], uzenetekSzama: 999 } };
+  } } };
+  const inc = await s.list(null, { incomingFrom: '2026-11-10T08:00:00.000Z', includeSent: true });
+  assert.equal(inc.ok, true);
+  assert.deepEqual([...new Set(calls.map(c => c.folder))], ['BEERKEZETT', 'ELKULDOTT'], 'növekményesen a tartós tár kimarad');
+  assert.ok(calls.filter(c => c.folder === 'BEERKEZETT').every(c => c.from === '"2026-11-10T08:00:00.000Z"'));
+  assert.equal(calls.filter(c => c.folder === 'ELKULDOTT').length, 1, 'az Elküldöttből csak az első oldal');
+  calls.length = 0;
+  await s.list(null, { includeSent: true });
+  assert.deepEqual([...new Set(calls.map(c => c.folder))], ['BEERKEZETT', 'TARTOS_TAR', 'ELKULDOTT'], 'teljes listánál a tartós tár is');
+  assert.ok(calls.every(c => c.from === 'null'));
+});

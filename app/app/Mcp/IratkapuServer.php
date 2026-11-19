@@ -22,7 +22,7 @@ Ez egy magyar könyvelőiroda iratkezelő programja (KapuMail / Iratkapu). Az ü
 - Nyomtatvány- és adókódok feloldása (Online Számla 3.0 ÁFA kódok és FormCatalog beadványok): `resolve_code`.
 - Határidők és naptár: `list_deadlines`. Összeköttetések állapota: `connections_status`.
 - A módosító eszközök szintje a kapcsolattól függ (olvasás / munka / admin). A `confirm` mezős eszközöknél előbb mutasd meg a felhasználónak az előnézetet, és csak az ő kifejezett igenje után hívd újra `confirm: true`-val.
-- Állami oldal felé (átvétel, letöltés, NAV-lekérdezés, szinkron) az MCP nem indít semmit; ezeket a felhasználó a programban végzi.
+- Szinkront a `start_sync` indít (csak munka/admin szintű kapcsolat, admin vagy vezető felhasználó); az állapot: `sync_status`. Egyéb állami oldali műveletet (egyedi átvétel, letöltés, NAV-lekérdezés) az MCP nem indít.
 - A becsült (nem megerősített) határidőt mindig jelezd becsültként.
 MD)]
 class IratkapuServer extends Server
@@ -53,6 +53,8 @@ class IratkapuServer extends Server
         Tools\ManageUsers::class,
         Tools\ManageClient::class,
         Tools\SaveRule::class,
+        Tools\StartSync::class,
+        Tools\SyncStatus::class,
     ];
 
     protected function boot(): void

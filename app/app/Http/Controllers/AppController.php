@@ -17,6 +17,7 @@ use App\Iratkapu\Es3Reader;
 use App\Iratkapu\FormCatalog;
 use App\Iratkapu\GateException;
 use App\Iratkapu\LegalDeadline;
+use App\Iratkapu\NavRowSync;
 use App\Iratkapu\Notify;
 use App\Iratkapu\OfficeMail;
 use App\Iratkapu\OwnMailRouter;
@@ -893,15 +894,18 @@ class AppController extends Controller
             'profiles_count' => count($seen), 'fetched_at' => now(), 'updated_at' => now()]);
         $cal = array_key_exists('obligations', $d) ? $this->navObligations($u, $portal, $d['subject'] ?? null, $d['obligations'] ?? [], $self) : null;
         $subjectClient = $this->navSubjectClient($u, $portal, $d['subject'] ?? null, $self);
-        $ret = array_key_exists('returns', $d) && $d['returns'] !== null ? $this->navReturns($u, $subjectClient, $d['returns']) : null;
-        $docs = array_key_exists('documents', $d) && $d['documents'] !== null ? $this->navDocuments($u, $subjectClient, $d['documents']) : null;
+        $retTally = $docTally = null;
+        $ret = array_key_exists('returns', $d) && $d['returns'] !== null ? $this->navReturns($u, $subjectClient, $d['returns'], $retTally) : null;
+        $docs = array_key_exists('documents', $d) && $d['documents'] !== null ? $this->navDocuments($u, $subjectClient, $d['documents'], $docTally) : null;
         $tt = (config('iratkapu.nav_queries') && $subjectClient && is_array($d['taxpayerTables'] ?? null))
             ? TaxpayerDataTables::syncClientSnapshot((int) $u->office_id, (int) $subjectClient->id, $d['taxpayerTables'])
             : null;
         DB::table('portal_connections')->where('id', $portal->id)->update(['upo_state' => 'ok', 'upo_at' => now(), 'updated_at' => now()]);
         Audit::log($u->office_id, $u, 'NAV-portál adatai fogadva: '.count($seen)." képviselt adózó, ebből $suggested ajánlat".($cal ? ", {$cal['upserted']} adónaptár-tétel" : ''), ['evidence' => 'csak olvasás, a belépő saját nevében', 'policy' => 'ADR-010, A kör']);
 
-        return ['ok' => true, 'known' => $known, 'suggested' => $suggested, 'total' => count($seen), 'calendar' => $cal, 'returns' => $ret, 'documents' => $docs] + ($tt !== null ? ['taxpayerTables' => $tt] : []);
+        return ['ok' => true, 'known' => $known, 'suggested' => $suggested, 'total' => count($seen), 'calendar' => $cal, 'returns' => $ret, 'documents' => $docs]
+            + ($ret !== null ? ['returnsTally' => $retTally] : []) + ($docs !== null ? ['documentsTally' => $docTally] : [])
+            + ($tt !== null ? ['taxpayerTables' => $tt] : []);
     }
 
     /** A NAV-nál kiválasztott adózóhoz tartozó ügyfél: látott, aktív ügyfél; a belépő saját adatainál a saját gyűjtője. Különben null. */
@@ -925,16 +929,17 @@ class AppController extends Controller
      * NAV ügyfélportál, „C kör”: a NAV szerint beadott bevallások mentése az ügyfélhez. Kikapcsolt lekérdezésnél (vagy ügyfél
      * nélkül) semmit nem tárol. Visszaadja a tárolt sorok számát, vagy nullt, ha nem tárolt.
      */
-    private function navReturns(object $u, ?object $client, array $rows): ?int
+    private function navReturns(object $u, ?object $client, array $rows, ?array &$tally = null): ?int
     {
         if (! config('iratkapu.nav_queries') || ! $client) {
             return null;
         }
+        $tally ??= ['new' => 0, 'changed' => 0, 'same' => 0];
         $n = 0;
         foreach ($rows as $x) {
-            DB::table('nav_returns')->updateOrInsert(['client_id' => $client->id, 'reg_no' => $x['regNo']], ['office_id' => $u->office_id, 'form_code' => $x['formCode'],
+            $tally[NavRowSync::upsert('nav_returns', ['client_id' => $client->id, 'reg_no' => $x['regNo']], ['office_id' => $u->office_id, 'form_code' => $x['formCode'],
                 'title' => isset($x['title']) ? ClientDiscovery::clean((string) $x['title'], 200) : null, 'period_from' => $x['periodStart'] ?? null, 'period_to' => $x['periodEnd'] ?? null,
-                'submitted_at' => $x['submittedAt'] ?? null, 'state' => $x['state'] ?? null, 'kind' => $x['kind'] ?? null, 'fetched_at' => now(), 'updated_at' => now()]);
+                'submitted_at' => $x['submittedAt'] ?? null, 'state' => $x['state'] ?? null, 'kind' => $x['kind'] ?? null, 'fetched_at' => now(), 'updated_at' => now()])]++;
             $n++;
         }
 
@@ -942,11 +947,12 @@ class AppController extends Controller
     }
 
     /** NAV ügyfélportál, „C kör”: a NAV-dokumentumok mentése az ügyfélhez (csak bekapcsolt lekérdezésnél és ismert ügyfélnél). */
-    private function navDocuments(object $u, ?object $client, array $rows): ?int
+    private function navDocuments(object $u, ?object $client, array $rows, ?array &$tally = null): ?int
     {
         if (! config('iratkapu.nav_queries') || ! $client) {
             return null;
         }
+        $tally ??= ['new' => 0, 'changed' => 0, 'same' => 0];
         $clean = fn ($v, $len = 200) => isset($v) ? ClientDiscovery::clean((string) $v, $len) : null;
         $n = 0;
         foreach ($rows as $x) {
@@ -954,11 +960,11 @@ class AppController extends Controller
             if ($key === null) {
                 continue;
             }
-            DB::table('nav_documents')->updateOrInsert(['client_id' => $client->id, 'doc_key' => $key], ['office_id' => $u->office_id, 'barcode' => $x['barcode'] ?? null, 'reg_no' => $x['regNo'] ?? null,
+            $tally[NavRowSync::upsert('nav_documents', ['client_id' => $client->id, 'doc_key' => $key], ['office_id' => $u->office_id, 'barcode' => $x['barcode'] ?? null, 'reg_no' => $x['regNo'] ?? null,
                 'subject' => $clean($x['subject'] ?? null, 300), 'doc_type' => $x['docType'] ?? null, 'form_code' => $x['formCode'] ?? null, 'form_name' => $clean($x['formName'] ?? null),
                 'case_type' => $clean($x['caseType'] ?? null), 'case_no' => $x['caseNo'] ?? null, 'kr_no' => $x['krNo'] ?? null,
                 'submitted_at' => $x['submittedAt'] ?? null, 'arrived_at' => $x['arrivedAt'] ?? null, 'downloaded_at' => $x['downloadedAt'] ?? null, 'files' => (int) ($x['files'] ?? 0),
-                'fetched_at' => now(), 'updated_at' => now()]);
+                'fetched_at' => now(), 'updated_at' => now()])]++;
             $n++;
         }
 
@@ -1128,6 +1134,7 @@ class AppController extends Controller
         $skipped = 0;
         $obligations = 0;
         $returns = 0;
+        $retTally = $docTally = ['new' => 0, 'changed' => 0, 'same' => 0];
         $documents = 0;
         $hasTt = false;
         $ttTotals = ['insured_persons' => 0, 'employers' => 0, 'efo_declarations' => 0, 'efo_quotas' => 0, 'reconciliations' => 0];
@@ -1151,10 +1158,10 @@ class AppController extends Controller
                 $obligations += $cal['upserted'] ?? 0;
             }
             if (isset($c['returns'])) {
-                $returns += $this->navReturns($u, $client, $c['returns']) ?? 0;
+                $returns += $this->navReturns($u, $client, $c['returns'], $retTally) ?? 0;
             }
             if (isset($c['documents'])) {
-                $documents += $this->navDocuments($u, $client, $c['documents']) ?? 0;
+                $documents += $this->navDocuments($u, $client, $c['documents'], $docTally) ?? 0;
             }
             if (config('iratkapu.nav_queries') && is_array($c['taxpayerTables'] ?? null)) {
                 $hasTt = true;
@@ -1169,7 +1176,8 @@ class AppController extends Controller
         Audit::log($u->office_id, $u, "NAV-portál: $saved ügyfél adatai fogadva képviselet-váltással".($skipped ? ", $skipped kihagyva" : '').($d['restored'] ? '' : ' – A VISSZAVÁLTÁS A SAJÁT PROFILRA NEM VOLT IGAZOLHATÓ'),
             ['evidence' => 'képviselet-váltás a belépő munkamenetében, utána csak olvasás', 'policy' => 'ADR-010, B kör']);
 
-        return ['ok' => true, 'saved' => $saved, 'skipped' => $skipped, 'obligations' => $obligations, 'returns' => $returns, 'documents' => $documents, 'restored' => (bool) $d['restored'], 'clients' => $names] + ($hasTt ? ['taxpayerTables' => $ttTotals] : []);
+        return ['ok' => true, 'saved' => $saved, 'skipped' => $skipped, 'obligations' => $obligations, 'returns' => $returns, 'documents' => $documents,
+            'returnsTally' => $retTally, 'documentsTally' => $docTally, 'restored' => (bool) $d['restored'], 'clients' => $names] + ($hasTt ? ['taxpayerTables' => $ttTotals] : []);
     }
 
     /**

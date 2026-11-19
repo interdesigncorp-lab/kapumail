@@ -40,7 +40,9 @@ contextBridge.exposeInMainWorld('iratkapuDesktop', {
     windowVisible: vis => ipcRenderer.invoke('live:windowVisible', Boolean(vis)),
     close: () => ipcRenderer.invoke('live:close'),
     mailboxes: () => ipcRenderer.invoke('live:mailboxes'),
-    list: (since, filter, opts) => ipcRenderer.invoke('live:list', since || null, filter || null, opts && opts.sent === true ? { sent: true } : null),
+    // `opts.portalId`: növekményes kézi szinkron (a főfolyamat számolja az ablakot); `opts.full`: teljes újraolvasás kérése.
+    list: (since, filter, opts) => ipcRenderer.invoke('live:list', since || null, filter || null, opts ? { sent: opts.sent === true, full: opts.full === true, ...(opts.portalId != null ? { portalId: String(opts.portalId) } : {}) } : null),
+    ack: (portalId, full) => ipcRenderer.invoke('live:ack', String(portalId), full === true),
     listHttp: opts => ipcRenderer.invoke('live:listHttp', opts && opts.sent === true ? { sent: true } : null),
     // Csak az irat azonosítója megy át: hogy mit szabad letölteni, azt a főfolyamat a szervertől kérdezi meg.
     downloadOne: req => ipcRenderer.invoke('live:downloadOne', {
@@ -73,6 +75,8 @@ contextBridge.exposeInMainWorld('iratkapuDesktop', {
     readOwnAuto: key => ipcRenderer.invoke('asp:readOwnAuto', String(key || '')),
     onUpdated: cb => { ipcRenderer.removeAllListeners('asp:updated'); ipcRenderer.on('asp:updated', () => cb()); },
   },
+  // MI-ből indított szinkron (ADR-016): a futás eleje és vége; közben zárolt appnál is átmennek a szinkron hívásai.
+  mcpSync: { begin: id => ipcRenderer.invoke('mcpsync:begin', Number(id)), end: id => ipcRenderer.invoke('mcpsync:end', Number(id)) },
   auto: {
     clients: () => ipcRenderer.invoke('auto:clients'),
     run: (keys, filters, forceFull, opts) => ipcRenderer.invoke('auto:run', Array.isArray(keys) ? keys.map(String) : null, filters || null, forceFull || null, opts && opts.sent === true ? { sent: true } : null),

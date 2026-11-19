@@ -161,8 +161,11 @@ function sanitizeFileName(fileName, fallbackEid = 'irat') {
 
 const LIST_FILTER = { searchTerm: null, labelIds: null, unreadOnly: null, excludeSystemMessages: null, messageTypes: [], verificationTypes: [], incomingFromDate: null, incomingToDate: null };
 
-function listScript(addressId, xsrf, pageNumber, folder = 'BEERKEZETT') {
+function listScript(addressId, xsrf, pageNumber, folder = 'BEERKEZETT', incomingFrom = null) {
   const box = normFolder(folder);
+  // A tárhely szűrője teljes, „Z” végű időbélyeget vár (sima dátumra 400-at ad); érvénytelen érték esetén nincs szűrés.
+  const from = incomingFrom && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/.test(String(incomingFrom)) ? String(incomingFrom) : null;
+  const filter = { ...LIST_FILTER, incomingFromDate: from };
   const path = `${API}/uzenetek/${box}/kereses`;
   return `(async () => {
     const headers = { Accept: 'application/json', 'Content-Type': 'application/json', 'address-id': ${JSON.stringify(addressId)} };
@@ -170,7 +173,7 @@ function listScript(addressId, xsrf, pageNumber, folder = 'BEERKEZETT') {
     if (!x) { const c = document.cookie.split('; ').find(i => i.startsWith('XSRF-TOKEN=')); if (c) x = decodeURIComponent(c.split('=')[1] || ''); }
     if (x) headers['x-xsrf-token'] = x;
     const r = await fetch(${JSON.stringify(path)}, { method: 'POST', headers, credentials: 'include',
-      body: JSON.stringify({ pageNumber: ${Number(pageNumber)}, countPerPage: '100', filter: ${JSON.stringify(LIST_FILTER)} }) });
+      body: JSON.stringify({ pageNumber: ${Number(pageNumber)}, countPerPage: '100', filter: ${JSON.stringify(filter)} }) });
     const t = await r.text(); let body; try { body = JSON.parse(t); } catch { body = null; }
     return { status: r.status, body };
   })()`;
@@ -522,7 +525,11 @@ class LiveSession {
     if (since && !/^\d{4}-\d{2}-\d{2}$/.test(since)) return { ok: false, code: 1, error: 'Érvénytelen dátum.' };
     if (this.busy) return { ok: false, code: 1, error: 'Már fut egy tárhelyművelet.' };
     this.busy = true;
-    const includeDurable = opts.includeDurable !== false;
+    // Növekményes listázás (`opts.incomingFrom`, ISO időbélyeg): csak a Beérkezett mappa azóta érkezett levelei, a
+    // tárhely saját szűrőjével; a tartós tár kimarad, az Elküldött mappából csak az első oldal. A teljes listát a hívó
+    // rendszeresen (és kérésre) maga kéri, így a régebbi levelek állapotváltozása sem vész el.
+    const incomingFrom = opts.incomingFrom || null;
+    const includeDurable = opts.includeDurable !== false && !incomingFrom;
     try {
       const wc = this.win.webContents, letters = [], quotas = {};
       const allowedMbs = this.sniff.mailboxes.filter(mb => mailboxAllowed(mb.name, opts.mailboxFilter || null));
@@ -539,9 +546,10 @@ class LiveSession {
         const seenInMb = new Set();
         for (const folder of folders) {
           const rows = [];
-          for (let page = 0; page < 50; page++) {
+          const maxPages = incomingFrom && folder === 'ELKULDOTT' ? 1 : 50;
+          for (let page = 0; page < maxPages; page++) {
             emit({ index: mi + 1, total: allowedMbs.length, mailbox: mbLabel, folder: folderLabel(folder), page: page + 1 });
-            const r = await wc.executeJavaScript(listScript(mb.addressId, this.sniff.xsrf, page, folder), true);
+            const r = await wc.executeJavaScript(listScript(mb.addressId, this.sniff.xsrf, page, folder, folder === 'BEERKEZETT' ? incomingFrom : null), true);
             if (!this.win || r.status === 401 || r.status === 403) {
               if (folder !== 'BEERKEZETT') break;
               this._fail('A kapcsolat megszűnt: a tárhely újra belépést kér.');
