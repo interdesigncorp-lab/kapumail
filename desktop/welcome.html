@@ -26,7 +26,7 @@ button.card[aria-busy="true"]{pointer-events:none;opacity:.8}
 .ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:#efecff}
 .off .ic{background:rgba(26,23,51,.06)}
 .ic svg{width:26px;height:26px;fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.tag{position:absolute;top:24px;right:24px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.01em;background:#e7f6ef;color:#16744f}
+.tag{position:absolute;top:24px;right:max(24px,calc(100vw - env(titlebar-area-x,0px) - env(titlebar-area-width,100vw) + 12px));padding:5px 11px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.01em;background:#e7f6ef;color:#16744f}
 .off .ic svg{stroke:var(--mute)}
 .off .tag{background:rgba(26,23,51,.08);color:var(--soft)}
 h2{margin:18px 0 6px;font-size:21px;font-weight:700;letter-spacing:-.02em}

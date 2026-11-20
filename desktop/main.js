@@ -8,6 +8,7 @@
 const { app, BrowserWindow, WebContentsView, ipcMain, safeStorage, shell, session, Menu, dialog, systemPreferences, powerMonitor, Notification, Tray, nativeImage, nativeTheme, clipboard } = require('electron');
 app.setName('KapuMail');
 const connector = require('./connector');
+const { windowChrome } = require('./window-chrome');
 const { LiveSession, MODES, PARTITION: LIVE_PARTITION } = require('./tarhely-live');
 const tarhelyHttp = require('./tarhely-http');
 const tarhelyAuto = require('./tarhely-auto');
@@ -1119,7 +1120,7 @@ async function createWindow() {
   nativeTheme.themeSource = 'light';
   const win = new BrowserWindow({
     width: 1440, height: 900, minWidth: 380, minHeight: 600, title: 'KapuMail', backgroundColor: '#eadff5', show: !SMOKE && !MCP_BG, icon: ICON,
-    titleBarStyle: 'hidden', trafficLightPosition: { x: 13, y: 7 },
+    ...windowChrome(),
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true, spellcheck: false },
   });
   mainWin = win;
